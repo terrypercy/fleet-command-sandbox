@@ -762,11 +762,92 @@ on the specialist's recommendation:*
 
 ## Dependencies
 
-[To be designed]
+### Upstream (what this system needs)
+
+**Hard dependencies: none.** The tick core (`SimState`, `step()`, the phase
+order and the hold-reason set) runs with nothing else designed. That is why it
+sits first in the Foundation layer.
+
+**Interface contracts** (soft). Each is consumed through the driver, or as data
+handed in, never as a call back into another system's logic:
+
+| System | Hard / soft | Interface | Notes |
+|---|---|---|---|
+| Runtime ID Service (#3) | Soft | Entities arrive with stable integer IDs; this system sorts by them within each phase | Without it, processing order falls back to creation order, which is still deterministic. IDs make it stable across save and load |
+| Input & Controls (#6) | Soft (driver only) | The flagship command struct each frame; pause, resume, step and speed actions | The headless path has no input. The core never reads input directly |
+| Gameplay Settings & Modifiers (#7) | Soft (driver only) | Speed steps, the single-step option, `STEP_LARGE`, auto-pause toggles, cooldowns and re-arm times, the focus-loss option, `SLEEP_THRESHOLD_S`, `SPEED_WINDOW_S`, `SPEED_TOLERANCE` | Read between ticks only. Defaults apply when Settings is absent (Tier 0 constants provider) |
+| Deterministic RNG & Seed Streams (#2) | None | — | This system draws no randomness. It only guarantees that phase consumers call their streams in a fixed order |
+| Save/Load & Migration (#5) | Soft (reverse) | This system *provides* its section: `tick_index`, the order queue, latches, trigger states, the replay log and the header (`TICK_RATE`, build ID) | Save owns the format, integer-safe encoding and migration |
+
+### Downstream (what depends on this system)
+
+**Listed in the systems index:**
+
+| System | Hard / soft | What it relies on |
+|---|---|---|
+| World Clock (#8) | Hard | The P8 call each tick, and `is_held()`. **This system owns the hold-reason set; the World Clock only reads it.** That replaces the index's earlier "hold-reasons API on the World Clock" contract (owner decision, 2026-10-28) |
+| Combat Event Bus & Battle Record (#9) | Hard | The P9 flush, stamped with `tick_index`, plus `battle_start_tick` |
+| Combat Space (#11) | Hard | P3 and P5 phase calls; ascending-ID order; the first-contact signal for auto-pause |
+| Fleet Orders (#19) | Hard | The order queue, the apply-tick stamp, `OrderRejected`, and `cancelled_by_context_end` |
+| AI-vs-AI Runner & AI Debug Tools (#25) | Hard | `step(n)` with no driver; the per-tick state hash; `TriggerWouldFire` logging |
+| Camera & Combat View (#45) | Soft | The interpolation alpha and read-only state. It never drives or pauses the tick |
+
+**Not yet listed in the index.** Each needs this system to appear in its own
+Dependencies, and the index should list it at the next update:
+
+| System | Hard / soft | What it relies on |
+|---|---|---|
+| Weapons & Damage (#12) | Hard | P4 and P5 phase calls; the hull-critical threshold signal |
+| Vigor (#13) | Hard | P6 phase call; the Vigor early-warning signal |
+| Coherence & Links (#14) | Hard | P6 phase call; the relay-cut signal |
+| Ship AI (#20), Fleet Coordination (#21) | Hard | P2 phase call. AI decisions are made into the order queue |
+| Battle Resolution & Retreat (#22) | Hard | P7 battle-end check (runs before trigger evaluation); ends the context; escort-lost signal |
+| After-Action Debrief (#24), Dossier (#47), Ledger (#48), Public History Screen (#49) | Soft | Add and remove `PLANNING:<screen_id>`. The Debrief's hold must be added on the frame the battle ends |
+| Menus, Settings & Save UI (#51) | Soft | Adds `SYSTEM:menu`, `SYSTEM:save`, `SYSTEM:load` |
+| Combat HUD & Tactical Overlay (#46) | Soft | Alpha, the speed display (D5), queued-order and latched-press markers, and the reasons behind each hold |
+| Telemetry & Playtest Logging (#54) | Soft | `tick_index` stamps; "time dropped" notes |
+
+**Bidirectional check.** No other GDD exists yet, so each of the systems above
+must list Simulation Tick & Pause in its own Dependencies when it is designed.
+`/design-system` raises this for each of them through the systems index.
 
 ## Tuning Knobs
 
-[To be designed]
+Player-facing knobs live in Gameplay Settings & Modifiers (#7). Designer knobs
+live in this system's data file. Engineering constants are listed separately:
+they are not knobs, and changing one is a versioned, replay-breaking change.
+
+### Designer and player knobs
+
+| Knob | Default | Safe range | Affects | Too low | Too high | Interacts with |
+|---|---|---|---|---|---|---|
+| `SPEED_STEPS` (player) | {0.5, 1, 2} | any steps in 0.25 – 2 | How fast battles play out; relaxation vs tension | Below 0.25×, battles drag and steps between speeds feel arbitrary | Above 2×, the D6 cap and CPU checks fail at 30 fps, and the "slowed" display triggers often | `MAX_TICKS_PER_FRAME`, `SIM_BUDGET_MS` (D6, D10) |
+| `DEFAULT_SPEED` | 1× | one of `SPEED_STEPS` | First impression of pace | — | — | `SPEED_STEPS` |
+| Player single-step option | Off | on / off | Fine-grained reading of a fight | — | — | `STEP_LARGE` |
+| `STEP_LARGE` | 10 ticks | 2 – 30 | Size of the coarse step | At 2, it is barely different from `STEP_SMALL` | Above 30 (0.5 s at 60 Hz), a step is too coarse to read and causes a visible hitch (D9) | `TICK_RATE` |
+| `AUTO_PAUSE_ENABLED[trigger]` | Hull critical **on**, first contact **on**; Vigor warning, relay cut, escort lost **off** | on / off each | Interruptions vs safety net (Pillar 3; "relaxing") | All off: fights can run away from a new player | All on: pause spam, which breaks flow | `cooldown_s`, `rearm_s` |
+| `cooldown_s[trigger]` | 10 s | 0 – 60 (simulation seconds) | Minimum gap between pauses from one trigger | Near 0: spam when a value hovers at its threshold | Above 30: a second real crisis is missed | `rearm_s`, speed (cooldowns run faster at 2×) |
+| `rearm_s[trigger]` | 2 s | 0 – 10 (simulation seconds) | How firmly a condition must clear before re-firing | At 0, the trigger re-fires on value jitter | Above 5, a genuine second crossing is missed | `cooldown_s` |
+| Focus-loss auto-pause | On | on / off | Safety when the player alt-tabs | — | — | rule 16 |
+| `SLEEP_THRESHOLD_S` | 1.0 s | 0.25 – 5 | Where a long frame counts as an interruption rather than a hitch | Below 0.25 s, ordinary hitches pause the battle | Above 5 s, waking from sleep lets the catch-up cap advance the battle without the player | `MAX_TICKS_PER_FRAME` |
+| `SPEED_WINDOW_S` | 1.0 s | 0.5 – 2 | How quickly the speed display reacts | Below 0.5 s, the display flickers | Above 2 s, it reports a slowdown late | `SPEED_TOLERANCE` |
+| `SPEED_TOLERANCE` | 0.05 | 0.02 – 0.10 | When the display says "slowed" | At 0.02, it says "slowed" on normal jitter | At 0.10, it hides a real 10% slowdown | `SPEED_WINDOW_S` |
+
+### Engineering constants (versioned; not tuning knobs)
+
+| Constant | Value | Why it is fixed |
+|---|---|---|
+| `TICK_RATE` | 60 Hz target; 30 Hz fallback, decided by the spike | Changes every tick's content, so replays and mid-battle saves are incompatible across values. Written into every header |
+| `MAX_TICKS_PER_FRAME` | 8 at 60 Hz, 4 at 30 Hz | Sets the catch-up ceiling (about 133 ms of simulation time per frame). Affects cadence only, never outcomes |
+| `SIM_BUDGET_MS` | 8 ms (provisional) | The simulation's share of a 16.67 ms frame. Sets the spike's pass line (D10). Needs technical-director sign-off |
+| `STEP_SMALL` | 1 tick | By definition |
+| 2^53 save assert; 2^31 − 1 hour warning | — | Integer safety (D8) |
+
+**Knobs owned elsewhere** (referenced, not duplicated):
+- the hull-critical threshold (Hulls / Weapons & Damage)
+- the Vigor early-warning threshold (Vigor)
+- how many game days a tick is worth, in battle and out (World Clock)
+- what counts as first contact (Combat Space)
 
 ## Visual/Audio Requirements
 
