@@ -1,7 +1,7 @@
 # Game Concept: The Makers' Debt
 
 *Created: 2026-10-28*
-*Status: Draft*
+*Status: Draft (revised 2026-10-28 after the first `/design-review`: NEEDS REVISION → revisions applied, re-review pending)*
 
 > Working title. A trademark search on the title is required before any public
 > use (`design/reference/development-plan.md` § 9).
@@ -37,7 +37,7 @@ the living races built the killer robots, and you decide who history blames."
 | **Platform** | PC (Steam / Epic), mouse and keyboard first |
 | **Target Audience** | Explorers and Storytellers first, strategy-minded Achievers second (see Target Player Profile) |
 | **Player Count** | Single-player |
-| **Session Length** | 30-120 minutes (a full prepare-attempt-return cycle) |
+| **Session Length** | 30-120 minutes; one fail-prepare-return arc spans 1-3 sessions |
 | **Monetization** | Premium, Steam Early Access first (plan § 8) — not yet decided in detail |
 | **Estimated Scope** | Large (5-10 years to 1.0, solo, full-time; Early Access at 2.2-3.8 years) — PR-SCOPE estimate, Low confidence until Tier 0 measures real velocity |
 | **Comparable Titles** | Starsector, Star Valor, Starlathe (genre); Return of the Obra Dinn, Outer Wilds (fixed-truth deduction) |
@@ -71,8 +71,24 @@ you decide who history blames.**
 - There is **one fixed, hidden truth**. The **public history** — which race the
   galaxy believes is to blame — is shaped by which fragments you share, and with
   whom. Factions react to that blame state.
-- The **consequences of sharing** (which factions shift, and by roughly how much)
-  are shown before you commit. Only the underlying truth is ambiguous.
+- The **consequences of sharing** are previewed before you commit, as
+  **first-order effects only**: which factions move, in which direction, and a
+  coarse band (slight, marked, severe). No magnitudes, no knock-on effects, and
+  nothing that hints how close a fragment is to the truth; a confirm step, and no
+  undo once committed. Only the underlying truth is ambiguous.
+- **The two halves of the fantasy are coupled.** A faction's blame state decides
+  which allied ships it will lend for your return attempt, and the After-Action
+  Debrief can name the faction that would help. Persuading a faction is therefore
+  a mechanic, not flavour, and what you tell them changes what you can bring
+  back to the stronghold that beat you.
+- **The truth matters.** A public history that contradicts the truth can be
+  exposed later by independent fragments, and factions that trusted you turn on
+  you (see Pillar 2 for the three possible endings).
+- **Originality.** "A creator race's machines turn on it" is a common trope, and
+  Starsector also asks who built its automated fleets. The differentiator is the
+  **political verdict** (you decide who history blames), not the discovery of who
+  built the machines. A clean-room lore check against Starsector is required
+  before the world bible is written.
 - Late in the game a **breakaway machine faction** can join you, so one fleet
   mixes living Vigor ships with Coherence-linked machines.
 
@@ -128,6 +144,14 @@ it. Challenge is the beat, not the point.
      spend **erodes that ship's Vigor ceiling for the rest of the expedition**;
      only port rest, or care from a living race, restores it. It is a cost you
      carry between battles, not a bar you fill and vent.
+   - *Vigor design requirements* (from CD-PLAYTEST and the first design review;
+     numbers belong in the Vigor GDD): **no hard lockout** — running dry changes a
+     ship's behaviour instead of disabling it, with an early warning before it
+     happens, checked against "can a Starsector player map this 1:1 onto flux?";
+     erosion must **change how players spend**, not only how long they can fire;
+     the ceiling floor must **never soft-lock** a player; and restoring at port
+     costs **time only** — rest days during which the world moves on (contracts
+     expire, rivals act) — so port is never free and never a money trap.
    - *Coherence* (machine): fleet-wide command bandwidth relayed through visible
      links from relay ships. Cut a relay or jam a link and the formation
      fragments into individual, simpler ships.
@@ -137,7 +161,8 @@ it. Challenge is the beat, not the point.
    trade routes).
 4. **Archive fragments and public blame** — evidence from machine strongholds;
    a sharing choice with previewed consequences; a tracked blame value factions
-   react to; one fixed hidden truth.
+   react to, and which gates the ships they lend for a return attempt; one fixed
+   hidden truth.
 5. **Sandbox economy and progression** — trade and contracts, salvage, loot and
    crafting, faction reputation, captain skills; later officers and colonies.
 
@@ -217,9 +242,11 @@ Dossier entry: the player can see exactly what's missing.
 
 Travel to a region; trade and take contracts to fund the fleet; gather intel on
 a machine node; attempt it — often losing the first time; read the Debrief;
-prepare (trade, craft, recruit, earn a faction's ships); return and win. Natural
-stopping point: docked in port after a battle. The hook to come back: the newest
-fragment raises a question, and some faction is reacting to what you revealed.
+prepare (trade, craft, recruit, earn a faction's ships); return and win. One
+fail-prepare-return arc spans **1-3 sessions**. The natural stopping point is
+**in port after the Debrief**, with the next attempt planned and the Dossier
+entry half-filled. The hook to come back: the newest fragment raises a question,
+and some faction is reacting to what you revealed.
 
 ### Long-Term Progression
 
@@ -227,7 +254,10 @@ Captain skills, fleet growth, loot and crafting (Star Valor-style unlocks to
 chase); faction reputation; officers and colonies at 1.0. The long-term goal:
 assemble the evidence, decide what the galaxy believes, unite a coalition around
 it — possibly including the breakaway machines — and break the Instrument at its
-origin. The story ends there; the sandbox continues.
+origin. The ending is **optional**: break the Instrument whenever you are ready
+(truth confirmed, lie exposed, or lie that stands — see Pillar 2), then keep
+playing freely in a changed world, where the Ledger, trade and colonies are the
+endgame.
 
 ### Retention Hooks
 
@@ -274,10 +304,23 @@ The truth about who built the machines is fixed; the history the galaxy
 believes is yours to write.
 
 *Design test*: debating a single authored reveal vs a player-determined
-outcome → **the player determines the public history, within authored bounds**
-(one hidden true maker; a small set of candidate races; fragments add evidence
-weight; public blame is a tracked value factions react to). Delivered through
-systems and short authored beats, not branching dialogue trees.
+outcome → **the player determines the public history, within authored bounds**:
+- one hidden true maker, among **3-4 candidate races** (the exact count is a
+  decision for the Mystery/Blame GDD);
+- fragments are evidence weighted towards candidates; **no single fragment is
+  decisive**, and the truth becomes provable only from several independent
+  fragments, found in any order;
+- at least one **deliberate red herring**, with readable provenance;
+- public blame is a tracked value factions react to, and it gates the ships they
+  lend for a return attempt (see Unique Hook);
+- **the truth matters**: a public history that contradicts it can be exposed
+  later by independent fragments, and factions that trusted you turn on you.
+  The three endings are **truth confirmed**, **lie exposed** and **lie that
+  stands**.
+
+Delivered through systems and short authored beats, not branching dialogue
+trees. Weights, normalisation, thresholds and the faction reaction matrix belong
+in the Mystery/Blame GDD.
 
 ### Pillar 3: Hands on the Helm
 Combat is felt first-hand from the flagship.
@@ -436,13 +479,17 @@ detective fiction where the truth is known but the verdict is political.
   stable namespaced string IDs (`base:…`, `mymod:…`); never save node trees.
 - **Mod data** in JSON or CSV validated against a schema, loaded into typed
   classes. Avoid loading third-party `.tres` files (a possible script-execution
-  path — to verify in the ADR). Reject negative weights in loot tables
-  (`rand_weighted`, 4.7.2).
+  path — to verify in the ADR). Reject negative weights in loot tables: the
+  4.7.2 change is to `RandomPCG::rand_weighted`; that it applies to
+  `RandomNumberGenerator.rand_weighted()` is the engine reference's own
+  **inference**, so validate weights in the loader regardless.
 - **Rendering**: draw a fleet's links in one `_draw()` pass, and widen them
   (4.7 draws `CanvasItem` lines without an antialiasing feather). Glow changed
   in 4.6 — spike it on D3D12 and Vulkan. Whether 2D canvas glow and per-instance
   canvas shader uniforms behave as needed in 4.7.2 is NOT SOURCEABLE in the
-  engine reference; the spike settles it.
+  engine reference; the spike settles it. Treat the spike as a pre-production
+  gate with written pass/fail criteria and a **named renderer** (Forward+,
+  Mobile or Compatibility), which is itself an ADR decision.
 - **Out of Tier 0**: the background economy simulation, procedural sector
   generation, and Steam/Epic integration (the GDExtension's 4.7.2 compatibility
   is NOT SOURCEABLE; needs a technology review).
@@ -457,7 +504,11 @@ setup.
 
 ### Design Risks
 - **Vigor ceiling erosion could feel punishing** rather than relaxing; it must
-  read as a cost worth choosing. Needs prototyping and tuning.
+  read as a cost worth choosing. It can also fail the other way: too weak to
+  change how anyone spends, or a death spiral at the ceiling floor. The first
+  prototype never asked whether the ceiling changed behaviour. The requirement
+  (see Core Mechanics): erosion changes how players spend, and the floor never
+  soft-locks. Needs prototyping and tuning.
 - **The mystery has to hold up in any order** across a sandbox; fragments found
   out of sequence must still build a coherent case.
 - **Thin faction reactions to blame would make Pillar 2 look broken**, not
@@ -515,13 +566,26 @@ timescale is optimistic.*
   → `/map-systems` and the world-builder.
 - **How do the player's own machine ships handle relays and jamming** in a
   mixed fleet? → a GDD for the Coherence system.
-- **Does Vigor ceiling erosion feel fair?** → the combat prototype.
+- **Does Vigor ceiling erosion feel fair?** Partly answered by the combat
+  prototype (final ceiling 58%, no complaint about erosion; the hard lockout was
+  the worst moment). Still open: did the ceiling change how the player spent in
+  later fights, and how often did Vigor hit empty? (CD-PLAYTEST condition 2.)
 - **Do 2D glow and per-ship breathing work in Godot 4.7.2 on D3D12 and
-  Vulkan?** → a 2-3 day rendering spike.
+  Vulkan?** → a 2-3 day rendering spike with written pass/fail criteria and a
+  named renderer.
+- **How does a player confirm a theory** about who built the machines before
+  committing to a public history? → the Mystery/Blame GDD.
+- **What is the breakaway machine faction's role in the mystery** (for example a
+  witness whose testimony is unreliable), beyond being a late-game fleet mix?
+  → the world-builder and the Mystery/Blame GDD.
+- **What are the four organic races?** Each needs an identity, a relationship to
+  the Instrument, a motive and means to have built it, a reason it could be
+  falsely blamed, and a gameplay hook. → `/map-systems` and the world-builder,
+  with a clean-room lore check against Starsector first.
 - ~~Which Godot editor version is installed locally?~~ Resolved 2026-10-28:
   4.7.2 (`4.7.2.stable.official.ed1daf0bf`), recorded in `VERSION.md`. Still
-  open: add build and run commands to `project.yaml`; install gdUnit4
-  (`/test-setup`) so the configured test command can run.
+  open: add build and run commands to `project.yaml`. gdUnit4 6.2.2 is
+  installed, and the test command was run on Godot 4.7.2 (commit `aed61d2`).
 - **Full-time or part-time development?** The producer's estimates assume
   35-40 hours a week; part-time roughly doubles them.
 
@@ -529,10 +593,15 @@ timescale is optimistic.*
 
 ## MVP Definition
 
-**Core hypothesis**: Players find the **fail → Debrief → prepare → return →
-win** loop against a machine stronghold satisfying, in captain-in-the-line
-combat where Vigor and Coherence play differently — and the archive-fragment
-sharing choice makes them care what they found.
+**Core hypothesis**: In the **fail → Debrief → prepare → return → win** loop
+against a machine stronghold, in captain-in-the-line combat where Vigor and
+Coherence play differently, testers (1) retry after losing, (2) change fleet
+composition, refit or tactic between attempts, with the change logged, and
+(3) give a stated reason for who they share a fragment with. Measured by
+behavioural logs and one post-session question ("who built the machines, and why
+do you think so?"), not by "satisfying" or "care". Target for the Tier 0 gate:
+at least 5 testers in total, at least 3 of them new to the genre, collected over
+time; 8 or more is an Early Access target.
 
 The MVP is the **build order**, not a scope cut: the full feature list remains
 the vision.
@@ -592,16 +661,19 @@ decision (kept as an open question above).
 
 ## Next Steps
 
-Prototype-first: the core mechanic (Vigor erosion against Coherence, and losing
-as a lead) is unproven.
+Prototype-first path: the concept prototype ran and returned **PROCEED**
+(creative-director CONCERNS accepted with 4 conditions — see
+`prototypes/vigor-coherence-concept/REPORT.md`).
 
 - [x] `/setup-engine` — already run (Godot 4.7.2); installed editor confirmed
   as 4.7.2. Re-run only to add build and run commands
-- [ ] `/test-setup` — install gdUnit4 and get the CI test command green
-- [ ] `/prototype vigor-vs-coherence combat` — is the core fight fun? Throwaway
-  code
-- [ ] If PROCEED: `/art-bible` — Breath and Wire, settling the art-supply question
-- [ ] `/design-review design/gdd/game-concept.md`
+- [x] `/test-setup` — gdUnit4 6.2.2 installed; CI test command verified on
+  Godot 4.7.2 (commit `aed61d2`)
+- [x] `/prototype vigor-vs-coherence combat` — PROCEED, with 4 CD-PLAYTEST
+  conditions
+- [ ] `/art-bible` — Breath and Wire, settling the art-supply question
+- [x] `/design-review design/gdd/game-concept.md` — first review 2026-10-28:
+  NEEDS REVISION; revisions applied the same day, re-review pending
 - [ ] `creative-director` — refine the pillars
 - [ ] `/map-systems` — systems index; factions and the hidden truth
 - [ ] `/design-system` — one GDD per system
