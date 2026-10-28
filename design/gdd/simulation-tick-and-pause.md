@@ -347,7 +347,261 @@ never stored as a separate enum, so it cannot disagree with the set.
 
 ## Formulas
 
-[To be designed]
+All tick-count quantities are integers. Every quantity that a player or designer
+tunes is stored in seconds, or as a multiplier, and converted to ticks at load.
+That way the tuning survives a `TICK_RATE` change. The accumulator is a float,
+but it only decides **how many** ticks run, never **what** a tick does, so it
+cannot break determinism.
+
+### D1. Tick length
+
+The dt_tick formula is defined as:
+
+`dt_tick = 1 / TICK_RATE`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| TICK_RATE | int | {30, 60} (target 60) | constant (engineering, versioned) | Ticks per second of simulation time |
+| dt_tick | float (s) | 1/60 – 1/30 | calculated | Simulation time one tick covers |
+
+**Output Range:** 0.01667 s at 60 Hz, or 0.03333 s on the 30 Hz fallback. It is
+fixed for a build and never changes at runtime.
+**Example:** at 60 Hz, `dt_tick = 1/60 = 0.016667 s` (16.67 ms).
+
+### D2. Accumulator update (once per rendered frame, driver only)
+
+The accumulator_update formula is defined as:
+
+`acc_next = held ? acc : (resumed_this_frame ? 0 : acc + frame_delta × speed_scale)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| acc | float (s) | 0 to < dt_tick between frames | calculated | Simulation time owed but not yet ticked |
+| frame_delta | float (s) | 0 – ∞ | calculated (engine frame time, read only by the driver) | Real time since the last frame |
+| speed_scale | float | {0.5, 1, 2}; 4 in dev builds | data file (tuning knob) | Selected speed |
+| held | bool | — | calculated | The hold-reason set is not empty |
+| resumed_this_frame | bool | — | calculated | The hold set became empty this frame |
+
+**Output Range:** 0 upwards before D3 runs; D3 brings it back below `dt_tick`.
+- While held, `acc` is frozen.
+- On the frame play resumes, `acc` resets to 0. Resuming from focus loss (rule
+  16) is one such case, and so is every other resume. **Time spent held is never
+  caught up.**
+
+**Example:** 60 fps at 2×, with `acc = 0.004`, gives
+`acc = 0.004 + 0.016667 × 2 = 0.037333 s`.
+
+### D3. Ticks this frame, and the discarded remainder
+
+The ticks_this_frame formula is defined as:
+
+`n = min(floor(acc / dt_tick), MAX_TICKS_PER_FRAME)`
+`acc_after = acc − n × dt_tick`
+`discarded_sim_s = (acc_after ≥ dt_tick) ? acc_after − fmod(acc_after, dt_tick) : 0`
+`acc_final = acc_after − discarded_sim_s`
+`discarded_real_s = discarded_sim_s / speed_scale`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| MAX_TICKS_PER_FRAME | int | 4 – 12; **8** at 60 Hz, **4** at 30 Hz | constant (engineering) | Catch-up cap. Both values cap catch-up at about 133 ms of simulation time per frame |
+| n | int | 0 – cap | calculated | Ticks the driver runs this frame |
+| discarded_sim_s | float (s) | ≥ 0 | calculated | Whole ticks of simulation time dropped. Logged outside the Battle Record |
+| acc_final | float (s) | 0 to < dt_tick | calculated | Fraction of a tick kept for interpolation |
+
+**Output Range:** `n` is 0 to 8. Ticks are discarded only when the cap binds. The
+fractional remainder is always kept, so interpolation stays smooth through a
+hitch.
+**Example:** a 250 ms hitch at 1×, with `acc = 0.004`, gives `acc = 0.254`, and
+`floor(0.254 / 0.016667) = 15`, so `n = 8`. That leaves
+`acc_after = 0.12067`, which is 7.24 ticks. The 7 whole ticks are discarded
+(0.11667 s), and `acc_final = 0.004`.
+
+### D4. Interpolation alpha
+
+The interpolation_alpha formula is defined as:
+
+`alpha = (held OR no_tick_since_resume) ? 1 : acc_final / dt_tick`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| alpha | float | [0, 1] | calculated | Presentation's blend from the previous tick's state to the current one |
+| no_tick_since_resume | bool | — | calculated | Play has resumed but no tick has run yet |
+
+**Output Range:** [0, 1) while running, and **exactly 1 while held**.
+- While paused, the screen shows the true current tick, so what the player sees
+  agrees with inspection and tooltips. *Pause stops everything exactly where it
+  is.*
+- The cost is a forward snap of at most one tick of motion at the instant of
+  pausing.
+- Because D2 resets `acc` on resume, alpha restarts from 0 on the next tick. The
+  view never jumps backward.
+
+**Example:** `acc_final = 0.004` gives `alpha = 0.24`. Pausing at that moment
+snaps alpha to 1.
+
+### D5. Effective speed, and the speed shown
+
+The effective_speed formula is defined as:
+
+`speed_limit = MAX_TICKS_PER_FRAME × fps / TICK_RATE`
+`speed_eff = min(speed_scale, speed_limit)`
+`speed_shown = ticks_in_window / (TICK_RATE × SPEED_WINDOW_S)`
+
+The UI shows `speed_scale` unless
+`speed_shown < speed_scale × (1 − SPEED_TOLERANCE)`. In that case it shows
+`speed_shown`, rounded down to 0.1 and marked "slowed".
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| fps | float | 1 – 240 | calculated | Measured frame rate |
+| ticks_in_window | int | ≥ 0 | calculated | Ticks run in the last `SPEED_WINDOW_S` of real time |
+| SPEED_WINDOW_S | float (s) | 0.5 – 2 (1.0) | data file (tuning knob) | Measurement window |
+| SPEED_TOLERANCE | float | 0.02 – 0.10 (0.05) | data file (tuning knob) | How far below the selected speed before the UI says "slowed" |
+
+**Output Range:** 0 up to `speed_scale`. While held, the UI shows "Paused" rather
+than a number.
+**Example:** 2× selected and the frame rate drops to 12 fps:
+`speed_limit = 8 × 12 / 60 = 1.6`, so the UI shows "1.6× (slowed)".
+
+### D6. Sustainable speed check
+
+The ticks_per_frame_needed formula is defined as:
+
+`tpf = TICK_RATE × speed_scale / fps`
+
+A speed is sustainable when it passes two checks:
+- **Cap check:** `tpf ≤ MAX_TICKS_PER_FRAME`
+- **CPU check:** `ceil(tpf) × t_tick_ms ≤ SIM_BUDGET_MS` (see D10)
+
+**Variables:** `TICK_RATE`, `speed_scale` and `fps` as above. `tpf` is a float,
+calculated.
+**Output Range:** 0.10 to 8 across the table below. A value above the cap means
+D3 discards time.
+**Example:** ticks needed per frame, with the cap at 8 (at 60 Hz) or 4 (at 30 Hz):
+
+| Rate / speed | 30 fps | 60 fps | 144 fps |
+|---|---|---|---|
+| 60 Hz 0.5× | 1 | 0.5 | 0.21 |
+| 60 Hz 1× | 2 | 1 | 0.42 |
+| 60 Hz 2× | 4 | 2 | 0.83 |
+| 60 Hz 4× (dev) | **8 (at cap)** | 4 | 1.67 |
+| 30 Hz 0.5× / 1× / 2× / 4× | 0.5 / 1 / 2 / 4 | 0.25 / 0.5 / 1 / 2 | 0.10 / 0.21 / 0.42 / 0.83 |
+
+Every player speed passes the cap check at 30 fps and above.
+
+### D7. Auto-pause cooldown and re-arm
+
+The trigger_fire formula is defined as:
+
+`cooldown_ticks = ceil(cooldown_s × TICK_RATE)`
+`rearm_ticks = ceil(rearm_s × TICK_RATE)`
+`fires(t) = enabled AND armed AND condition(t) AND (t − last_fire_tick ≥ cooldown_ticks)`
+
+A trigger becomes **armed** once its condition has been false for `rearm_ticks`
+consecutive ticks. A condition that is still true when its cooldown expires
+**fires then, late**, rather than being dropped.
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| cooldown_s | float (simulation s) | 0 – 60 (10) | data file (tuning knob, per trigger) | Minimum simulation time between fires |
+| rearm_s | float (simulation s) | 0 – 10 (2) | data file (tuning knob, per trigger) | How long the condition must stay clear before the trigger re-arms |
+| enabled | bool | — | data file (Gameplay Settings) | The player's per-trigger toggle |
+| last_fire_tick | int | ≥ 0 | calculated | Tick of the last fire |
+
+**Output Range:** 600 cooldown ticks and 120 re-arm ticks at 60 Hz (300 and 60 at
+30 Hz).
+- Cooldowns are simulation time, so at 2× a 10 s cooldown passes in 5 s of real
+  time.
+- *First enemy contact* has no cooldown. It fires once per enemy fleet per
+  battle.
+
+**Example:** *Flagship hull critical* fires at tick 12,000. The hull recovers
+above the threshold at 12,050 and stays there, so the trigger re-arms at 12,170.
+The hull drops below again at 12,300, which is still inside the cooldown
+(300 < 600). The trigger waits, and fires at 12,600 if the hull is still below
+the threshold.
+
+### D8. tick_index range and integer safety
+
+The tick_index_bound formula is defined as:
+
+`hours_to_limit = LIMIT / (TICK_RATE × 3600)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| tick_index | int (64-bit) | 0 – 2^53 − 1 | calculated | Ticks since the simulation session started |
+| LIMIT | int | 2^53, 2^31, 2^24 | constant | Largest integer each kind of consumer holds exactly |
+
+**Output Range** (at 60 Hz, 216,000 ticks per hour):
+- **2^53** (doubles, so it survives a JSON float parse exactly): about
+  4.17 × 10^10 hours. This is a hard assert on save.
+- **2^31** (any 32-bit consumer): 9,942 hours, which is 414 days of continuous
+  simulation. This is a warning threshold. **Storing `tick_index` in 32 bits is
+  banned.**
+- **2^24** (a float32 value such as shader time, `tick_index × dt_tick`):
+  **77.7 hours**. Presentation must pass time *modulo a period*, never the raw
+  value.
+
+**Example:** a 200-hour campaign at 1× is 43.2 million ticks, about 2.0% of 2^31.
+
+### D9. Single-step
+
+The step formula is defined as:
+
+`sim_s_advanced = n_step × dt_tick`, with `n_step ∈ {STEP_SMALL, STEP_LARGE}`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| STEP_SMALL | int | 1 | constant | The fine step |
+| STEP_LARGE | int | 2 – 30 (10) | data file (tuning knob) | The coarse step, in ticks, as the owner decided |
+
+**Output Range:** 16.7 ms or 166.7 ms of simulation time at 60 Hz (33.3 or
+333 ms at 30 Hz).
+**Example:** 10 ticks at 4 ms each is 40 ms of compute, about a two-frame hitch
+while paused. The driver may instead spread them at up to 8 per frame. The result
+is identical either way.
+
+### D10. Simulation time budget per frame (the spike's pass line)
+
+The sim_frame_cost formula is defined as:
+
+`sim_ms = ceil(tpf) × t_tick_ms ≤ SIM_BUDGET_MS`
+
+This gives the spike's pass line:
+
+`t_tick_ms ≤ SIM_BUDGET_MS / ceil(TICK_RATE × max_player_speed / target_fps)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| SIM_BUDGET_MS | float (ms) | 5 – 10 (**8, provisional**) | constant (engineering; needs technical-director sign-off) | The simulation's share of a 16.67 ms frame |
+| t_tick_ms | float (ms) | measured | calculated | 95th-percentile cost of one tick, headless, with about 100 ships and 500 projectiles |
+| max_player_speed | float | 2 | constant | Highest player-selectable speed |
+| target_fps | int | 60 | constant | Frame-rate target |
+
+**Output Range:** at 60 Hz, 2× and 60 fps the simulation needs 2 ticks per
+frame, so **each tick must cost ≤ 4.0 ms**. On the 30 Hz fallback it needs 1
+tick per frame, so a tick may cost ≤ 8.0 ms. That doubled headroom is what the
+fallback buys.
+**Example:** the spike measures `t_tick = 3.2 ms`. `2 × 3.2 = 6.4 ≤ 8`, so 60 Hz
+passes. If it measures 5.1 ms, 60 Hz fails, and the fallback holds because
+`5.1 ≤ 8`.
+
+*Specialist consulted: `systems-designer`. Decisions taken in guided mode, all
+on the specialist's recommendation:*
+- *Alpha is 1 while held.*
+- *A condition still true after its cooldown fires late.*
+- *`STEP_LARGE` stays in ticks.*
+- *`SIM_BUDGET_MS = 8` is provisional until the technical-director signs it off
+  (Open Questions).*
 
 ## Edge Cases
 
