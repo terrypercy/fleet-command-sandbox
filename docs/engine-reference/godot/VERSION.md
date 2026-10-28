@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Engine Version** | Godot 4.7.2 |
-| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probe (2026-10-28) ran in a cloud container with no editor on `PATH`; the developer's local install was not probed. |
+| **Installed at pin time** | 4.7.2.stable.official.ed1daf0bf — developer's Windows PC, installed 2026-10-28 (version reported by the owner from the editor); cloud container also verified `4.7.2.stable.official.ed1daf0bf` headless on 2026-10-28. |
 | **Release Date** | 4.7: June 2026 · 4.7.1: 14 July 2026 · 4.7.2: 18 August 2026 |
 | **Project Pinned** | 2026-10-28 (4.7.2; was 4.7 on 2026-10-17) |
 | **Last Docs Verified** | 2026-10-28 (4.7.1 and 4.7.2 maintenance notes); 2026-10-17 (release timeline and 4.7 changes); 2026-02-12 (4.4-4.6 content) |

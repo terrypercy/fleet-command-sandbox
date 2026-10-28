@@ -412,7 +412,7 @@ detective fiction where the truth is known but the verdict is political.
 
 | Consideration | Assessment |
 | ---- | ---- |
-| **Recommended Engine** | Godot 4.7.2, GDScript — the owner's choice, already configured in `project.yaml`. Fits 2D, data-driven content and modding. Version risk: the model's training predates 4.5-4.7; verify every engine API against `docs/engine-reference/godot/`. The installed editor version is NOT DETERMINED (`VERSION.md`) |
+| **Recommended Engine** | Godot 4.7.2, GDScript — the owner's choice, already configured in `project.yaml`. Fits 2D, data-driven content and modding. Version risk: the model's training predates 4.5-4.7; verify every engine API against `docs/engine-reference/godot/`. Installed editor confirmed as 4.7.2 (`4.7.2.stable.official.ed1daf0bf`, the owner's Windows PC, 2026-10-28; `VERSION.md`) |
 | **Key Technical Challenges** | Ship and fleet AI across two resource models (HIGH); the Debrief's loss attribution (cause → counter classifier) on a combat event bus; pausable real-time with direct piloting; projectile counts at scale; persistent world, faction and blame state in versioned saves; a moddable data pipeline |
 | **Art Style** | 2D flat vector-style sprites, two layers (body + emissive mask), glow on dark backgrounds |
 | **Art Pipeline Complexity** | Medium (custom 2D): one shared Vigor shader; a ~12-module machine kit; four organic shape languages are the main cost |
@@ -518,8 +518,10 @@ timescale is optimistic.*
 - **Does Vigor ceiling erosion feel fair?** → the combat prototype.
 - **Do 2D glow and per-ship breathing work in Godot 4.7.2 on D3D12 and
   Vulkan?** → a 2-3 day rendering spike.
-- **Which Godot editor version is installed locally?** → record it in
-  `VERSION.md`; add build and run commands to `project.yaml`.
+- ~~Which Godot editor version is installed locally?~~ Resolved 2026-10-28:
+  4.7.2 (`4.7.2.stable.official.ed1daf0bf`), recorded in `VERSION.md`. Still
+  open: add build and run commands to `project.yaml`; install gdUnit4
+  (`/test-setup`) so the configured test command can run.
 - **Full-time or part-time development?** The producer's estimates assume
   35-40 hours a week; part-time roughly doubles them.
 
@@ -593,8 +595,9 @@ decision (kept as an open question above).
 Prototype-first: the core mechanic (Vigor erosion against Coherence, and losing
 as a lead) is unproven.
 
-- [ ] `/setup-engine` — already run (Godot 4.7.2). Re-run only to record the
-  installed editor version and add build and run commands
+- [x] `/setup-engine` — already run (Godot 4.7.2); installed editor confirmed
+  as 4.7.2. Re-run only to add build and run commands
+- [ ] `/test-setup` — install gdUnit4 and get the CI test command green
 - [ ] `/prototype vigor-vs-coherence combat` — is the core fight fun? Throwaway
   code
 - [ ] If PROCEED: `/art-bible` — Breath and Wire, settling the art-supply question
