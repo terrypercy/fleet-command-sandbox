@@ -1,0 +1,15 @@
+; Engine configuration file.
+; Written by /setup-engine. Edit in the Godot editor (Project > Project Settings).
+
+config_version=5
+
+[application]
+
+config/name="fleet-command-sandbox"
+; run/main_scene is left unset: there is no scene yet. /dev-story or the
+; developer sets it once the first scene exists.
+config/features=PackedStringArray("4.7", "Forward Plus")
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
