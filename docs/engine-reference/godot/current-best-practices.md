@@ -1,6 +1,6 @@
 # Godot — Current Best Practices
 
-Last verified: 2026-10-17 (4.7 sections); 2026-02-12 (rest) | Engine: Godot 4.7
+Last verified: 2026-10-28 (4.7.x maintenance section); 2026-10-17 (4.7 sections); 2026-02-12 (rest) | Engine: Godot 4.7.2
 
 Practices that are **new or changed** since the model's training data (~4.3).
 This supplements (not replaces) the agent's built-in knowledge.
@@ -132,6 +132,19 @@ This supplements (not replaces) the agent's built-in knowledge.
 - **Dual-focus system**: Mouse/touch focus is now separate from keyboard/gamepad focus
   - Visual feedback differs depending on input method
   - Consider this when designing custom focus behavior
+
+## Maintenance releases (4.7.x)
+
+Sources: https://godotengine.org/article/maintenance-release-godot-4-7-1/, https://godotengine.org/article/maintenance-release-godot-4-7-2/
+
+- **Use 4.7.2.** Both maintenance releases report no known incompatibilities
+  with the release before them; back up or commit before upgrading, as the
+  articles advise.
+- **Weighted random weights must be non-negative** (4.7.2, GH-120004):
+  `RandomPCG::rand_weighted` forbids negative weights. Validate weight tables
+  when they are loaded from data files.
+- **High-polling-rate mice on Windows** (4.7.2, GH-109639): fixes performance
+  issues when moving the mouse. Profile mouse-heavy input on 4.7.2, not 4.7.
 
 ## UI and Input (4.7)
 

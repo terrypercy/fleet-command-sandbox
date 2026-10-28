@@ -1,6 +1,10 @@
 # Godot — Deprecated APIs
 
-Last verified: 2026-10-17 (4.7 rows); 2026-02-12 (rest)
+Last verified: 2026-10-28 (4.7 → 4.7.2 note); 2026-10-17 (4.7 rows); 2026-02-12 (rest)
+
+**4.7 → 4.7.2:** the 4.7.1 and 4.7.2 release articles list no deprecations
+(https://godotengine.org/article/maintenance-release-godot-4-7-1/, https://godotengine.org/article/maintenance-release-godot-4-7-2/). They list selected fixes only, and the full changelog was not
+read, so this is "none listed", not "none exist".
 
 The 4.7 migration guide lists no formal deprecations; the 4.7 rows below are
 renames and removals from it

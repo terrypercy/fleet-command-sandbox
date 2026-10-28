@@ -2,11 +2,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Engine Version** | Godot 4.7 |
-| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probes the installed editor and records the result here. |
-| **Release Date** | June 2026 (latest patch: 4.7.2, August 2026) |
-| **Project Pinned** | 2026-10-17 |
-| **Last Docs Verified** | 2026-10-17 (release timeline and 4.7 changes); 2026-02-12 (4.4-4.6 content) |
+| **Engine Version** | Godot 4.7.2 |
+| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probe (2026-10-28) ran in a cloud container with no editor on `PATH`; the developer's local install was not probed. |
+| **Release Date** | 4.7: June 2026 · 4.7.1: 14 July 2026 · 4.7.2: 18 August 2026 |
+| **Project Pinned** | 2026-10-28 (4.7.2; was 4.7 on 2026-10-17) |
+| **Last Docs Verified** | 2026-10-28 (4.7.1 and 4.7.2 maintenance notes); 2026-10-17 (release timeline and 4.7 changes); 2026-02-12 (4.4-4.6 content) |
 | **LLM Knowledge Cutoff** | May 2025 |
 
 ## Knowledge Gap Warning
@@ -32,6 +32,8 @@ version-qualified claim** — `NOT DETERMINED` means the gap is unknown, not abs
 | 4.5 | Sep 2025 | HIGH | Accessibility (AccessKit), variadic args, @abstract, shader baker, SMAA |
 | 4.6 | Jan 2026 | HIGH | Jolt default, glow rework, D3D12 default on Windows, IK restored |
 | 4.7 | Jun 2026 | HIGH | AreaLight3D, HDR output, Asset Store replaces the Asset Library, VirtualJoystick, Jolt soft-body and world-boundary changes, typed-return overrides |
+| 4.7.1 | Jul 14 2026 | LOW | Maintenance: 78 fixes, "no known incompatibilities with the previous Godot 4.7 release" |
+| 4.7.2 | Aug 18 2026 | LOW | Maintenance: 57 fixes, "no known incompatibilities with the previous Godot 4.7.1 release"; `RandomPCG::rand_weighted` forbids negative weights |
 
 ## Before the Cutoff
 
@@ -40,4 +42,6 @@ cutoff; the Knowledge Gap Warning still applies to it.
 
 Dates from https://github.com/godotengine/godot/releases, checked 2026-10-17:
 4.4 Mar 3 2025, 4.5 Sep 15 2025, 4.6 Jan 26 2026, 4.7 Jun 18 2026, 4.7.2 Aug 18
-2026. Migration guides and release notes: `breaking-changes.md` § Sources.
+2026. 4.7.1 Jul 14 2026 and 4.7.2 Aug 18 2026 confirmed from the godotengine.org
+release articles, checked 2026-10-28. Migration guides and release notes:
+`breaking-changes.md` § Sources.

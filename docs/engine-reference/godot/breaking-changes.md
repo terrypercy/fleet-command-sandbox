@@ -1,8 +1,18 @@
 # Godot — Breaking Changes
 
-Last verified: 2026-10-17 (4.6 → 4.7 and the section dates); 2026-02-12 (older sections)
+Last verified: 2026-10-28 (4.7 → 4.7.2); 2026-10-17 (4.6 → 4.7 and the section dates); 2026-02-12 (older sections)
 
 Changes between Godot versions, focused on post-LLM-cutoff changes (4.4+).
+
+## 4.7 → 4.7.2 (Jul–Aug 2026 — maintenance releases, LOW RISK)
+
+Both release articles state there are no known incompatibilities with the previous
+release: 4.7.1 with 4.7 (https://godotengine.org/article/maintenance-release-godot-4-7-1/), 4.7.2 with 4.7.1 (https://godotengine.org/article/maintenance-release-godot-4-7-2/).
+The articles list selected fixes only; the full interactive changelog was not read.
+
+| Subsystem | Change | Details |
+|-----------|--------|---------|
+| Core | `RandomPCG::rand_weighted` forbids negative weights (4.7.2, GH-120004) | Weighted random picks reject negative weights. *Inference, not stated in the article:* `RandomNumberGenerator.rand_weighted()` uses `RandomPCG` internally, so loot and procedural-generation tables must keep every weight `>= 0` |
 
 ## 4.6 → 4.7 (Jun 2026 — POST-CUTOFF, HIGH RISK)
 
@@ -109,6 +119,9 @@ change behaviour or defaults. The guide lists no deprecations.
 | Animation | AnimationMixer base class | AnimationPlayer and AnimationTree now extend AnimationMixer |
 
 ## Sources
+
+- 4.7.1 release article: https://godotengine.org/article/maintenance-release-godot-4-7-1/
+- 4.7.2 release article: https://godotengine.org/article/maintenance-release-godot-4-7-2/
 
 - Official docs: https://docs.godotengine.org/en/stable/
 - 4.6→4.7 migration: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.7.html
