@@ -54,7 +54,7 @@
 #   in any other shape is reported as unsupported layout, with its number.
 
 version: 1
-last_updated: ""
+last_updated: "2026-10-28"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -123,7 +123,18 @@ items: []
 #   output_range[min, max], added
 # Optional: expression (the actual formula), notes
 
-formulas: []
+formulas:
+  - name: dt_tick
+    status: active
+    source: design/gdd/simulation-tick-and-pause.md
+    referenced_by:
+      - design/gdd/simulation-tick-and-pause.md
+    variables:
+      - TICK_RATE
+    output_range: [0.016667, 0.033333]
+    expression: "1 / TICK_RATE"
+    notes: "Seconds of simulation time per tick (D1). Fixed per build; never changes at runtime."
+    added: 2026-10-28
 
 # Example:
 #
@@ -156,7 +167,28 @@ formulas: []
 #
 # Required fields: name, status, source, referenced_by, value, unit, added
 
-constants: []
+constants:
+  - name: tick_rate
+    status: active
+    source: design/gdd/simulation-tick-and-pause.md
+    referenced_by:
+      - design/gdd/simulation-tick-and-pause.md
+    value: 60
+    unit: Hz
+    notes: "Target rate, gated by a headless spike (about 100 ships and 500 projectiles must fit the frame budget); fallback is 30 Hz. Versioned engineering constant: written into every save and replay header, and changing it breaks replays."
+    added: 2026-10-28
+    revised: ""
+
+  - name: sim_budget_ms
+    status: active
+    source: design/gdd/simulation-tick-and-pause.md
+    referenced_by:
+      - design/gdd/simulation-tick-and-pause.md
+    value: 8
+    unit: ms
+    notes: "PROVISIONAL until technical-director sign-off. The simulation's share of a 16.67 ms frame; sets the spike pass line (4.0 ms per tick at 60 Hz, D10)."
+    added: 2026-10-28
+    revised: ""
 
 # Example:
 #

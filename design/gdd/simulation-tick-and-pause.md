@@ -5,6 +5,7 @@
 > **Last Updated**: 2026-10-28
 > **Last Verified**: 2026-10-28
 > **Implements Pillar**: Pillar 3 (Hands on the Helm — "pause is always available"); Pillar 1 (Every Defeat Is a Lead — deterministic replay behind a trustworthy Debrief)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-28 — CONCERNS resolved. In battle, planning screens add a player pause; a default-on Battle-start auto-pause was added; rule 18 ("pause is never a crutch") was added; "Tactical step" naming; Settings owns difficulty presets; the 10-tick step is first to cut
 
 ## Summary
 
@@ -206,6 +207,12 @@ carried into Game Feel and Acceptance Criteria instead.*
       - `AUTO_PAUSE:<trigger_id>`
       - `PLANNING:<screen_id>` (Dossier, Ledger, Case File, Debrief)
       - `SYSTEM:<cause>` (menu, loading, save in progress, window focus lost)
+    - **In `BATTLE`, opening any planning screen also adds `PLAYER_PAUSE`**, as
+      opening the menu or losing focus does (rule 16). Closing the screen
+      therefore never restarts a fight on its own: *nothing moves until the
+      player chooses*. The Debrief is the exception: its hold is added as the
+      battle context ends, so no `PLAYER_PAUSE` is added, because there is no
+      battle left to resume.
     - **The World Clock reads `is_held()`** and never keeps a separate pause.
       Closing the game holds everything by definition.
     - Pause is the simulation's own state, **not the engine's scene-tree pause**.
@@ -224,6 +231,7 @@ carried into Game Feel and Acceptance Criteria instead.*
 
       | Trigger | Default | Threshold owned by |
       |---|---|---|
+      | **Battle start**: adds `AUTO_PAUSE:battle_start` when a `BATTLE` context begins, before its first tick runs | **ON** | This system |
       | Flagship hull critical | **ON** | Hulls / Weapons & Damage |
       | First enemy contact (once per enemy fleet per battle) | **ON** | Combat Space |
       | Vigor early warning | Off | Vigor |
@@ -232,14 +240,30 @@ carried into Game Feel and Acceptance Criteria instead.*
 
       Few triggers are on by default, so the game stays relaxing rather than
       interrupting.
+    - **Battle start** is the "bridge holds its breath" moment: every battle
+      opens held, so the player can read the field before acting. Because it is
+      added at context start rather than evaluated in P7, it has no cooldown and
+      is not affected by the start-unarmed rule (Edge Cases). Headless runs log
+      it instead of holding.
+    - Difficulty and assist **presets** that turn on more triggers, or set a
+      slower default speed, belong to Gameplay Settings & Modifiers (#7). This
+      system only exposes the toggles.
 12. **Single-step.**
     - While the simulation is held only by `PLAYER_PAUSE` and/or `AUTO_PAUSE`
       reasons, a step command runs **exactly 1 or 10 normal ticks**, including
       P1 orders, and then holds again.
     - Stepping is unavailable while any `PLANNING` or `SYSTEM` reason is present.
-    - Players get it **behind an off-by-default option**. Dev builds and the
-      headless runner always have it, because it is the same `step()` the runner
-      calls.
+    - Players get it as **"Tactical step"**, an ordinary tactical setting, off by
+      default. It is never labelled or grouped as a debug, cheat or assist
+      option. Dev builds and the headless runner always have it, because it is
+      the same `step()` the runner calls.
+    - The 1-tick step is the core of the feature. The 10-tick step, and its
+      `STEP_LARGE` knob, are the **first thing to cut** if scope shrinks.
+18. **Pause is never a crutch.** Hold, speed, step and auto-pause usage never
+    feeds a score, rating, achievement, Debrief grade, difficulty label or any
+    other judgement of the player. The data may be logged for telemetry, but is
+    never shown back as a verdict (Player Fantasy: "nothing penalises, scores
+    against or shames using pause").
 13. **Tick rate is a versioned engineering constant.**
     - `TICK_RATE` targets 60 Hz. Lower rates add up to about 33-50 ms of
       flagship input latency and double the distance a projectile moves per
@@ -302,8 +326,10 @@ never stored as a separate enum, so it cannot disagree with the set.
 - **Resume** removes only `PLAYER_PAUSE` and `AUTO_PAUSE:*` reasons. It is
   unavailable while any `PLANNING` or `SYSTEM` reason remains, and the resume
   control says why.
-- A screen closing removes **only its own** `PLANNING` reason. Closing the Case
-  File therefore never resumes a battle the player had paused. They return to
+- A screen closing removes **only its own** `PLANNING` reason. In `BATTLE`,
+  opening the screen also added `PLAYER_PAUSE` (rule 10), so closing the Case
+  File never resumes a battle, whether or not the player had paused first. They
+  return to
   Paused.
 - Speed changes and steps never change the set.
 - Ending a simulation context (battle over) clears `PLAYER_PAUSE` and
@@ -706,7 +732,10 @@ on the specialist's recommendation:*
   player enables the trigger mid-battle**: the trigger starts **unarmed**. It
   must see the condition clear for `rearm_ticks` before it can fire, because the
   player already knows about a condition that existed before they could act.
-  Disabling a trigger never removes a hold that already exists.
+  Disabling a trigger never removes a hold that already exists. *Battle start*
+  is the exception: it is added at context start and is never evaluated (rule
+  11). That matters, because fleets usually start already in contact, so the
+  first-contact trigger begins unarmed and cannot be the opening pause.
 
 ### Catch-up, speed and frame time
 
@@ -815,8 +844,8 @@ Dependencies, and the index should list it at the next update:
 | Vigor (#13) | Hard | P6 phase call; the Vigor early-warning signal |
 | Coherence & Links (#14) | Hard | P6 phase call; the relay-cut signal |
 | Ship AI (#20), Fleet Coordination (#21) | Hard | P2 phase call. AI decisions are made into the order queue |
-| Battle Resolution & Retreat (#22) | Hard | P7 battle-end check (runs before trigger evaluation); ends the context; escort-lost signal |
-| After-Action Debrief (#24), Dossier (#47), Ledger (#48), Public History Screen (#49) | Soft | Add and remove `PLANNING:<screen_id>`. The Debrief's hold must be added on the frame the battle ends |
+| Battle Resolution & Retreat (#22) | Hard | P7 battle-end check (runs before trigger evaluation); ends the context; escort-lost signal. **Constraint (rule 18):** must never grade or penalise hold, speed or step usage |
+| After-Action Debrief (#24), Dossier (#47), Ledger (#48), Public History Screen (#49) | Soft | Add and remove `PLANNING:<screen_id>`. In `BATTLE`, opening also adds `PLAYER_PAUSE` (rule 10). The Debrief's hold must be added on the frame the battle ends. **Constraint (rule 18):** the Debrief never grades pause, speed or step usage |
 | Menus, Settings & Save UI (#51) | Soft | Adds `SYSTEM:menu`, `SYSTEM:save`, `SYSTEM:load` |
 | Combat HUD & Tactical Overlay (#46) | Soft | Alpha, the speed display (D5), queued-order and latched-press markers, and the reasons behind each hold |
 | Telemetry & Playtest Logging (#54) | Soft | `tick_index` stamps; "time dropped" notes |
@@ -837,9 +866,9 @@ they are not knobs, and changing one is a versioned, replay-breaking change.
 |---|---|---|---|---|---|---|
 | `SPEED_STEPS` (player) | {0.5, 1, 2} | any steps in 0.25 – 2 | How fast battles play out; relaxation vs tension | Below 0.25×, battles drag and steps between speeds feel arbitrary | Above 2×, the D6 cap and CPU checks fail at 30 fps, and the "slowed" display triggers often | `MAX_TICKS_PER_FRAME`, `SIM_BUDGET_MS` (D6, D10) |
 | `DEFAULT_SPEED` | 1× | one of `SPEED_STEPS` | First impression of pace | — | — | `SPEED_STEPS` |
-| Player single-step option | Off | on / off | Fine-grained reading of a fight | — | — | `STEP_LARGE` |
-| `STEP_LARGE` | 10 ticks | 2 – 30 | Size of the coarse step | At 2, it is barely different from `STEP_SMALL` | Above 30 (0.5 s at 60 Hz), a step is too coarse to read and causes a visible hitch (D9) | `TICK_RATE` |
-| `AUTO_PAUSE_ENABLED[trigger]` | Hull critical **on**, first contact **on**; Vigor warning, relay cut, escort lost **off** | on / off each | Interruptions vs safety net (Pillar 3; "relaxing") | All off: fights can run away from a new player | All on: pause spam, which breaks flow | `cooldown_s`, `rearm_s` |
+| "Tactical step" (player setting) | Off | on / off | Fine-grained reading of a fight | — | — | `STEP_LARGE` |
+| `STEP_LARGE` (first to cut; becomes a fixed value) | 10 ticks | 2 – 30 | Size of the coarse step | At 2, it is barely different from `STEP_SMALL` | Above 30 (0.5 s at 60 Hz), a step is too coarse to read and causes a visible hitch (D9) | `TICK_RATE` |
+| `AUTO_PAUSE_ENABLED[trigger]` | Battle start **on**, hull critical **on**, first contact **on**; Vigor warning, relay cut, escort lost **off** | on / off each | Interruptions vs safety net (Pillar 3; "relaxing") | All off: fights can run away from a new player | All on: pause spam, which breaks flow | `cooldown_s`, `rearm_s` |
 | `cooldown_s[trigger]` | 10 s | 0 – 60 (simulation seconds) | Minimum gap between pauses from one trigger | Near 0: spam when a value hovers at its threshold | Above 30: a second real crisis is missed | `rearm_s`, speed (cooldowns run faster at 2×) |
 | `rearm_s[trigger]` | 2 s | 0 – 10 (simulation seconds) | How firmly a condition must clear before re-firing | At 0, the trigger re-fires on value jitter | Above 5, a genuine second crossing is missed | `cooldown_s` |
 | Focus-loss auto-pause | On | on / off | Safety when the player alt-tabs | — | — | rule 16 |
@@ -922,15 +951,20 @@ This system contributes these elements to the Combat HUD & Tactical Overlay
    never accepts a press it cannot act on (Edge Cases).
 3. **Speed control and display.** It offers 0.5×, 1× and 2×, plus 4× in dev
    builds, shows the effective speed, and adds "slowed" per D5.
-4. **Step controls** (when the player option is on): step 1 tick and step 10
-   ticks. They are disabled under planning and system holds, with the reason
-   shown.
+4. **Step controls** (when "Tactical step" is on): step 1 tick, and step 10
+   ticks (first to cut). They are disabled under planning and system holds, with
+   the reason shown.
 5. **Auto-pause banner.** One banner per pause lists every trigger that fired on
    that tick. Each entry links to its toggle.
 6. **Queued-order and latched-press markers.** These are visible while held, and
    each can be cancelled (AC-48).
-7. **Settings entries** (in #51): each auto-pause toggle, the focus-loss pause,
-   and the player single-step option.
+7. **Settings entries** (in #51): each auto-pause toggle, including Battle
+   start; the focus-loss pause; and "Tactical step", grouped with the tactical
+   settings, never with debug or assist settings.
+
+The hold indicator's wording ("Paused", or a bridge-style "Holding") goes to
+`narrative-director` together with the UX spec. Its tone is naval-bridge calm
+(Player Fantasy).
 
 Every element must be usable from the keyboard alone. Pause must be bindable to
 any key (Input & Controls; accessibility requirements). Meaning must never rely
@@ -1189,6 +1223,26 @@ counts are compared as exact integers.
   simulation, **THEN** the resume control names the hold (for example
   "Saving…").
 
+### Pillar alignment (CD-GDD-ALIGN revisions; BLOCKING)
+
+- **AC-50 (rule 10)**: **GIVEN** a `BATTLE` that is Running, **WHEN** the player
+  opens the Case File and then closes it, **THEN** the battle is Paused (player),
+  0 ticks run until the player resumes, and the same holds for the Dossier and
+  the Ledger. Unit test, `tests/unit/sim_tick/`.
+- **AC-51 (rule 11, Battle start)**: **GIVEN** Battle start is enabled, **WHEN** a
+  `BATTLE` context begins, including one whose fleets start already in contact,
+  **THEN** `AUTO_PAUSE:battle_start` is present before tick 1 of that battle, and
+  0 combat ticks run until the player resumes. **GIVEN** it is disabled, **THEN**
+  the first tick runs on the next driver pass. **GIVEN** a headless run, **THEN**
+  it is logged and no hold is added. Unit test.
+- **AC-52 (rule 18)**: **GIVEN** the simulation code and its consumers (Debrief,
+  Battle Resolution, achievements, telemetry views), **WHEN** CI checks them,
+  **THEN** no score, grade, rating, achievement or difficulty label reads
+  hold-reason history, the speed selection or step counts. Telemetry may log
+  them, but no player-facing view may judge them. This is a static check plus a
+  review checklist item. Like AC-34, it must be shown to fail on a planted
+  violation before it counts.
+
 *Specialist consulted: `qa-lead`. It flagged nine rules as not independently
 testable as written. All nine were fixed:*
 - *Rule 3 now says what P2 sees (AC-04).*
@@ -1204,7 +1258,7 @@ testable as written. All nine were fixed:*
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **Does a battle start paused?** The default-on first-contact trigger may already pause it at the moment that matters. | game-designer + creative-director | Fleet Orders GDD (#19) |
+| 1 | ~~Does a battle start paused?~~ **Resolved 2026-10-28 (CD-GDD-ALIGN):** yes, through the default-on *Battle start* auto-pause (rule 11). The first-contact trigger could not cover it, because a trigger already true at battle start begins unarmed. | — | — |
 | 2 | **Is `SIM_BUDGET_MS = 8` signed off?** It sets the spike's 4.0 ms-per-tick pass line (D10, AC-44/45). | technical-director | Before the tick-rate spike runs |
 | 3 | **Does the tick-rate spike pass at 60 Hz?** About 100 ships and 500 projectiles, headless; if it fails, the 30 Hz fallback applies. | engine-programmer + performance-analyst | Pre-production, alongside the Combat Space GDD (#11) |
 | 4 | **ADR-level choices:** integer-microsecond vs float accumulator; the state-hash algorithm; our own small PRNG vs pinning `RandomNumberGenerator` per engine version; fixed-point vs float for the critical path; the Dictionary-iteration rule (insertion order is NOT SOURCEABLE in the engine reference). | technical-director | Tick/Pause/Determinism ADR, before any Core-layer implementation |

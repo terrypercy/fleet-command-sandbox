@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-28
-> **Last Updated**: 2026-10-28
+> **Last Updated**: 2026-10-28 (Simulation Tick & Pause designed)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -51,8 +51,9 @@ values that Vigor, AI, Battle Resolution and the HUD read. It sits in
 Foundation so those values are designed in from the start, not retrofitted; only
 the option screens are Polish.
 
-**Core (11).** **World Clock** counts game days. It exposes a hold-reasons API
-that pause and planning screens push to, so it never depends on Presentation.
+**Core (11).** **World Clock** counts game days. It reads `is_held()` from Simulation Tick
+& Pause, which owns the single hold-reason set that pause and planning screens
+push to, so the clock never depends on Presentation.
 **Combat Event Bus & Battle Record** carries typed combat events and records
 each battle as a log; the Debrief is a pure function over that log.
 **Hulls & Ship Definition** is the hull schema: size classes, mounts and stats.
@@ -194,7 +195,7 @@ Later tiers:
 
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
-| 1 | Simulation Tick & Pause | Core | MVP | Not Started | — | — |
+| 1 | Simulation Tick & Pause | Core | MVP | Designed | design/gdd/simulation-tick-and-pause.md | — |
 | 2 | Deterministic RNG & Seed Streams (inferred) | Core | MVP | Not Started | — | — |
 | 3 | Runtime ID Service (inferred) | Core | MVP | Not Started | — | — |
 | 4 | Content Data & Mod Loading | Core | MVP | Not Started | — | — |
@@ -205,19 +206,19 @@ Later tiers:
 | 9 | Combat Event Bus & Battle Record | Core | MVP | Not Started | — | Simulation Tick & Pause, Runtime ID Service |
 | 10 | Hulls & Ship Definition (inferred) | Gameplay | MVP | Not Started | — | Content Data & Mod Loading |
 | 11 | Combat Space (inferred) | Core | MVP | Not Started | — | Simulation Tick & Pause, Runtime ID Service, Hulls & Ship Definition |
-| 12 | Weapons & Damage (inferred) | Gameplay | MVP | Not Started | — | Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Combat Space |
-| 13 | Vigor | Gameplay | MVP | Not Started | — | Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space |
-| 14 | Coherence & Links | Gameplay | MVP | Not Started | — | Combat Event Bus & Battle Record, Combat Space |
+| 12 | Weapons & Damage (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Combat Space |
+| 13 | Vigor | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space |
+| 14 | Coherence & Links | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Combat Space |
 | 15 | Flagship Piloting | Gameplay | MVP | Not Started | — | Input & Controls, Combat Space, Weapons & Damage, Vigor, Coherence & Links |
 | 16 | Truth Seeding & Candidates (inferred) | Narrative | MVP | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Save/Load & Migration |
 | 17 | Faction Reputation & Standing | Progression | MVP | Not Started | — | Content Data & Mod Loading, Save/Load & Migration |
 | 18 | Credits, Upkeep & Sinks (inferred) | Economy | MVP | Not Started | — | Save/Load & Migration, World Clock |
 | 19 | Fleet Orders | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space |
-| 20 | Ship AI | Gameplay | MVP | Not Started | — | Deterministic RNG & Seed Streams, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space, Weapons & Damage, Vigor, Coherence & Links |
-| 21 | Fleet Coordination (inferred) | Gameplay | MVP | Not Started | — | Fleet Orders, Ship AI |
-| 22 | Battle Resolution & Retreat (inferred) | Gameplay | MVP | Not Started | — | Combat Event Bus & Battle Record, Weapons & Damage, Fleet Orders |
+| 20 | Ship AI | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space, Weapons & Damage, Vigor, Coherence & Links |
+| 21 | Fleet Coordination (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Fleet Orders, Ship AI |
+| 22 | Battle Resolution & Retreat (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Weapons & Damage, Fleet Orders |
 | 23 | Machine Nodes & Strongholds | Gameplay | MVP | Not Started | — | Content Data & Mod Loading, Hulls & Ship Definition, Coherence & Links, Fleet Coordination |
-| 24 | After-Action Debrief | Gameplay | MVP | Not Started | — | Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds |
+| 24 | After-Action Debrief | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds |
 | 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds |
 | 26 | Sector Map & Travel (inferred) | Gameplay | MVP | Not Started | — | Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Not Started | — | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
@@ -239,15 +240,15 @@ Later tiers:
 | 43 | Background Faction Economy | Economy | Alpha | Not Started | — | World Clock, Faction Reputation & Standing, Markets & Trade, Contracts & Missions |
 | 44 | Breakaway Machine Faction | Gameplay | Full Vision | Not Started | — | Coherence & Links, Ship AI, Archive Fragments & Evidence, Allied Lending |
 | 45 | Camera & Combat View (inferred) | Core | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space |
-| 46 | Combat HUD & Tactical Overlay (inferred) | UI | MVP | Not Started | — | Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View |
-| 47 | Dossier | UI | MVP | Not Started | — | Machine Nodes & Strongholds, After-Action Debrief, Allied Lending |
-| 48 | Ledger | UI | Vertical Slice | Not Started | — | Sector Map & Travel, Markets & Trade |
-| 49 | Public History Screen (inferred) | UI | MVP | Not Started | — | Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
+| 46 | Combat HUD & Tactical Overlay (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View |
+| 47 | Dossier | UI | MVP | Not Started | — | Simulation Tick & Pause, Machine Nodes & Strongholds, After-Action Debrief, Allied Lending |
+| 48 | Ledger | UI | Vertical Slice | Not Started | — | Simulation Tick & Pause, Sector Map & Travel, Markets & Trade |
+| 49 | Public History Screen (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 50 | Port & Fleet Management Screens (inferred) | UI | MVP | Not Started | — | Ports, Rest & Care, Refit & Loadout, Markets & Trade |
-| 51 | Menus, Settings & Save UI (inferred) | UI | MVP | Not Started | — | Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
+| 51 | Menus, Settings & Save UI (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
 | 52 | Audio Direction & Adaptive Music | Audio | Vertical Slice | Not Started | — | Combat Event Bus & Battle Record, Vigor, Coherence & Links, Battle Resolution & Retreat, After-Action Debrief, Archive Fragments & Evidence, Exposure & Rival Investigation |
 | 53 | Onboarding & Opening Sequence | Meta | MVP | Not Started | — | Battle Resolution & Retreat, Machine Nodes & Strongholds, After-Action Debrief, Dossier |
-| 54 | Telemetry & Playtest Logging (inferred) | Meta | MVP | Not Started | — | Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout |
+| 54 | Telemetry & Playtest Logging (inferred) | Meta | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout |
 | 55 | Accessibility Options UI (inferred) | Meta | Vertical Slice | Not Started | — | Gameplay Settings & Modifiers, Menus, Settings & Save UI |
 | 56 | Difficulty Options UI (inferred) | Meta | Vertical Slice | Not Started | — | Gameplay Settings & Modifiers, Menus, Settings & Save UI |
 | 57 | Platform Integration | Meta | Full Vision | Not Started | — | Save/Load & Migration |
@@ -365,6 +366,8 @@ Within a layer, a system may depend on one listed above it in the same layer.
 4. Difficulty Options UI — depends on: Settings & Modifiers, Menus/Settings/Save UI
 5. Platform Integration — depends on: Save
 
+**Simulation Tick & Pause** is also a direct dependency of Weapons & Damage, Vigor, Coherence & Links, Ship AI, Fleet Coordination, Battle Resolution & Retreat (phase handlers), the After-Action Debrief, Dossier, Ledger and Public History Screen (planning holds), Combat HUD, Menus/Settings/Save UI and Telemetry (added from its GDD, 2026-10-28).
+
 **Bottlenecks** (many dependents — high risk, design first and keep small): Simulation Tick & Pause, Content Data & Mod Loading, Combat Event Bus & Battle Record, Combat Space, Hulls, Weapons & Damage, Ship AI, Archive Fragments, Faction Belief & Blame, Credits.
 **Leaf nodes** (safe to design late): Officers, Colonies & Industry, Background Faction Economy, Breakaway Machine Faction, Platform Integration, Audio Direction. (Not the Ledger: it is a protected Pillar 4 tool and gates Markets leaving stub depth.)
 
@@ -447,7 +450,7 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 - **Vigor / Coherence ↔ Ship AI**: the AI spends Vigor and must react to fragmentation. **Contract:** Vigor owns Vigor state, rules, warning thresholds and dry-state effects on ship stats; Coherence owns the link graph (updated on events) and fragmentation state; Ship AI owns the injected resource policy that maps that state to a posture, and the fallback behaviour for fragmented ships.
 - **Faction Belief & Blame ↔ Faction Reputation & Standing**: blame moves standing, and standing gates care. **Contract:** Reputation is a plain ledger; Belief writes reactions into it; Reputation never reads belief.
 - **Markets & Trade / Contracts & Missions ↔ Background Faction Economy**: the background economy reads markets and contracts and also sets their prices and offers. **Contract:** Markets and Contracts own their price, supply and offer state and expose write APIs; Background Economy only calls them.
-- **World Clock ↔ planning screens**: the clock stops while a planning screen is open. **Contract:** the clock exposes a hold-reasons API that screens and pause push to; the clock never depends on Presentation.
+- **World Clock ↔ planning screens**: the clock stops while a planning screen is open. **Contract (revised 2026-10-28, owner decision in the Simulation Tick & Pause GDD):** Simulation Tick & Pause owns the single hold-reason set (player pause, auto-pause, planning screen, system); screens and pause push and pop reasons there; the World Clock only reads `is_held()`. Neither the clock nor the tick depends on Presentation.
 
 ---
 
@@ -474,10 +477,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 0 |
+| Design docs started | 1 |
 | Design docs reviewed | 0 |
 | Design docs approved | 0 |
-| MVP systems designed | 0/43 |
+| MVP systems designed | 1/43 (pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---
@@ -488,5 +491,7 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 - [ ] Write the Tick/Pause/Determinism ADR direction into the first GDD (Simulation Tick & Pause) — it fixes the sim/view split every Core system relies on
 - [ ] Design MVP-tier systems first, in the order above (use `/design-system [system-name]`)
 - [ ] Run `/design-review` on each completed GDD
+- [ ] Fresh session: `/design-review design/gdd/simulation-tick-and-pause.md` (status Designed, pending review)
+- [ ] UX flag, Simulation Tick & Pause: run `/ux-design` for the combat HUD pause, speed and auto-pause elements and the settings entries before writing epics
 - [ ] Run `/gate-check technical-setup` when MVP systems are designed
 - [ ] Validate the highest-risk systems with `/vertical-slice` before committing to Production
