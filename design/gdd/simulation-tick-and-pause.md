@@ -93,8 +93,11 @@ carried into Game Feel and Acceptance Criteria instead.*
 ### Core Rules
 
 1. **A tick is the only way simulation state changes.**
-   - A tick is one atomic, equal-size step, indexed by an integer `tick_index`
-     that starts at 0 for each simulation session.
+   - A tick is one atomic, equal-size step, indexed by an integer `tick_index`.
+   - `tick_index` is **campaign-monotonic**: it starts at 0 on a new game, is
+     saved and restored, and never resets per battle. Each battle's record also
+     stores `battle_start_tick`, so battle-relative time is
+     `tick_index − battle_start_tick`.
    - Its length is `dt_tick = 1 / TICK_RATE`, and `TICK_RATE` targets
      **60 Hz** (see rule 13).
    - No simulation rule reads a frame delta, `Time.*` or any wall clock.
@@ -258,8 +261,10 @@ carried into Game Feel and Acceptance Criteria instead.*
     - The headless path calls exactly the same `step()`, with exactly the same
       inputs, as the player's build. Only the cadence differs.
 16. **Window focus.** By default, losing window focus adds `SYSTEM:focus_lost`.
-    This is a player option. On resume, the first frame's time is clamped, so
-    unfocused time is never caught up.
+    This is a player option.
+    - In `BATTLE`, it also adds `PLAYER_PAUSE`, and so does opening the menu.
+      Regaining focus therefore leaves the battle paused.
+    - On resume, held time is never caught up (D2).
 17. **Saves happen on tick boundaries.**
     - A save captures the complete simulation state between ticks: `tick_index`,
       RNG stream states, the queue, and the replay log so far. It never captures
@@ -373,13 +378,18 @@ fixed for a build and never changes at runtime.
 
 The accumulator_update formula is defined as:
 
-`acc_next = held ? acc : (resumed_this_frame ? 0 : acc + frame_delta × speed_scale)`
+`d = clamp_low(frame_delta, 0)`
+`acc_next = held ? acc : ((resumed_this_frame OR d > SLEEP_THRESHOLD_S) ? 0 : acc + d × speed_scale)`
+
+A frame longer than `SLEEP_THRESHOLD_S` (sleep, a debugger break, a long
+stall) feeds no time. In `BATTLE`, it also adds `PLAYER_PAUSE`.
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | acc | float (s) | 0 to < dt_tick between frames | calculated | Simulation time owed but not yet ticked |
-| frame_delta | float (s) | 0 – ∞ | calculated (engine frame time, read only by the driver) | Real time since the last frame |
+| frame_delta | float (s) | any; values below 0 are treated as 0 | calculated (engine frame time, read only by the driver) | Real time since the last frame |
+| SLEEP_THRESHOLD_S | float (s) | 0.25 – 5 (1.0) | data file (tuning knob) | Frame length above which the frame is treated as an interruption, not a hitch |
 | speed_scale | float | {0.5, 1, 2}; 4 in dev builds | data file (tuning knob) | Selected speed |
 | held | bool | — | calculated | The hold-reason set is not empty |
 | resumed_this_frame | bool | — | calculated | The hold set became empty this frame |
@@ -458,7 +468,7 @@ The UI shows `speed_scale` unless
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| fps | float | 1 – 240 | calculated | Measured frame rate |
+| fps | float | 1 upward (no maximum is enforced) | calculated | Measured frame rate |
 | ticks_in_window | int | ≥ 0 | calculated | Ticks run in the last `SPEED_WINDOW_S` of real time |
 | SPEED_WINDOW_S | float (s) | 0.5 – 2 (1.0) | data file (tuning knob) | Measurement window |
 | SPEED_TOLERANCE | float | 0.02 – 0.10 (0.05) | data file (tuning knob) | How far below the selected speed before the UI says "slowed" |
@@ -605,7 +615,150 @@ on the specialist's recommendation:*
 
 ## Edge Cases
 
-[To be designed]
+### Holds and resume
+
+- **If pause is pressed and released, or toggled twice, within one frame**: the
+  driver reads the hold set once per frame, just before D2. Changes that cancel
+  out within a frame have no effect: the accumulator is not reset, alpha does
+  not snap, and no tick is affected. Pause acts on the press; the release does
+  nothing.
+- **If `PLAYER_PAUSE`, `PLANNING:case_file` and `SYSTEM:focus_lost` are stacked
+  and then removed in any order**: each reason is removed only by its own cause,
+  and ticks resume on the frame the last one goes. For example, if focus returns
+  and then the Case File closes, the game is still Paused (player) and the
+  player resumes it.
+- **If the player presses resume while any `SYSTEM` or `PLANNING` reason is
+  present**: the press is rejected, the set is unchanged, and the press is **not
+  remembered**. The resume control names the hold (for example "Saving…"). A
+  remembered press would unpause later, at a moment the player did not choose.
+- **If the window loses focus, or the menu opens, during `BATTLE`**:
+  `PLAYER_PAUSE` is added alongside the `SYSTEM` reason (rule 16). The battle
+  never restarts while the player's hand is off the mouse. In `CAMPAIGN`, only
+  the `SYSTEM` reason is added.
+
+### Orders and input
+
+- **If an order's subject ship is destroyed before P1 applies the order** (the
+  UI was showing a state one tick old): P1 drops the order, emits
+  `OrderRejected(order_id, reason = subject_lost)` to the Event Bus, and logs the
+  drop. A replay reruns the same check and gets the same result. If the order's
+  *target* is gone instead, Fleet Orders (#19) decides what happens.
+- **If an order is edited or cancelled on the same frame its tick runs**: input
+  is processed before the driver every frame, so the edit lands before P1 reads
+  the queue. Once P1 has drained an order it is history, and a later edit
+  becomes a new order for the next tick. Moving the simulation off the main
+  thread must preserve this ordering (Tick/Pause/Determinism ADR).
+- **If two orders for the same ship apply on one tick**: both apply and both are
+  logged, ordered by a monotonic enqueue sequence number, never by timestamp.
+  Where they conflict, the later order wins. Whether an order replaces or
+  appends (queued waypoints) belongs to Fleet Orders (#19).
+- **If an ability press and its release both land between two ticks**: the latch
+  keeps the press, so the next P1 sees exactly one press. Several presses of the
+  same ability between ticks count as one. Different abilities apply in a fixed
+  bit order. Fire bits use *held OR pressed-since-last-tick*, so a tap shorter
+  than one tick (16.7 ms) still fires for one tick.
+- **If an ability is pressed while the game is held**: the latch is **kept**. It
+  is shown as a queued action, can be cancelled, and is consumed by the first
+  tick after resume or step.
+
+### Stepping
+
+- **If a 10-tick step reaches a battle-ending tick at tick k of 10**: the step
+  stops after tick k, and the remaining ticks never run. The context ends, which
+  clears player and auto reasons, and the Debrief `PLANNING` hold applies.
+- **If an auto-pause trigger fires during a step**: the step stops after that
+  tick, so the player sees the moment the trigger fired.
+- **If a `SYSTEM` reason arrives mid-step** (autosave, quit): the current tick
+  finishes, because ticks are atomic, and the rest of the step is cancelled.
+  Stepping is unavailable under `SYSTEM`.
+
+### Auto-pause
+
+- **If a trigger fires on the tick the battle ends**: within P7, the battle-end
+  check runs before trigger evaluation. Triggers are still evaluated and logged,
+  but they add no hold, so a hull-critical pause never lands on top of the
+  Debrief.
+- **If several triggers fire on one tick while another is in cooldown**: the
+  eligible triggers combine into one pause that lists every reason, and the one
+  in cooldown is not listed. It fires late, at the first tick where
+  `t − last_fire_tick ≥ cooldown_ticks`, if it is still armed and its condition
+  is still true (D7). Cooldowns do not elapse while held, because they count
+  ticks.
+- **If two enemy fleets are first contacted on the same tick**: one pause names
+  both, and each fleet's once-per-battle flag is used up. Fleets are keyed by
+  Runtime ID. What counts as "contact", and how a fleet that splits is treated,
+  belongs to Combat Space (#11).
+- **If a trigger's condition is already true when the battle starts, or when the
+  player enables the trigger mid-battle**: the trigger starts **unarmed**. It
+  must see the condition clear for `rearm_ticks` before it can fire, because the
+  player already knows about a condition that existed before they could act.
+  Disabling a trigger never removes a hold that already exists.
+
+### Catch-up, speed and frame time
+
+- **If the speed changes while catch-up is under way**: the new speed applies
+  from the frame in which the change is processed. Simulation time already owed
+  in `acc` is not rescaled. Only cadence changes, so outcomes are unaffected.
+- **If `frame_delta` is 0 or negative**: it is treated as 0. No ticks run, and
+  alpha is unchanged.
+- **If `frame_delta > SLEEP_THRESHOLD_S`** (sleep, a debugger break, a long
+  stall): the frame feeds no time (D2). In `BATTLE`, `PLAYER_PAUSE` is added.
+  Waking from sleep never jumps the battle forward while the player was away.
+- **If the frame rate is above 240 fps** (no frame cap): many frames run 0
+  ticks, and alpha carries the motion. The speed display counts ticks, so it
+  stays correct. This system enforces no minimum or maximum frame rate.
+- **If float jitter in the accumulator makes a 60 fps, 1× frame run 0 or 2
+  ticks**: this is accepted, because it affects cadence only, never outcomes.
+  An integer-microsecond accumulator is an option for the ADR.
+
+### Saves, replay and determinism
+
+- **If a save is requested while a tick is running**: the save waits for the
+  tick boundary, and never captures a state in the middle of a tick (rule 17).
+- **If a save or replay has a different `TICK_RATE`**: a mid-battle save is
+  refused for that battle. The player is offered the battle's pre-battle state
+  instead, which is campaign state kept in World Clock days and does not depend
+  on the tick rate. A mismatched replay is refused. These checks belong to
+  Save/Load (#5) and the AI-vs-AI Runner (#25).
+- **If a save or replay has a different build ID**: a save warns, then goes
+  through migration (Save/Load #5). A replay plays as **"unverified"**, and the
+  Debrief must not treat it as proof.
+- **If the replay log is missing an entry**:
+  - A flagship command absent from the log means "unchanged", which is valid.
+  - A gap in the order sequence numbers, or a mismatch with the per-tick state
+    hash, stops the replay at the last verified tick and reports "diverged at
+    tick T".
+  - Nothing is ever filled in.
+- **If `tick_index` passes 2^31 − 216,000** (one hour of ticks before the 32-bit
+  limit): a warning is logged. Gameplay is unaffected, because the counter is
+  64-bit. At 2^53, the save asserts (D8). Presentation never passes the raw
+  tick count to float32 shader inputs.
+
+### Headless
+
+- **If a headless run meets an auto-pause condition**: the trigger runs its full
+  cooldown and re-arm logic and logs `TriggerWouldFire(tick, trigger_id)`, but
+  adds no hold. Trigger bookkeeping never feeds back into ship state, so headless
+  and player runs stay identical tick for tick.
+
+### Context changes
+
+- **If `BATTLE` ends with orders still queued or a press latched**: unapplied
+  orders are discarded and logged as `cancelled_by_context_end`, and latches are
+  cleared. Orders never cross into a new context.
+- **If the Debrief's `PLANNING` hold is still present when `CAMPAIGN` starts**:
+  no campaign ticks run, and the World Clock does not advance, until the Debrief
+  closes. Battle Resolution (#22) and the Debrief (#24) must add the hold on the
+  frame the context ends, before the next driver pass, so not a single campaign
+  tick slips through.
+
+*Specialist consulted: `systems-designer`. Decisions taken in guided mode:*
+- *keep a press latched while held*
+- *a trigger already true starts unarmed*
+- *add `SLEEP_THRESHOLD_S` (D2 amended)*
+- *`tick_index` is campaign-monotonic (rule 1 amended)*
+
+*Whether a battle starts paused is left to Open Questions.*
 
 ## Dependencies
 
