@@ -63,3 +63,36 @@ Revisions: all 8 blockers applied 2026-10-28. Owner decisions: truth seeded per 
 Reviewed-Content-Hash: design/gdd/game-concept.md 01eba1cbb28cccd034fcd47cedcb71929f61246b
 Reviewed-Content-Hash: design/registry/entities.yaml dfeacb02917f751cb1dfd88cf490c7ec3d8d2d0f
 Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+
+## Review — 2026-10-28 — Verdict: NEEDS REVISION
+Review mode: full · Workflow: full
+Scope signal: XL
+Specialists: game-designer, systems-designer, narrative-director, economy-designer, ux-designer, ai-programmer, godot-specialist, qa-lead; creative-director (senior reviewer)
+Blocking items: 9 | Recommended: 9 (carry-forward groups)
+Summary: Identity, hook and pillar ranking hold; all 16 earlier blockers landed and the combat half is sound. The new problems sat in Pillar 2's information model: four specialists independently found the Case File and exposure readout acting as a truth oracle, and nothing defined what drives exposure, what good faith is, what the truth is worth, or how an ending is reached; the 2-race MVP slice could not test any of it. Not MAJOR — none changes what the game is.
+Prior verdict resolved: Yes (all 8 second-review blockers)
+Note: concept document, reviewed against the game-concept template (8-section GDD checklist not applicable); `entities.yaml` has 0 entries, no related GDDs — values not cross-checked. economy-designer and ai-programmer read partial ranges; overlapping specialists covered the rest.
+Findings:
+- [BLOCKING] Unique Hook / Pillar 2: Case File + exposure readout are a truth oracle (free single-fragment elimination; held vs world fragments unstated; no exposure trigger); red herring "contradicts" the truth for an honest player
+- [BLOCKING] Unique Hook: good faith keyed to Case File queries rewards never querying
+- [BLOCKING] Pillar 2: no truth/lie payoff asymmetry; suppression undefined; lender direction unstated
+- [BLOCKING] Pillar 2: blame global vs per-faction unstated; no blame→ending rule; no ending trigger; "shared nothing" state
+- [BLOCKING] MVP Definition: 2 races cannot test a 3-4 candidate mystery; 1-2 fragments cannot fire exposure
+- [BLOCKING] Pillar 2 / Visual Identity: authored-content cost of a seeded truth unbounded; Instrument art would reveal its maker
+- [BLOCKING] Core Mechanics (Vigor) / Pillar 1: always-running clock can death-spiral; hostile factions can trap a ship at its floor; opening loss cost; clock behaviour during pause/closed
+- [BLOCKING] Technical Considerations / Scope Tiers: AI-vs-AI runner required (l.507) yet listed as not adopted (l.697)
+- [BLOCKING] MVP Definition: pass-bar rubric target, "retry" and "logged change" undefined; "tactic" not loggable
+- [RECOMMENDED] Mystery/Blame, Debrief GDDs and Tier 0 test plan: ACs for independence, thresholds, bands, truth-blind preview, telemetry events, cause IDs
+- [RECOMMENDED] Tick/Pause/Determinism ADR: seeded RNG streams, own sim accumulator, hits resolved in the sim not physics callbacks
+- [RECOMMENDED] Rendering ADR / CI: glow and per-instance shader fallbacks; retry `--import` (exit 139 seen 3/17)
+- [RECOMMENDED] Debrief, Enemy AI, Fleet Orders GDDs: typed cause events, fixed dry-Vigor posture, jammed-escort order set, AI frame budget
+- [RECOMMENDED] Accessibility: design/accessibility-requirements.md — sim speed, orders while paused, remap, colour independence beyond two pairs, photosensitivity
+- [RECOMMENDED] UX specs: consolidate ~9 information surfaces with a question→surface map; Dossier faction pages
+- [RECOMMENDED] Economy GDD: endgame sink class, standing/reputation/blame fungibility, lent-ship cost, scripted Tier 0 "rivals act"; grind-wall wording "gear gates the Dossier counter, never raw power"
+- [RECOMMENDED] Scope Tiers: Tier 0 cut line (drop market and lent escort first)
+- [RECOMMENDED] Narrative/world bible: tone, meaning of "debt", breakaway motive, moral framing, clean-room list, anti-pillar → "no player-driven dialogue trees"
+Disagreements (creative-director rulings): D1 elimination over held evidence is intended — fix combines held-only reasoning, ≥2 reliable contradictions, finite set and world-clock investigators; queries not metered. D2 "lent ships never required" stands (game-designer's intended-lent-tier offered as option only). D3 owner's ending stance stands. D4 only narrow pass-bar definitions block; other QA items → GDD ACs. D5 determinism → ADR. D6 glow spike already in the gate row → fallback to ADR. D7 surface consolidation → UX specs. D8 sinks → Economy GDD, death-spiral bound concept-level. D9 Tier 0a/0b decline stands; cut line recommended.
+Revisions: all 9 blockers applied 2026-10-28. Owner decisions: exposure driven by rival investigators on the world clock; truth costly now and compounding later, lies cheap with suppression upkeep, factions lend when blame lands on rivals; MVP slice uses 3 candidates (third text-only) and ≥4 fragments incl. a red herring; AI-vs-AI harness moved into Tier 0 (reverses that one declined producer suggestion). Defaults approved: finite seeded fragment set; Case File over held fragments, ≥2 reliable independent contradictions to rule out, provenance classes; good faith by held fragments + minimum support; per-faction blame, Reckoning, ending classifier with "unresolved"; template authoring bounds and no race lineage on the Instrument; defeat-cost bounds; world clock stops while paused, in planning screens and when the game is closed. Owner accepted revisions for now (In Review); a re-review decides Approved. The hashes below are of the text that was REVIEWED (HEAD 527c24c), so the revised file reads CHANGED and gets a full re-review.
+Reviewed-Content-Hash: design/gdd/game-concept.md d6e41b057c317513aa39d13f0e99906813f1f685
+Reviewed-Content-Hash: design/registry/entities.yaml dfeacb02917f751cb1dfd88cf490c7ec3d8d2d0f
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
