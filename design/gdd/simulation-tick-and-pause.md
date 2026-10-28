@@ -8,9 +8,15 @@
 
 ## Summary
 
-[To be designed]
+Simulation Tick & Pause is the fixed 60 Hz (spike-gated) deterministic step that
+advances all simulation state, and the pause that freezes it while the screen
+and every planning tool stay live. For the player, it means stopping a battle
+mid-shot to read and order, with no penalty, and trusting that the battle the
+Debrief explains is the battle that happened. It exists because the same seed
+and the same orders must replay the same fight, which the headless AI-vs-AI
+runner and every system with real-time rules depend on.
 
-> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `None`
+> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `None` (upstream); depended on by World Clock, Combat Event Bus & Battle Record, Combat Space, Fleet Orders, AI-vs-AI Runner, and every phase-handler system
 
 ## Overview
 
@@ -126,8 +132,11 @@ carried into Game Feel and Acceptance Criteria instead.*
    *Why this order:*
    - Orders come first, so an order given while paused takes effect on the very
      next tick.
-   - AI reads the previous tick's settled state, so every actor's decisions are
-     equally one tick stale. That is fair and deterministic.
+   - AI reads the previous tick's settled **world** state: positions, damage,
+     Vigor and links as they stood after the last P9. Every actor's decisions are
+     therefore equally one tick stale, which is fair and deterministic. P2 **does**
+     see the orders P1 applied this tick, so an escort's AI acts on a fresh order
+     immediately.
    - Movement comes before fire, so shots use current positions.
    - Damage comes before Vigor and Coherence, so erosion and link cuts react to
      this tick's hits.
@@ -160,9 +169,9 @@ carried into Game Feel and Acceptance Criteria instead.*
    - Input is sampled every rendered frame. The simulation reads the flagship's
      current command once per tick, in P1.
    - The command is a small struct: move axis, aim point, fire bits and ability
-     bits. The aim point is converted to **world space and quantized** before it
-     is recorded, never stored as a screen position, so a replay never depends on
-     the camera.
+     bits. The aim point is converted to **world space and quantized** to
+     `AIM_QUANTUM` (1/16 of a world unit) before it is recorded, never stored as a
+     screen position, so a replay never depends on the camera.
    - Held inputs (thrust, fire) are level-triggered.
    - A press that lands between ticks (an ability) is **latched** until the next
      tick consumes it, so no press is lost.
@@ -317,7 +326,7 @@ never stored as a separate enum, so it cannot disagree with the set.
 | Battle Resolution & Retreat (#22) | P7 end-of-battle and escort-lost signals | Context end, which clears player and auto holds | Battle Resolution owns outcomes |
 | AI-vs-AI Runner (#25) | `step(n)` calls | Final state, the per-tick state hash, the event log | The runner owns pacing; this system owns determinism |
 | Planning screens: Dossier (#47), Public History / Case File (#49), Ledger (#48), Debrief (#24) | Add and remove `PLANNING:<screen_id>` | — | Each screen owns its own reason key |
-| Camera & Combat View (#45) and all presentation | — | Interpolation alpha; read-only state | Presentation owns drawing. **Presentation decides, per effect, whether it freezes while held**: combat VFX, tweens and animation freeze; UI keeps running. The engine does not pause them automatically under this design |
+| Camera & Combat View (#45) and all presentation | — | Interpolation alpha; read-only state | Presentation owns drawing. The engine does not pause effects automatically under this design, so each effect class is assigned. **Frozen while held:** ship and projectile visuals, combat VFX and particles, combat tweens and animations, and combat sound one-shots (paused, then resumed). **Running while held:** all UI and planning screens, camera pan and zoom, selection and hover feedback, queued-order and latch markers, and music and ambience |
 
 **What the player cannot do:**
 - change the tick rate, or what a tick does
@@ -503,6 +512,11 @@ D3 discards time.
 | 30 Hz 0.5× / 1× / 2× / 4× | 0.5 / 1 / 2 / 4 | 0.25 / 0.5 / 1 / 2 | 0.10 / 0.21 / 0.42 / 0.83 |
 
 Every player speed passes the cap check at 30 fps and above.
+
+**An unsustainable speed is still offered and still selectable.** It runs at
+`speed_eff`, and the display marks it "slowed" (D5). It is never silently
+replaced by another speed, and never hidden from the menu, so the player always
+knows what they chose and what they are getting.
 
 ### D7. Auto-pause cooldown and re-arm
 
@@ -841,6 +855,7 @@ they are not knobs, and changing one is a versioned, replay-breaking change.
 | `MAX_TICKS_PER_FRAME` | 8 at 60 Hz, 4 at 30 Hz | Sets the catch-up ceiling (about 133 ms of simulation time per frame). Affects cadence only, never outcomes |
 | `SIM_BUDGET_MS` | 8 ms (provisional) | The simulation's share of a 16.67 ms frame. Sets the spike's pass line (D10). Needs technical-director sign-off |
 | `STEP_SMALL` | 1 tick | By definition |
+| `AIM_QUANTUM` | 1/16 world unit | Quantizes the recorded aim point (rule 6). Changing it changes replays |
 | 2^53 save assert; 2^31 − 1 hour warning | — | Integer safety (D8) |
 
 **Knobs owned elsewhere** (referenced, not duplicated):
@@ -851,24 +866,347 @@ they are not knobs, and changing one is a versioned, replay-breaking change.
 
 ## Visual/Audio Requirements
 
-[To be designed]
+This system has no art of its own. It sets the rules that combat visuals and
+audio must follow while the simulation is held or sped up:
+
+- **Freezing while held** follows the effect-class list in Interactions.
+  - Ship and projectile visuals, combat VFX and particles, combat tweens and
+    animations freeze.
+  - Combat sound one-shots pause and resume where they left off.
+  - UI, the camera, hover and selection feedback, queued-order and latch markers,
+    and music and ambience keep running.
+- **A held battle reads as held at a glance.** The planning chart language (art
+  bible: "planning tools are drawn on the captain's chart") may tint or overlay
+  the paused field. It must never hide hull glow or link patterns, because the
+  player pauses precisely to read them.
+- **At 0.5× and 2×**, combat visuals play at simulation speed: they are driven
+  by the tick plus alpha. Whether combat sound **pitch-shifts** or only
+  **time-scales** at 2× is open (see Open Questions). Music never changes speed.
+- **No visual may depend on a raw `tick_index` in float32** (D8). Shader time is
+  passed modulo a period.
+
+*`art-director` and `audio-director` were not consulted: Visual/Audio is optional
+for `Core` systems. Review this section when the art bible and audio direction
+exist.*
 
 ## Game Feel
 
-[To be designed]
+- **Pause responds on the press, within one rendered frame.** The next frame the
+  player sees is frozen: alpha snaps to 1 and no further tick runs. There is no
+  fade-in to the pause, because the fantasy is that "everything stops mid-shot".
+- **Resume is equally immediate.** The first tick after resume runs on the next
+  frame where `acc ≥ dt_tick`, which is at most one tick, 16.7 ms at 60 Hz.
+- **Flagship input latency target: under 50 ms** from input to a visible effect,
+  including the one-tick interpolation lag. At 60 Hz the expected figure is about
+  17–33 ms. The 30 Hz fallback needs the aim reticle drawn in presentation to
+  stay inside this target (rule 13).
+- **Orders given while paused feel committed, not pending.** A queued order shows
+  its marker the moment it is issued. On resume, it visibly takes effect on the
+  first tick (framing C of the Player Fantasy, "my orders, exactly").
+- **Auto-pause must feel like a hand on the shoulder, not a slammed door.** It
+  lands on a tick boundary, names its reasons in one banner, and never fires
+  twice for one crossing.
+- **Slowdowns are honest.** When the catch-up cap binds, the game slows visibly,
+  and the speed display says "slowed". It never stalls and then lurches.
 
 ## UI Requirements
 
-[To be designed]
+This system contributes these elements to the Combat HUD & Tactical Overlay
+(#46) and to Menus, Settings & Save UI (#51):
+
+1. **Hold indicator.** It shows "Paused" whenever the simulation is held, with
+   every active reason in plain words: paused by you; auto-pause (hull critical,
+   contact…); Case File open; saving; window unfocused.
+2. **Resume control.** When resume is not possible, it is disabled and names the
+   blocking hold (for example "Saving…" or "Close the Case File to resume"). It
+   never accepts a press it cannot act on (Edge Cases).
+3. **Speed control and display.** It offers 0.5×, 1× and 2×, plus 4× in dev
+   builds, shows the effective speed, and adds "slowed" per D5.
+4. **Step controls** (when the player option is on): step 1 tick and step 10
+   ticks. They are disabled under planning and system holds, with the reason
+   shown.
+5. **Auto-pause banner.** One banner per pause lists every trigger that fired on
+   that tick. Each entry links to its toggle.
+6. **Queued-order and latched-press markers.** These are visible while held, and
+   each can be cancelled (AC-48).
+7. **Settings entries** (in #51): each auto-pause toggle, the focus-loss pause,
+   and the player single-step option.
+
+Every element must be usable from the keyboard alone. Pause must be bindable to
+any key (Input & Controls; accessibility requirements). Meaning must never rely
+on colour alone.
+
+> **📌 UX Flag — Simulation Tick & Pause**: this system has UI requirements. In
+> Phase 4 (Pre-Production), run `/ux-design` to create UX specs for the combat
+> HUD's pause, speed and auto-pause elements, and for the settings entries,
+> **before** writing epics. Stories that reference this UI should cite
+> `design/ux/[screen].md`, not this GDD.
 
 ## Cross-References
 
-[To be designed]
+| This GDD references | Document | Section | What is relied on |
+|---|---|---|---|
+| Pillar 3, *Hands on the Helm*; pillar tensions | `design/gdd/game-concept.md` | Game Pillars | "Pause is always available"; pause and difficulty options are pillar commitments |
+| Pillar 1, *Every Defeat Is a Lead* | `design/gdd/game-concept.md` | Game Pillars | The Debrief's cause must be trustworthy, which deterministic replay supports |
+| World clock behaviour | `design/gdd/game-concept.md` | Core Mechanics (Vigor: defeat-cost bounds) | The clock runs in battle and in travel, and stops while paused, while planning screens are open, and while the game is closed |
+| Architecture direction | `design/gdd/game-concept.md` | Technical Considerations | Simulation/view split; fixed tick; headless AI-vs-AI runner; versioned saves |
+| System boundaries, layer, priority | `design/gdd/systems-index.md` | Systems Enumeration; Technical Director Note; Circular Dependencies | Foundation layer; no scene nodes in the simulation; the hold-reason contract, now **owned here** |
+| Tier 0 boundary test | `design/gdd/systems-index.md` | Technical Director Note | "The headless runner reproduces the same battle twice from one seed" (AC-39) |
+| Prototype pause | `prototypes/vigor-coherence-concept/REPORT.md` | Results | Pause and fleet orders were not in the build, so there is no tested design to inherit |
+| Engine facts | `docs/engine-reference/godot/` | `VERSION.md`; `current-best-practices.md` (Command Line); `deprecated-apis.md` | 4.7.2 headless; CLI flags; `Time.get_ticks_*`. There is **no `modules/core.md`**, so this domain is unchecked against the pinned engine |
+
+No other system GDD exists yet. Each system in Dependencies → Downstream must
+cross-reference this GDD when it is written.
 
 ## Acceptance Criteria
 
-[To be designed]
+**How tests stay isolated.** No criterion reads the wall clock. The fixtures:
+- **`FakeFrameSource`** feeds the driver a scripted `frame_delta[]`, plus a fake
+  `now` for D5's window.
+- **`FixtureSimState`** has stub phase handlers that append
+  `(tick_index, phase, entity_id)` to a call log, and a stub trigger whose
+  `condition(t)` is scripted per tick.
+- **`ConstantsProvider`** injects `TICK_RATE`, `MAX_TICKS_PER_FRAME`,
+  `SIM_BUDGET_MS` and the knobs.
+- **`EventBusSpy`** and **`WorldClockSpy`** record calls.
+- **`state_hash(SimState)`** hashes the simulation state.
+
+Unit tests do no file I/O: saves round-trip through an in-memory buffer. Test
+files are named `sim_tick_[feature]_test.gd`, with functions named
+`test_[scenario]_[expected]`. Floats are compared with `is_equal_approx`; tick
+counts are compared as exact integers.
+
+### Logic: unit tests, `tests/unit/sim_tick/` (BLOCKING)
+
+- **AC-01 (rule 1, D1)**: **GIVEN** a new game with `TICK_RATE = 60`, **WHEN**
+  `step(5)` runs, **THEN** `tick_index == 5`, `dt_tick ≈ 1/60`, and
+  battle-relative time equals `tick_index − battle_start_tick`.
+- **AC-02 (rule 1)**: **GIVEN** a save at `tick_index = N`, with a battle ending
+  after it, **WHEN** the save is reloaded and a new battle starts, **THEN**
+  `tick_index` continues from N and never resets.
+- **AC-03 (rule 3)**: **GIVEN** `BATTLE`, and entities with IDs {7, 2, 5}
+  inserted in that order, **WHEN** one tick runs, **THEN** the call log shows
+  P1…P9 in order, and within each phase the IDs come in the order 2, 5, 7.
+- **AC-04 (rule 3)**: **GIVEN** an order applied in P1 of tick T, **WHEN** P2 of
+  tick T runs, **THEN** the stub AI sees the order applied, and sees positions
+  and damage as they stood at the end of tick T−1.
+- **AC-05 (rule 4)**: **GIVEN** `CAMPAIGN`, **WHEN** one tick runs, **THEN**
+  P2–P6 are absent from the call log, P1, P7, P8 and P9 run in order, and
+  `WorldClockSpy` records one P8 call.
+- **AC-06 (rule 5)**: **GIVEN** the simulation is held at `tick_index = T`, and
+  orders A, B and C are enqueued in that order (A and C for the same ship),
+  **WHEN** play resumes and one tick runs, **THEN** all three are stamped T+1,
+  P1 applies them in the order A, B, C, the replay log holds all three at T+1,
+  and C's effect wins.
+- **AC-07 (rule 5)**: **GIVEN** a queued order, **WHEN** it is cancelled before
+  its tick, **THEN** P1 does not apply it. **WHEN** it is instead edited after P1
+  has drained it, **THEN** the edit is a new order stamped for the next tick.
+- **AC-08 (rule 6)**: **GIVEN** the simulation is held, **WHEN** one ability is
+  pressed and released, then pressed three more times, and one tick runs,
+  **THEN** P1 sees exactly one press, and the latch is clear afterwards. A fire
+  tap shorter than `dt_tick` fires for exactly one tick.
+- **AC-09 (rule 6)**: **GIVEN** the same world aim point under two different
+  camera positions, **WHEN** the command is recorded, **THEN** both recorded aims
+  equal `round(world / AIM_QUANTUM) × AIM_QUANTUM`.
+- **AC-10 (rule 7, D2)**: **GIVEN** `acc = 0.004` at 2×, **WHEN** one frame of
+  1/60 s is fed, **THEN** `acc ≈ 0.037333` before D3 runs. **WHEN** the same
+  frame is fed while held, **THEN** `acc` is unchanged.
+- **AC-11 (D2)**: **GIVEN** `frame_delta ≤ 0`, **WHEN** that frame is fed,
+  **THEN** no tick runs, and `acc` and alpha are unchanged.
+- **AC-12 (rule 8, D3)**: **GIVEN** `acc = 0.004` at 1× with the cap at 8, **WHEN**
+  a 0.25 s frame is fed, **THEN** `n == 8`, 7 whole ticks are discarded,
+  `acc_final ≈ 0.004`, and one "time dropped" note is logged outside the Battle
+  Record.
+- **AC-13 (D2, boundary)**: **GIVEN** `BATTLE` with `SLEEP_THRESHOLD_S = 1.0`:
+  - **WHEN** a 1.0 s frame is fed, **THEN** time is fed.
+  - **WHEN** a 1.001 s frame is fed, **THEN** 0 ticks run, `acc == 0`, and
+    `PLAYER_PAUSE` is present.
+  - **WHEN** a 1.001 s frame is fed in `CAMPAIGN`, **THEN** 0 ticks run and no
+    `PLAYER_PAUSE` is added.
+- **AC-14 (D4)**: **GIVEN** `acc_final = 0.004`:
+  - **WHEN** running, **THEN** `alpha ≈ 0.24`.
+  - **WHEN** held, **THEN** `alpha == 1`.
+  - **WHEN** play resumes, **THEN** alpha stays at 1 until the first tick, and
+    is below 1 after it.
+- **AC-15 (rule 9)**: **GIVEN** the simulation is held, **WHEN** the speed is
+  changed, **THEN** the hold set is unchanged.
+- **AC-16 (D5)**: **GIVEN** 2× selected, `fps = 12` and the cap at 8, **WHEN**
+  `speed_limit` is computed and the fake window counts ticks, **THEN**
+  `speed_limit ≈ 1.6`, and the display model reports `1.6`, `slowed = true`.
+  **GIVEN** `speed_shown == speed_scale × (1 − SPEED_TOLERANCE)` exactly,
+  **THEN** `slowed = false`.
+- **AC-17 (D6)**: **GIVEN** each cell of the D6 table, **WHEN** `tpf` is
+  computed, **THEN** it matches the table to 2 decimal places, and only the
+  60 Hz, 4×, 30 fps cell equals the cap. **GIVEN** a speed whose `tpf` exceeds
+  the cap, **THEN** it is still selectable and runs at `speed_eff`.
+- **AC-18 (rule 10, stacking)**: **GIVEN** `PLAYER_PAUSE`, `PLANNING:case_file`
+  and `SYSTEM:focus_lost`, **WHEN** they are removed by their own causes in each
+  of the 6 possible orders, **THEN** ticks resume only after the last one goes,
+  and closing the Case File never removes `PLAYER_PAUSE`. Adding a reason that is
+  already present leaves the set's size unchanged.
+- **AC-19 (resume rejected)**: **GIVEN** a `SYSTEM` or `PLANNING` reason is
+  present, **WHEN** resume is pressed and that reason is later removed, **THEN**
+  the press did not change the set, the press returned a rejection naming the
+  reason, and it was not remembered: the game is still held by the player
+  reason.
+- **AC-20 (same-frame toggle)**: **GIVEN** the game is running, **WHEN** pause is
+  added and then removed in the same frame, before the driver reads the hold
+  set, **THEN** `acc` is not reset, alpha does not snap, and the tick count is
+  unaffected.
+- **AC-21 (rule 11, D7)**: **GIVEN** a hull-critical trigger with a cooldown of
+  600 ticks and a re-arm of 120 ticks, **WHEN** its condition is scripted true at
+  12,000, false from 12,050 to 12,299, and true from 12,300 on, **THEN** it fires
+  at 12,000, re-arms at 12,170, and fires again at 12,600, never at 12,300. Every
+  hold is added after P7 of a tick, never mid-tick.
+- **AC-22 (rule 11)**: **GIVEN** two eligible triggers and one in cooldown on the
+  same tick, **WHEN** P7 runs, **THEN** there is one pause listing exactly the
+  two eligible reasons. **GIVEN** a condition already true at battle start, or
+  when the trigger is enabled, **THEN** the trigger does not fire until the
+  condition has been clear for `rearm_ticks`. Cooldowns do not elapse while
+  held.
+- **AC-23 (battle-end tick)**: **GIVEN** a trigger condition that is true on the
+  battle-ending tick, **WHEN** P7 runs, **THEN** the battle-end check runs before
+  the trigger, the trigger is logged, and no `AUTO_PAUSE` is added.
+- **AC-24 (first contact)**: **GIVEN** two enemy fleets contacted on one tick,
+  **WHEN** P7 runs, **THEN** one pause names both fleets, and neither fires again
+  in that battle.
+- **AC-25 (rule 12, D9)**: **GIVEN** the simulation is held only by player and
+  auto reasons, **WHEN** `step(STEP_SMALL)` or `step(STEP_LARGE)` runs, **THEN**
+  exactly 1 or `STEP_LARGE` ticks run, P1 orders apply, and the original hold set
+  is restored. **GIVEN** any `PLANNING` or `SYSTEM` reason, **THEN** the step is
+  rejected and 0 ticks run.
+- **AC-26 (step interrupted)**: **GIVEN** a 10-tick step, **WHEN** the battle ends
+  at tick k, or a trigger fires at k, or a `SYSTEM` reason arrives during tick k,
+  **THEN** exactly k ticks run in each case.
+- **AC-27 (rule 16)**: **GIVEN** `BATTLE` with the focus option on, **WHEN** focus
+  is lost and then regained, **THEN** `SYSTEM:focus_lost` and `PLAYER_PAUSE` are
+  both added, and only `SYSTEM:focus_lost` is removed. **GIVEN** `CAMPAIGN`,
+  **THEN** only the `SYSTEM` reason is added.
+- **AC-28 (rule 17)**: **GIVEN** a save requested during P4, **WHEN** the save
+  completes, **THEN**:
+  - its `tick_index` is a whole tick, and the saved state matches `state_hash` at
+    that boundary;
+  - it includes the queue, latches, trigger states, RNG stream states and the
+    replay log, and excludes `acc`;
+  - on load, the hold set equals `{PLAYER_PAUSE}`.
+- **AC-29 (lost subject, context end)**: **GIVEN** an order whose subject is
+  destroyed before P1, **THEN** the order is dropped and
+  `OrderRejected(subject_lost)` is emitted. **GIVEN** the context ends with
+  queued orders and latches, **THEN** the orders are logged
+  `cancelled_by_context_end`, and the latches are cleared.
+- **AC-30 (D8, boundary)**: **GIVEN** `tick_index = 2^31 − 216,000`, **WHEN** one
+  tick runs, **THEN** exactly one warning is logged, and play continues. **GIVEN**
+  `tick_index = 2^53` on save, **THEN** the save asserts. Encoding and decoding
+  `2^53 − 1` is exact.
+- **AC-31 (context end)**: **GIVEN** a battle ends, **THEN** player and auto
+  reasons are cleared, and `PLANNING` and `SYSTEM` reasons persist.
+- **AC-32 (float jitter)**: **GIVEN** 600 frames of exactly 1/60 s at 1×, **WHEN**
+  they are fed, **THEN** 600 ± 1 ticks run.
+- **AC-33 (rule 2)**: **GIVEN** the simulation is held, **WHEN** 600 frames of
+  rendering, inspection and tooltip queries run, **THEN** `state_hash` is
+  unchanged.
+
+### Static checks, CI lint (BLOCKING)
+
+- **AC-34 (rules 1, 7, 14)**: **GIVEN** the simulation code in `src/sim/**`
+  (excluding the driver adapter and the RNG system), **WHEN** CI lints it,
+  **THEN** it fails on any of:
+  - `Time.`
+  - `OS.get_ticks`
+  - a `delta` parameter
+  - `_process` or `_physics_process`
+  - `randi`, `randf` or `randomize`
+  - `RandomNumberGenerator.new`
+
+  The lint must be **shown to fail** on a planted violation before it counts.
+- **AC-35 (D8)**: **GIVEN** `tick_index = 2^24 + 1`, **WHEN** presentation sets
+  its shader time inputs, **THEN** every time uniform is less than its declared
+  period.
+
+### Integration: `tests/integration/sim_tick/` (BLOCKING)
+
+- **AC-36 (World Clock)**: **GIVEN** each hold category in turn, **WHEN** 600
+  frames are fed, **THEN** `WorldClock.is_held()` is true and game days are
+  unchanged. **WHEN** the game is running, **THEN** P8 is called once per tick.
+- **AC-37 (Event Bus)**: **GIVEN** events emitted in P1–P7 across 3 ticks,
+  **THEN** there are exactly 3 flushes, each stamped with its own `tick_index`,
+  and no event carries a later tick's stamp.
+- **AC-38 (Debrief hold)**: **GIVEN** a battle-ending tick, **WHEN** the next
+  driver pass runs, **THEN** `PLANNING:debrief` is already present, 0 `CAMPAIGN`
+  ticks run, and the World Clock does not advance until the Debrief closes.
+
+### Determinism and replay: `tests/integration/sim_tick/` (BLOCKING)
+
+- **AC-39 (Tier 0 boundary test)**: **GIVEN** one seed, one starting state and one
+  recorded command log, **WHEN** the headless runner plays the battle twice,
+  **THEN** the two per-tick `state_hash` sequences are identical and the same
+  length.
+- **AC-40 (rules 9, 15)**: **GIVEN** one seed and log, **WHEN** the battle is run
+  through `FakeFrameSource` at 0.5×, 1× and 2× with hitches injected, and once
+  through headless `step(n)`, **THEN** all four hash sequences are identical.
+- **AC-41 (replay divergence)**: **GIVEN** a replay with a gap in the order
+  sequence at tick T, or a state hash altered at T, **THEN** the replay stops at
+  T−1, reports "diverged at tick T", and fills nothing in. **GIVEN** a flagship
+  command missing from the log, **THEN** it is treated as unchanged, with no
+  divergence.
+- **AC-42 (headless triggers)**: **GIVEN** a headless run that meets a trigger
+  condition, **THEN** `TriggerWouldFire(tick, id)` is logged at the same ticks as
+  AC-21, the hold set stays empty, and the hash sequence equals that of the
+  player-path run.
+- **AC-43 (rules 13, 14: headers)**: **GIVEN** a replay with a different
+  `TICK_RATE`, **THEN** it is refused. **GIVEN** a different build ID, **THEN** it
+  plays flagged "unverified".
+
+### Performance: `tests/performance/sim_tick/` (BLOCKING for the tick-rate decision)
+
+- **AC-44 (D10)**: **GIVEN** a headless run at 60 Hz with about 100 ships and 500
+  projectiles, the 2× player maximum, a 60 fps target, and `SIM_BUDGET_MS` read
+  from `ConstantsProvider` (never a literal), **WHEN** at least 3,600 ticks are
+  measured after warm-up:
+  - **THEN** 60 Hz passes if `p95(t_tick_ms) ≤ SIM_BUDGET_MS / ceil(60 × 2 / 60)`,
+    which is 4.0 ms at the current value of 8.
+  - On a fail, the 30 Hz fallback passes if `p95 ≤ SIM_BUDGET_MS / 1`.
+  - The report records the measured p95 and the build.
+- **AC-45**: **GIVEN** `SIM_BUDGET_MS` is marked provisional, **THEN** AC-44's
+  result is recorded as *provisional* until the technical-director signs the
+  value off. The test needs no edit once it is signed off.
+
+### Feel and UI: manual, retained screenshot in `production/qa/evidence/` (BLOCKING)
+
+- **AC-46 (Visual/Feel)**: **GIVEN** a battle in motion at 1×, **WHEN** it is
+  paused, **THEN**:
+  - two screenshots taken 2 s apart are pixel-identical for every effect class
+    the Interactions table lists as frozen;
+  - every class it lists as running (UI, camera, hover, markers) is still live.
+
+  A lead signs off.
+- **AC-47 (UI)**: **GIVEN** 2× with the frame rate capped at 12 fps, **THEN** the
+  speed display reads "1.6× (slowed)". When held, it reads "Paused".
+- **AC-48 (UI)**: **GIVEN** the simulation is held with two queued orders and one
+  latched ability, **THEN** markers for all three are visible and each can be
+  cancelled.
+- **AC-49 (UI)**: **GIVEN** `SYSTEM:save` or `PLANNING:case_file` is holding the
+  simulation, **THEN** the resume control names the hold (for example
+  "Saving…").
+
+*Specialist consulted: `qa-lead`. It flagged nine rules as not independently
+testable as written. All nine were fixed:*
+- *Rule 3 now says what P2 sees (AC-04).*
+- *`AIM_QUANTUM` is defined (AC-09).*
+- *The outcome of an unsustainable speed is specified in D6 (AC-17).*
+- *The effect classes that freeze while held are listed in Interactions
+  (AC-46).*
+- *The jitter tolerance is stated (AC-32).*
+- *Lint and render-purity checks cover rules 1, 2, 7 and 14 (AC-33, AC-34).*
+- *The shader-time period check covers D8 (AC-35).*
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Resolve by |
+|---|---|---|---|
+| 1 | **Does a battle start paused?** The default-on first-contact trigger may already pause it at the moment that matters. | game-designer + creative-director | Fleet Orders GDD (#19) |
+| 2 | **Is `SIM_BUDGET_MS = 8` signed off?** It sets the spike's 4.0 ms-per-tick pass line (D10, AC-44/45). | technical-director | Before the tick-rate spike runs |
+| 3 | **Does the tick-rate spike pass at 60 Hz?** About 100 ships and 500 projectiles, headless; if it fails, the 30 Hz fallback applies. | engine-programmer + performance-analyst | Pre-production, alongside the Combat Space GDD (#11) |
+| 4 | **ADR-level choices:** integer-microsecond vs float accumulator; the state-hash algorithm; our own small PRNG vs pinning `RandomNumberGenerator` per engine version; fixed-point vs float for the critical path; the Dictionary-iteration rule (insertion order is NOT SOURCEABLE in the engine reference). | technical-director | Tick/Pause/Determinism ADR, before any Core-layer implementation |
+| 5 | **Combat audio at 2×:** pitch-shift, time-scale only, or neither? | audio-director | Audio Direction GDD (#52) |
+| 6 | **Godot behaviour on focus loss and in low-processor mode:** what frame time arrives on resume? NOT SOURCEABLE; the driver clamps regardless (D2). | engine-programmer | Tick/Pause/Determinism ADR spike |
