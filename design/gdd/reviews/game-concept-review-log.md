@@ -31,3 +31,35 @@ Revisions: all 8 blocking items were applied to `game-concept.md` on 2026-10-28 
 Reviewed-Content-Hash: design/gdd/game-concept.md f6292afd0d86f3c33b56ea8febf1a9b2a8d546a6
 Reviewed-Content-Hash: design/registry/entities.yaml dfeacb02917f751cb1dfd88cf490c7ec3d8d2d0f
 Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+
+## Review — 2026-10-28 — Verdict: NEEDS REVISION
+Review mode: full · Workflow: full
+Scope signal: XL
+Specialists: game-designer, systems-designer, narrative-director, ai-programmer, godot-specialist, economy-designer, ux-designer, qa-lead; creative-director (senior reviewer)
+Blocking items: 8 | Recommended: 9 (carry-forward groups)
+Summary: All 8 first-review blockers were addressed; identity, pillars and hook hold. The new problems sat where the revisions meet, mostly in Pillar 2: no way to check a theory, delayed exposure contradicting "always previewed", lying as the optimal lending strategy, and the coupling unable to fire after the first loss. Not MAJOR — none changes the game's identity.
+Prior verdict resolved: Yes (all 8 first-review blockers)
+Note: concept document, reviewed against the game-concept template (8-section GDD checklist not applicable); `entities.yaml` has 0 entries, no related GDDs — values not cross-checked.
+Findings:
+- [BLOCKING] Unique Hook / Pillar 2: no player-facing theory check; "provable" vs "nothing hints closeness" contradict
+- [BLOCKING] Pillar tensions / Anti-Pillars: "consequences always previewed" and "NOT wiki-dependent … including sharing" contradicted by delayed exposure
+- [BLOCKING] Unique Hook / Pillar 2: lending makes lying optimal; blame shape (scalar vs distribution) unstated; no fallback when the ally is locked out; "lie that stands" undefined; lie vs good-faith error
+- [BLOCKING] Unique Hook / Core Loop: fragments only from broken strongholds, so the coupling cannot fire after the first loss
+- [BLOCKING] Core Mechanics (Vigor): "care from a living race" cost undefined; no always-running clock behind time-only rest; floor must keep a ship viable
+- [BLOCKING] Unique Hook: breakaway machines vs "nobody remembers"; jammability of the player's machine ships
+- [BLOCKING] MVP Definition: no pass bar; Debrief loss causes 4-6 vs 2-6; lending absent from the slice
+- [BLOCKING] Status / Next Steps: stale "re-review pending" and "refine the pillars"
+- [RECOMMENDED] Economy GDD: money sinks, bankruptcy floor, lent-ship rate limits, checkable grind-wall test, trade income bound
+- [RECOMMENDED] Combat/AI GDD and ADRs: deterministic combat and seeded RNG, orders while paused, Debrief reason codes, dry-Vigor and fragmented-machine AI behaviour, minimal MVP order set, AI frame budget
+- [RECOMMENDED] Pause/tick ADR: own sim accumulator, not get_tree().paused; queued-order tick; interpolation
+- [RECOMMENDED] Test plan: measurable pillar and 32 px visual tests; Debrief/Dossier view logging
+- [RECOMMENDED] Accessibility: create design/accessibility-requirements.md before the Pre-Production gate
+- [RECOMMENDED] Onboarding: what if the player wins the intended loss; max time to first Debrief
+- [RECOMMENDED] Narrative: authored-content budget; clean-room lore check before the race list; non-candidate races
+- [RECOMMENDED] Godot: tag .tres script-execution claim unsourced; CI needs --import first and tolerance of the import segfault; 4.7 input device-ID change
+- [RECOMMENDED] Hook sentence: lead with the political verdict, not the shared trope
+Disagreements (creative-director rulings): determinism/pause/attribution → ADR-level; MVP pass bar → blocking (narrow); money sinks → Economy GDD; measurable pillar rewrites → GDD ACs; Case File vs l.77 → l.77 scoped to the preview; Tier 0a/0b split → owner's decline stands.
+Revisions: all 8 blockers applied 2026-10-28. Owner decisions: truth seeded per save; fragments also from derelicts, archives and testimony (not from losses); "lie that stands" is bittersweet, reached by costly visible suppression; Case File with a consistency count. Defaults approved: care costs standing with that race; good-faith misreading costs less than a contradicted lie; breakaways stripped their own archives (unreliable testimony). MVP slice now includes the Case File and one blame-gated lent escort. The hashes below are of the text that was REVIEWED (HEAD 632eefc), so the revised file reads CHANGED and gets a full re-review. Re-review pending.
+Reviewed-Content-Hash: design/gdd/game-concept.md 01eba1cbb28cccd034fcd47cedcb71929f61246b
+Reviewed-Content-Hash: design/registry/entities.yaml dfeacb02917f751cb1dfd88cf490c7ec3d8d2d0f
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43

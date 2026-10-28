@@ -1,7 +1,7 @@
 # Game Concept: The Makers' Debt
 
 *Created: 2026-10-28*
-*Status: Draft (revised 2026-10-28 after the first `/design-review`: NEEDS REVISION → revisions applied, re-review pending)*
+*Status: Draft (revised 2026-10-28 after the first `/design-review`: NEEDS REVISION → revisions applied; second review the same day: NEEDS REVISION → revisions applied, re-review pending)*
 
 > Working title. A trademark search on the title is required before any public
 > use (`design/reference/development-plan.md` § 9).
@@ -68,29 +68,45 @@ you decide who history blames.**
 
 - Breaking a machine stronghold yields **archive fragments**: evidence about
   which organic race built the Instrument.
-- There is **one fixed, hidden truth**. The **public history** — which race the
-  galaxy believes is to blame — is shaped by which fragments you share, and with
-  whom. Factions react to that blame state.
+- There is **one fixed, hidden truth per save**: the true maker is seeded at new
+  game from the candidate races, so it cannot be looked up. The **public
+  history** — how the galaxy spreads blame across the candidates — is shaped by
+  which fragments you share, and with whom. Factions react to that blame state.
 - The **consequences of sharing** are previewed before you commit, as
   **first-order effects only**: which factions move, in which direction, and a
-  coarse band (slight, marked, severe). No magnitudes, no knock-on effects, and
-  nothing that hints how close a fragment is to the truth; a confirm step, and no
-  undo once committed. Only the underlying truth is ambiguous.
+  coarse band (slight, marked, severe). No magnitudes, and the preview is
+  **truth-blind** — nothing in it hints how close a fragment is to the truth; a
+  confirm step, and no undo once committed. Later consequences follow **no hidden
+  rule**: they are legible after the fact, and a persistent **exposure-risk
+  readout** (low / rising / high) shows how many independent fragments contradict
+  the public history, never which candidate is true.
+- **Checking a theory — the Case File.** The player can state a candidate at any
+  time; the Case File answers "consistent with N independent fragments" or
+  "contradicted by [fragment]", never "correct". This is how a detective tests a
+  case before going public; the sharing preview stays truth-blind.
 - **The two halves of the fantasy are coupled.** A faction's blame state decides
   which allied ships it will lend for your return attempt, and the After-Action
   Debrief can name the faction that would help. Persuading a faction is therefore
   a mechanic, not flavour, and what you tell them changes what you can bring
-  back to the stronghold that beat you.
+  back to the stronghold that beat you. Fragments come from broken strongholds
+  and also from **derelicts, archives and testimony** found between attempts, so
+  there is evidence to share before the first return. Lent ships are **never
+  required**: every Dossier entry names at least one counter that needs no ally.
 - **The truth matters.** A public history that contradicts the truth can be
   exposed later by independent fragments, and factions that trusted you turn on
-  you (see Pillar 2 for the three possible endings).
+  you. A good-faith misreading is not a lie: sharing a theory the Case File had
+  not contradicted costs trust slowly if exposed; sharing one it had contradicted
+  costs it sharply. See Pillar 2 for the three possible endings.
 - **Originality.** "A creator race's machines turn on it" is a common trope, and
   Starsector also asks who built its automated fleets. The differentiator is the
   **political verdict** (you decide who history blames), not the discovery of who
   built the machines. A clean-room lore check against Starsector is required
   before the world bible is written.
 - Late in the game a **breakaway machine faction** can join you, so one fleet
-  mixes living Vigor ships with Coherence-linked machines.
+  mixes living Vigor ships with Coherence-linked machines. Your own machine ships
+  **can be jammed** like any other. The breakaways stripped their own archives
+  when they broke away; what they recall is **testimony** — evidence with marked,
+  unreliable provenance, never decisive.
 
 *Alternatives considered for the hook* (session record): a blockade-breaking
 loop on its own (Breakwater), a living bio-fleet (Hollow Tide), relighting a
@@ -143,15 +159,18 @@ it. Challenge is the beat, not the point.
    - *Vigor* (organic): living energy spent by weapons, shields and boost. Every
      spend **erodes that ship's Vigor ceiling for the rest of the expedition**;
      only port rest, or care from a living race, restores it. It is a cost you
-     carry between battles, not a bar you fill and vent.
+     carry between battles, not a bar you fill and vent. *Care* is offered only
+     at that race's ports and costs **standing with that race** instead of time.
    - *Vigor design requirements* (from CD-PLAYTEST and the first design review;
      numbers belong in the Vigor GDD): **no hard lockout** — running dry changes a
      ship's behaviour instead of disabling it, with an early warning before it
      happens, checked against "can a Starsector player map this 1:1 onto flux?";
      erosion must **change how players spend**, not only how long they can fire;
-     the ceiling floor must **never soft-lock** a player; and restoring at port
-     costs **time only** — rest days during which the world moves on (contracts
-     expire, rivals act) — so port is never free and never a money trap.
+     the ceiling floor must **never soft-lock** a player — at the floor a ship can
+     still fight and retreat, not merely hold a non-zero value; and restoring at
+     port costs **time only** — rest days on a **world clock that always runs**
+     (in the sandbox and after the optional ending), during which contracts
+     expire and rivals act — so port is never free and never a money trap.
    - *Coherence* (machine): fleet-wide command bandwidth relayed through visible
      links from relay ships. Cut a relay or jam a link and the formation
      fragments into individual, simpler ships.
@@ -159,10 +178,12 @@ it. Challenge is the beat, not the point.
    counter for every loss), the **Dossier** (per machine node: weaknesses,
    counter-fleet, which faction would help) and the **Ledger** (markets and
    trade routes).
-4. **Archive fragments and public blame** — evidence from machine strongholds;
-   a sharing choice with previewed consequences; a tracked blame value factions
-   react to, and which gates the ships they lend for a return attempt; one fixed
-   hidden truth.
+4. **Archive fragments and public blame** — evidence from machine strongholds,
+   derelicts, archives and testimony; a sharing choice with previewed
+   first-order consequences; public blame tracked as a distribution over the
+   candidate races, which factions react to and which gates the ships they lend
+   for a return attempt; the Case File for testing a theory; one fixed hidden
+   truth, seeded per save.
 5. **Sandbox economy and progression** — trade and contracts, salvage, loot and
    crafting, faction reputation, captain skills; later officers and colonies.
 
@@ -231,7 +252,8 @@ dim.
 
 ### Short-Term (5-15 minutes)
 
-Battle → salvage and, at machine sites, an **archive fragment** → the
+Battle → salvage and, at a broken stronghold, an **archive fragment** (derelicts,
+archives and testimony between fights yield them too) → the
 **After-Action Debrief** names what happened → the **Dossier** updates (a
 weakness confirmed, a counter-fleet suggested, a faction that might help) →
 the player decides: refit, chase the lead, head to port to restore Vigor, or
@@ -281,7 +303,8 @@ of the five pillars lean towards combat and systems.
 Intended tensions, and how they resolve:
 - *Every Defeat Is a Lead* (clear information) vs *The Truth Is Yours to Tell*
   (ambiguous evidence): **combat information is always clear; historical
-  evidence is ambiguous; the consequences of sharing are always previewed.**
+  evidence is ambiguous; the first-order consequences of sharing are always
+  previewed, and nothing that follows later obeys a hidden rule.**
 - *Hands on the Helm* (reflexes) vs *Plan in the Open* (deliberation): pause
   is always available, and planning happens between battles.
 - *Hands on the Helm* vs "challenge should feel relaxing": pause, readable
@@ -305,18 +328,25 @@ believes is yours to write.
 
 *Design test*: debating a single authored reveal vs a player-determined
 outcome → **the player determines the public history, within authored bounds**:
-- one hidden true maker, among **3-4 candidate races** (the exact count is a
-  decision for the Mystery/Blame GDD);
+- one hidden true maker, among **3-4 candidate races**, **seeded per save** (the
+  exact count is a decision for the Mystery/Blame GDD);
 - fragments are evidence weighted towards candidates; **no single fragment is
   decisive**, and the truth becomes provable only from several independent
-  fragments, found in any order;
+  fragments, found in any order. "Provable" is player-facing: the **Case File**
+  reports a stated theory as consistent with N independent fragments, or
+  contradicted — never "correct";
 - at least one **deliberate red herring**, with readable provenance;
-- public blame is a tracked value factions react to, and it gates the ships they
-  lend for a return attempt (see Unique Hook);
+- public blame is a **distribution over the candidates**, not a single value;
+  factions react to it, and it gates the ships they lend for a return attempt
+  (see Unique Hook). Lent ships are never required to win;
 - **the truth matters**: a public history that contradicts it can be exposed
-  later by independent fragments, and factions that trusted you turn on you.
+  later by independent fragments, and factions that trusted you turn on you;
+  exposure risk rises with each independent contradicting fragment, and is shown.
+  A good-faith misreading costs less than a lie the Case File had contradicted.
   The three endings are **truth confirmed**, **lie exposed** and **lie that
-  stands**.
+  stands** — a bittersweet, legitimate ending, reached only by visibly and
+  expensively **suppressing** every independent fragment that contradicts the
+  public history.
 
 Delivered through systems and short authored beats, not branching dialogue
 trees. Weights, normalisation, thresholds and the faction reaction matrix belong
@@ -352,8 +382,10 @@ resolved inside the asymmetry rather than by flattening it.
 
 ### Anti-Pillars (What This Game Is NOT)
 
-- **NOT wiki-dependent**: no hidden formulas or unexplained modifiers, including
-  the consequences of sharing fragments. It would break *Plan in the Open*.
+- **NOT wiki-dependent**: no hidden formulas or unexplained modifiers. Sharing
+  fragments previews its first-order effects, and what follows later obeys no
+  hidden rule and is legible after the fact; the truth is seeded per save, so it
+  cannot be looked up. It would break *Plan in the Open*.
 - **NOT run-ending on defeat by default**: permadeath only as an optional mode.
   It would break *Every Defeat Is a Lead*.
 - **NOT consequence-free on defeat either**: a loss costs time or resources, or
@@ -565,7 +597,8 @@ timescale is optimistic.*
 - **Which organic race really built the machines, and who are the candidates?**
   → `/map-systems` and the world-builder.
 - **How do the player's own machine ships handle relays and jamming** in a
-  mixed fleet? → a GDD for the Coherence system.
+  mixed fleet? Partly resolved: they can be jammed like any machine ship. The
+  relay rules → a GDD for the Coherence system.
 - **Does Vigor ceiling erosion feel fair?** Partly answered by the combat
   prototype (final ceiling 58%, no complaint about erosion; the hard lockout was
   the worst moment). Still open: did the ceiling change how the player spent in
@@ -573,11 +606,13 @@ timescale is optimistic.*
 - **Do 2D glow and per-ship breathing work in Godot 4.7.2 on D3D12 and
   Vulkan?** → a 2-3 day rendering spike with written pass/fail criteria and a
   named renderer.
-- **How does a player confirm a theory** about who built the machines before
-  committing to a public history? → the Mystery/Blame GDD.
-- **What is the breakaway machine faction's role in the mystery** (for example a
-  witness whose testimony is unreliable), beyond being a late-game fleet mix?
-  → the world-builder and the Mystery/Blame GDD.
+- ~~How does a player confirm a theory before committing?~~ Resolved
+  2026-10-28: the Case File (see Unique Hook). Its weights and thresholds → the
+  Mystery/Blame GDD.
+- ~~What is the breakaway machine faction's role in the mystery?~~ Resolved
+  2026-10-28: an unreliable witness — they stripped their own archives, and
+  their testimony is marked-provenance, never-decisive evidence. Detail → the
+  world-builder and the Mystery/Blame GDD.
 - **What are the four organic races?** Each needs an identity, a relationship to
   the Instrument, a motive and means to have built it, a reason it could be
   falsely blamed, and a gameplay hook. → `/map-systems` and the world-builder,
@@ -601,7 +636,11 @@ composition, refit or tactic between attempts, with the change logged, and
 behavioural logs and one post-session question ("who built the machines, and why
 do you think so?"), not by "satisfying" or "care". Target for the Tier 0 gate:
 at least 5 testers in total, at least 3 of them new to the genre, collected over
-time; 8 or more is an Early Access target.
+time; 8 or more is an Early Access target. **Pass bar**: at least 4 of 5
+testers, including at least 2 of the 3 new to the genre, each (1) start a new
+attempt after a loss without being prompted, (2) show a logged change between
+attempts, and (3) give a reason for their share that a written rubric accepts.
+At this size the gate is a **qualitative smoke test, not proof**.
 
 The MVP is the **build order**, not a scope cut: the full feature list remains
 the vision.
@@ -612,10 +651,12 @@ the vision.
 2. Vigor (with ceiling erosion) against Coherence (with cuttable, visible links).
 3. About 6 hulls and 8 weapons; 2 organic races plus the Instrument.
 4. One machine stronghold you are expected to lose first.
-5. After-Action Debrief v1 (2-6 loss causes) and Dossier v1.
-6. **Mystery slice**: 1-2 archive fragments, a sharing choice between two
-   factions with previewed consequences, and a visible relations change
-   (CD-PILLARS: the hook must be proven early, not last).
+5. After-Action Debrief v1 (4-6 loss causes) and Dossier v1.
+6. **Mystery slice**: 1-2 archive fragments (at least one from a
+   non-stronghold source), a sharing choice between two factions with previewed
+   consequences, a visible relations change, the Case File, and one faction's
+   lent escort gated by its blame state (CD-PILLARS: the hook must be proven
+   early, not last; the lent escort tests the coupling of the two halves).
 7. A cluster of 3-5 hand-made systems with a basic market to fund refits.
 8. Save/load with a versioned schema; data loaded from external files with
    stable string IDs.
@@ -673,8 +714,8 @@ Prototype-first path: the concept prototype ran and returned **PROCEED**
   conditions
 - [ ] `/art-bible` — Breath and Wire, settling the art-supply question
 - [x] `/design-review design/gdd/game-concept.md` — first review 2026-10-28:
-  NEEDS REVISION; revisions applied the same day, re-review pending
-- [ ] `creative-director` — refine the pillars
+  NEEDS REVISION, revised; second review the same day: NEEDS REVISION, revised;
+  re-review pending
 - [ ] `/map-systems` — systems index; factions and the hidden truth
 - [ ] `/design-system` — one GDD per system
 - [ ] `/create-architecture`, then `/architecture-decision` for each ADR above
