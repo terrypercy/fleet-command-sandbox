@@ -2,7 +2,7 @@
 
 **PROTOTYPE - NOT FOR PRODUCTION.** Throwaway code. Never import from or into the game.
 
-**Status:** in-progress (built 2026-10-28, not yet playtested by a human)
+**Status:** concluded 2026-10-28 — **PROCEED**, creative-director CONCERNS accepted with 4 conditions (see [REPORT.md](REPORT.md))
 
 ## Hypothesis
 
@@ -41,4 +41,13 @@ ceiling carries over.
 
 ## Findings
 
-_None yet. Fill in after the playtest debrief._
+One internal playtester (the owner), one full run. Full detail in [REPORT.md](REPORT.md).
+
+- **Signals met:** relay-first 2/3 (target ≥ 2), final Vigor ceiling 58% (band 25–70%).
+- **Best moment:** the formation breaking when the link was cut.
+- **Worst moment:** the hard EXHAUSTED lockout on running dry ("not being able to shoot
+  or really do anything"). The GDD should add a warning and make exhaustion change
+  behaviour instead of disabling the ship.
+- **Surprise:** movement and bullet feel were good even with placeholder shapes.
+- **Caveats:** relay-first came from genre intuition, not from the link lines alone;
+  whether the ceiling changed behaviour in later fights was not asked.
