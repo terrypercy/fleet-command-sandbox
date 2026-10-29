@@ -197,7 +197,7 @@ Later tiers:
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Simulation Tick & Pause | Core | MVP | In Review | design/gdd/simulation-tick-and-pause.md | — |
 | 2 | Deterministic RNG & Seed Streams (inferred) | Core | MVP | Designed | design/gdd/deterministic-rng-and-seed-streams.md | — |
-| 3 | Runtime ID Service (inferred) | Core | MVP | Not Started | — | — |
+| 3 | Runtime ID Service (inferred) | Core | MVP | Designed | design/gdd/runtime-id-service.md | — |
 | 4 | Content Data & Mod Loading | Core | MVP | Not Started | — | — |
 | 5 | Save/Load & Migration | Persistence | MVP | Not Started | — | Runtime ID Service |
 | 6 | Input & Controls (inferred) | Core | MVP | Not Started | — | — |
@@ -213,24 +213,24 @@ Later tiers:
 | 16 | Truth Seeding & Candidates (inferred) | Narrative | MVP | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Save/Load & Migration |
 | 17 | Faction Reputation & Standing | Progression | MVP | Not Started | — | Content Data & Mod Loading, Save/Load & Migration |
 | 18 | Credits, Upkeep & Sinks (inferred) | Economy | MVP | Not Started | — | Save/Load & Migration, World Clock |
-| 19 | Fleet Orders | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space |
-| 20 | Ship AI | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space, Weapons & Damage, Vigor, Coherence & Links |
-| 21 | Fleet Coordination (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Fleet Orders, Ship AI |
-| 22 | Battle Resolution & Retreat (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Weapons & Damage, Fleet Orders |
+| 19 | Fleet Orders | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space, Runtime ID Service |
+| 20 | Ship AI | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space, Weapons & Damage, Vigor, Coherence & Links, Runtime ID Service |
+| 21 | Fleet Coordination (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Fleet Orders, Ship AI, Runtime ID Service |
+| 22 | Battle Resolution & Retreat (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Weapons & Damage, Fleet Orders, Runtime ID Service |
 | 23 | Machine Nodes & Strongholds | Gameplay | MVP | Not Started | — | Content Data & Mod Loading, Hulls & Ship Definition, Coherence & Links, Fleet Coordination |
-| 24 | After-Action Debrief | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds |
-| 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds |
+| 24 | After-Action Debrief | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds, Runtime ID Service |
+| 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds, Runtime ID Service |
 | 26 | Sector Map & Travel (inferred) | Gameplay | MVP | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Not Started | — | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
 | 28 | Archive Fragments & Evidence | Narrative | MVP | Not Started | — | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
 | 29 | Points of Interest (inferred) | Gameplay | MVP | Not Started | — | Sector Map & Travel, Archive Fragments & Evidence |
-| 30 | Faction Belief & Blame | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Faction Reputation & Standing, Credits, Upkeep & Sinks, Archive Fragments & Evidence |
+| 30 | Faction Belief & Blame | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Faction Reputation & Standing, Credits, Upkeep & Sinks, Archive Fragments & Evidence, Runtime ID Service |
 | 31 | Case File & Deduction | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Archive Fragments & Evidence |
-| 32 | Exposure & Rival Investigation | Narrative | MVP | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Archive Fragments & Evidence, Faction Belief & Blame |
-| 33 | Allied Lending | Gameplay | MVP | Not Started | — | Hulls & Ship Definition, Fleet Coordination, Faction Belief & Blame |
+| 32 | Exposure & Rival Investigation | Narrative | MVP | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Archive Fragments & Evidence, Faction Belief & Blame, Runtime ID Service |
+| 33 | Allied Lending | Gameplay | MVP | Not Started | — | Hulls & Ship Definition, Fleet Coordination, Faction Belief & Blame, Runtime ID Service |
 | 34 | Reckoning & Endings | Narrative | Vertical Slice | Not Started | — | Truth Seeding & Candidates, Credits, Upkeep & Sinks, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 35 | Refit & Loadout | Progression | MVP | Not Started | — | Hulls & Ship Definition, Weapons & Damage, Credits, Upkeep & Sinks |
-| 36 | Salvage & Recovery | Economy | Vertical Slice | Not Started | — | Credits, Upkeep & Sinks, Battle Resolution & Retreat |
+| 36 | Salvage & Recovery | Economy | Vertical Slice | Not Started | — | Credits, Upkeep & Sinks, Battle Resolution & Retreat, Runtime ID Service |
 | 37 | Markets & Trade | Economy | MVP | Not Started | — | Credits, Upkeep & Sinks, Sector Map & Travel |
 | 38 | Contracts & Missions | Economy | Alpha | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Faction Reputation & Standing, Credits, Upkeep & Sinks, Sector Map & Travel |
 | 39 | Loot & Crafting | Progression | Alpha | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Refit & Loadout, Salvage & Recovery |
@@ -238,9 +238,9 @@ Later tiers:
 | 41 | Officers | Progression | Full Vision | Not Started | — | Ship AI, Captain Skills |
 | 42 | Colonies & Industry | Economy | Full Vision | Not Started | — | Faction Reputation & Standing, Credits, Upkeep & Sinks, Sector Map & Travel |
 | 43 | Background Faction Economy | Economy | Alpha | Not Started | — | World Clock, Faction Reputation & Standing, Markets & Trade, Contracts & Missions |
-| 44 | Breakaway Machine Faction | Gameplay | Full Vision | Not Started | — | Coherence & Links, Ship AI, Archive Fragments & Evidence, Allied Lending |
-| 45 | Camera & Combat View (inferred) | Core | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space |
-| 46 | Combat HUD & Tactical Overlay (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View |
+| 44 | Breakaway Machine Faction | Gameplay | Full Vision | Not Started | — | Coherence & Links, Ship AI, Archive Fragments & Evidence, Allied Lending, Runtime ID Service |
+| 45 | Camera & Combat View (inferred) | Core | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space, Runtime ID Service |
+| 46 | Combat HUD & Tactical Overlay (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View, Runtime ID Service |
 | 47 | Dossier | UI | MVP | Not Started | — | Simulation Tick & Pause, Machine Nodes & Strongholds, After-Action Debrief, Allied Lending |
 | 48 | Ledger | UI | Vertical Slice | Not Started | — | Simulation Tick & Pause, Sector Map & Travel, Markets & Trade |
 | 49 | Public History Screen (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
@@ -248,7 +248,7 @@ Later tiers:
 | 51 | Menus, Settings & Save UI (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
 | 52 | Audio Direction & Adaptive Music | Audio | Vertical Slice | Not Started | — | Combat Event Bus & Battle Record, Vigor, Coherence & Links, Battle Resolution & Retreat, After-Action Debrief, Archive Fragments & Evidence, Exposure & Rival Investigation |
 | 53 | Onboarding & Opening Sequence | Meta | MVP | Not Started | — | Battle Resolution & Retreat, Machine Nodes & Strongholds, After-Action Debrief, Dossier |
-| 54 | Telemetry & Playtest Logging (inferred) | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout |
+| 54 | Telemetry & Playtest Logging (inferred) | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout, Runtime ID Service |
 | 55 | Accessibility Options UI (inferred) | Meta | Vertical Slice | Not Started | — | Gameplay Settings & Modifiers, Menus, Settings & Save UI |
 | 56 | Difficulty Options UI (inferred) | Meta | Vertical Slice | Not Started | — | Gameplay Settings & Modifiers, Menus, Settings & Save UI |
 | 57 | Platform Integration | Meta | Full Vision | Not Started | — | Save/Load & Migration |
@@ -477,10 +477,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 2 |
+| Design docs started | 3 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 2/43 (#1 In Review; #2 pending review) |
+| MVP systems designed | 3/43 (#1 In Review; #2 and #3 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---

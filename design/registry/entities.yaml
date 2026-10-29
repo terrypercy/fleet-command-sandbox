@@ -274,6 +274,50 @@ constants:
     added: 2026-10-29
     revised: ""
 
+  - name: max_runtime_id
+    status: active
+    source: design/gdd/runtime-id-service.md
+    referenced_by:
+      - design/gdd/runtime-id-service.md
+    value: 9007199254740991
+    unit: id
+    notes: "2^53 - 1. Highest Runtime ID ever issued; exact as a JSON number and a float. Issuing past it is fatal (D1). Storing an ID in 32 bits is banned; next_id crossing 2^31 logs one warning."
+    added: 2026-10-29
+    revised: ""
+
+  - name: runtime_id_none
+    status: active
+    source: design/gdd/runtime-id-service.md
+    referenced_by:
+      - design/gdd/runtime-id-service.md
+    value: 0
+    unit: id
+    notes: "The empty Runtime ID (NONE). Never issued; first issued ID is 1. Every system uses 0 for an empty ID field."
+    added: 2026-10-29
+    revised: ""
+
+  - name: identity_table_save_ceiling_mb
+    status: active
+    source: design/gdd/runtime-id-service.md
+    referenced_by:
+      - design/gdd/runtime-id-service.md
+    value: 8
+    unit: MB
+    notes: "PROVISIONAL. Ceiling on the uncompressed identity section of a save (D2). Unreferenced tombstones are compacted at campaign saves to stay under it. Save/Load must budget for it."
+    added: 2026-10-29
+    revised: ""
+
+  - name: resolve_share
+    status: active
+    source: design/gdd/runtime-id-service.md
+    referenced_by:
+      - design/gdd/runtime-id-service.md
+    value: 0.1
+    unit: fraction
+    notes: "PROVISIONAL until technical-director sign-off. Share of the per-tick pass line L (Simulation Tick & Pause D10) that Runtime ID lookups may use (D4)."
+    added: 2026-10-29
+    revised: ""
+
 # Example:
 #
 # constants:
