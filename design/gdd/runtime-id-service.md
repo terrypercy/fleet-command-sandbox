@@ -311,9 +311,14 @@ alone was judged too close in tone to the RNG GDD's "sealed" framing.*
       needs new IDs, it issues them in its own versioned migration step, after
       validation and before the first tick, from the restored `next_id` (Save/Load
       #5 owns migration).
+    - **Substitution** (Content Data & Mod Loading, Core Rule 13) rebinds an
+      identity's content ID in that same migration step, to a replacement of the
+      same kind. Each rebind is a recorded event in the identity digest, like an
+      issue or a retirement.
     - A save with no saved digest is refused, as one with no `next_id` is.
     - `next_id` and the identity table's **digest** are part of `state_hash`.
-      The digest is a running hash of issue, retire and compaction events (D2);
+      The digest is a running hash of issue, retire, compaction and substitution
+      events (D2);
       it is itself **saved and restored**, so a reloaded game hashes exactly as
       the original run did. *Simulation Tick & Pause rule 14's list of hashed
       state needs `next_id`, this digest and the projectile sequence added at its
@@ -470,7 +475,7 @@ far longer campaigns under it.
 
 *Hashing:* putting the whole table into `state_hash` every tick would hash
 megabytes per tick. The table's contribution is therefore a running digest of
-issue, retire and compaction events, which is **saved with the table** so a
+issue, retire, compaction and substitution events, which is **saved with the table** so a
 reload continues it exactly (Core Rule 11; ADR).
 
 ### D3. Projectile sequence bound
