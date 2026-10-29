@@ -18,10 +18,11 @@ Deterministic RNG & Seed Streams is the only source of random numbers in the
 simulation. A save holds one **master seed**, chosen once at new game. From it
 the system derives a separate, **named stream** for each consumer: truth
 seeding, hit rolls, AI tie-breaks, loot, missions, rival investigators, and any
-later consumer. A stream's output depends on three things only: its parent
-seed (the master seed, or the battle's own seed), the stream's full name
-(including the Runtime ID key of a per-ship stream), and how many draws that
-stream has itself made. Two consequences follow:
+later consumer. A stream's output depends only on its parent seed (the master
+seed, or the battle's own seed), the stream's full name (including the Runtime
+ID key of a per-ship stream), and its position: how many draws the stream has
+made, or, for a battle stream, the battle tick and how many draws it has made
+in that tick. Two consequences follow:
 - **No consumer can shift another's results.** A weapon that rolls one extra
   hit chance never changes which maker is the hidden truth, what a wreck
   drops, or how a rival investigator moves.
@@ -142,8 +143,18 @@ exactly, and the game says so.*
      - Loading a save made before a battle gives the same `battle_ordinal`, so
        the same battle. Retreating and engaging again starts a new battle with
        a new ordinal.
-3. **A stream's output depends on (parent seed, full name, own draw count),
-   and nothing else.**
+3. **A stream's output depends on (parent seed, full name, position), and
+   nothing else.**
+   - **Campaign streams:** the position is the stream's own draw count. Each
+     draw continues the sequence.
+   - **Battle streams are tick-indexed:** the position is
+     `(battle_tick, draw_index_in_tick)`, where
+     `battle_tick = tick_index − battle_start_tick` (Simulation Tick & Pause,
+     rule 1) and the index restarts at 0 every tick (D1). A battle roll
+     therefore never depends on how many rolls that stream made on earlier
+     ticks. That closes the reload loophole of "burning" a known roll with a
+     cheap shot first (rule 11). Repeating the same commands still repeats the
+     battle exactly, because ticks are part of the record.
    - A stream's seed comes from its **name**, never from a list position or the
      order streams were registered or first used.
    - So adding a stream in a patch never changes an existing stream, a mod's
@@ -153,9 +164,14 @@ exactly, and the game says so.*
      replay-breaking change, like changing `TICK_RATE`.
 4. **Names.** `<namespace>:<system>.<purpose>`, for example `base:combat.hit`,
    `base:truth.maker`, `mymod:raid.spawn`.
-   - Names are ASCII, matching `^[a-z][a-z0-9_]*:[a-z][a-z0-9_.]*$`, with an
-     optional key suffix (rule 5). There is no Unicode, so there is nothing to
-     normalise.
+   - Names are ASCII, matching
+     `^[a-z][a-z0-9_]*:[a-z][a-z0-9_.]*(#(0|[1-9][0-9]*)(/(0|[1-9][0-9]*))*)?$`.
+     The optional key suffix (rule 5) is canonical unsigned decimal with no
+     leading zeros, so one ship can never have two spellings of its stream.
+     There is no Unicode, so there is nothing to normalise.
+   - A declared key pattern whose longest possible name exceeds
+     `NAME_MAX_BYTES` (D1) is rejected when the registry loads, never at first
+     draw.
    - `base:` is reserved for shipped content. A mod may use only its own content
      namespace (Content Data & Mod Loading #4 enforces namespaces).
    - Every stream is **declared** by its owning system's GDD and registered as a
@@ -165,8 +181,10 @@ exactly, and the game says so.*
      refused, with a logged error, in release builds.
 5. **Keyed streams for combat and AI; one stream per consumer elsewhere.**
    - **Battle streams drawn per entity are keyed by Runtime ID.** Weapon hit
-     rolls use `base:combat.hit#<ship_id>/<weapon_slot>`, and AI tie-breaks use
-     `base:ai.tiebreak#<ship_id>`. Each owning GDD declares the key pattern. Adding
+     rolls use `base:combat.hit#<ship_id>/<weapon_slot>`. Ship AI tie-breaks
+     use `base:ai.tiebreak#<ship_id>`, and Fleet Coordination tie-breaks use its
+     own `base:fleet.tiebreak#<fleet_id>`, so each stream has exactly one owner
+     (rule 6). Each owning GDD declares the key pattern. Adding
      a ship, a weapon or a fleet therefore never changes another ship's rolls.
      A tuning comparison in the headless runner changes only what it changed.
    - **Campaign streams are one per consumer** (for example `base:truth.maker`,
@@ -217,7 +235,17 @@ exactly, and the game says so.*
      - A table whose weights total 0 is a content error at load. At run time,
        an empty table returns "no pick" and consumes no draw; the caller's GDD
        defines what happens then.
-   - **`shuffle(list)`**: Fisher–Yates, using exactly `n − 1` `int_range` calls.
+   - **`shuffle(list)`**: Fisher–Yates, using exactly `n − 1` `int_range` calls
+     for `n ≥ 2`. A list of 0 or 1 items is returned unchanged with no call.
+   - **Computed probabilities** (for example accuracy minus evasion) are
+     clamped to 0–1000 by the consumer before the call. `chance_permille`
+     asserts `0 ≤ p ≤ 1000`, because load-time validation cannot see computed
+     values.
+   - **A refused draw** (an undeclared name, or a keyed name that collides when
+     created) consumes no word and returns the lowest legal result: `a` for
+     `int_range`, false for `chance_permille`, 0.0 for `unit_float`, and "no
+     pick" for `weighted_pick`. It is logged. It is a hard error in debug builds,
+     and in release builds it stays deterministic.
    - **AI tie-breaks:** each AI decision draws exactly one value per actor per
      tick from that actor's tie-break stream, whether or not a tie exists.
      Candidates are ranked by utility, then by that value mixed with the
@@ -243,9 +271,15 @@ exactly, and the game says so.*
      them, and presentation cannot draw a simulation stream. Both are enforced by
      lint (AC-34, Acceptance Criteria). The replay hash test catches any leak.
 10. **Persistence and hashing.**
-    - **Saved:** the master seed, `battle_ordinal`, and for each stream that has
-      been drawn: its full name, its generator state and its draw count. A
-      mid-battle save also holds the battle seed and the battle's streams.
+    - **Saved:** the master seed, `battle_ordinal`, and for each campaign
+      stream that has been drawn: its full name, its generator state and its
+      draw count. A mid-battle save also holds the battle seed and, for each
+      drawn battle stream, its name and total draw count. A battle stream has
+      no other state to save: saves happen at tick boundaries, where every
+      battle stream's in-tick index is 0 (rule 3).
+    - **A load restores stored state; it never fast-forwards.** A renamed
+      stream is migrated as a name remap by Save/Load (#5), so an old save
+      continues the same sequence.
     - A stream exists in the save and in the hash only **after its first draw**.
     - **Hashed into `state_hash`:** every existing stream's state and draw count,
       ordered by the bytes of the full stream name (never by Dictionary or
@@ -259,7 +293,9 @@ exactly, and the game says so.*
 11. **Reloads restore exactly, and the game says so.** Loading restores every
     stream's state; nothing is re-derived or re-rolled. Repeating the same
     actions after a load gives the same results, and doing something different
-    gives different results. The game states this once, plainly (Player
+    gives different results. Because battle rolls are tick-indexed (rule 3),
+    acting at a different moment gives a different roll, and a known roll
+    cannot be "used up" by firing something else first. The game states this once, plainly (Player
     Fantasy; wording goes to `narrative-director`). Nothing in the game reacts
     to reloads: no pity timers and no difficulty that adapts to them.
 12. **Platform scope.** A stream's raw output is integer-only, so it is the same
@@ -292,7 +328,8 @@ Battle, and a load returns to the state that was saved.
 | Combat Event Bus & Battle Record (#9) | — | Battle seed and registry version for the record header | #9 |
 | Weapons & Damage (#12) | — | `base:combat.hit#<ship_id>/<weapon_slot>`, permille checks | #12 owns hit odds |
 | Truth Seeding & Candidates (#16) | — | `base:truth.*` campaign streams, drawn at new game only | #16 |
-| Ship AI (#20), Fleet Coordination (#21) | — | `base:ai.tiebreak#<ship_id>`, one draw per actor per decision per tick | AI owns decisions |
+| Ship AI (#20) | — | `base:ai.tiebreak#<ship_id>`, one draw per actor per decision per tick | Ship AI owns decisions |
+| Fleet Coordination (#21) | — | `base:fleet.tiebreak#<fleet_id>`, one draw per fleet per decision per tick | Fleet Coordination owns decisions |
 | Battle Resolution & Retreat (#22) | Battle end | — | #22 |
 | After-Action Debrief (#24) | — | The battle seed for replay | #24 |
 | AI-vs-AI Runner (#25) | Injected battle seeds | Streams and hashes per run | Runner owns seed sweeps |
@@ -327,8 +364,7 @@ per-entity keys everywhere. The owner chose keys for combat and AI only.
 - the derivation hash: FNV-1a 64 plus a SplitMix64 mixer recommended, never
   the engine's `String.hash()` or `hash()`
 - unsigned 64-bit maths on GDScript's signed `int`
-- whether a load restores stored state or fast-forwards from the draw count
-  (the behaviour must be identical either way)
+- a counter-based construction for tick-indexed battle streams (D1)
 - the byte encoding
 - a per-tick draw budget, and a GDExtension fallback if GDScript draws prove
   too slow (see Formulas)
@@ -370,6 +406,25 @@ The stream_seed formula is defined as:
 `h = FNV1a64(name)`, `stream_seed = SplitMix64(M XOR h)`. The same `M` and name
 give the same seed on every run, on every machine.
 
+**Battle streams are tick-indexed (Core Rule 3).** Each tick, a battle stream
+restarts from a per-tick seed:
+
+`tick_seed = SplitMix64(stream_seed XOR SplitMix64(battle_tick))`
+
+Draws in that tick run the generator from `tick_seed`, and `draw_index_in_tick`
+starts at 0.
+
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| battle_tick | int | 0 – 2^53 − 1 | calculated | `tick_index − battle_start_tick` (Simulation Tick & Pause, rule 1) |
+| draw_index_in_tick | int | 0 – `DRAW_BUDGET_PER_TICK` in practice | calculated | Words drawn from this stream in this tick; 0 at every tick boundary |
+| tick_seed | int (u64) | 0 – 2^64 − 1 | calculated | Generator start for this stream on this tick |
+
+The value at a given `(battle_tick, draw_index_in_tick)` never depends on what
+the stream drew on any earlier tick. *The exact construction (this
+SplitMix64 form, or a counter-based generator) is the ADR's choice. The
+behaviour is fixed here.*
+
 ### D2. Battle seed
 
 The battle_seed formula is defined as:
@@ -390,6 +445,10 @@ The battle_seed formula is defined as:
   minutes is 2,000 battles, about 2^11, against a limit of 2^63.
 - Ordinal 0 never seeds a battle.
 - The runner injects `battle_seed` directly and ignores the ordinal.
+- **No battle seed can equal a campaign stream's seed.** Both derive from the
+  master seed through H, so the registry also rejects any declared campaign
+  name whose `FNV1a64` equals that of `"base:battle" ‖ u64le(k)` for any `k`
+  from 1 to 65,536. Campaigns longer than 65,536 battles are out of scope.
 
 **Example:** a save made before the 7th battle restores `battle_ordinal = 6`.
 The next battle raises it to 7, so
@@ -409,7 +468,7 @@ repeat `x = next_u32()` until `x ≥ threshold`
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | a, b | int | −2^62 – 2^62, with a ≤ b | calculated | Inclusive bounds. Bounds out of range, or a > b, are an error. The ±2^62 limit keeps `b − a` from overflowing a signed 64-bit int |
-| n | int | 1 – 2^31 | calculated | Size of the range |
+| n | int | 1 – 2^31; `n > 2^31` is an error, as `a > b` is | calculated | Size of the range |
 | x | int (u32) | 0 – 2^32 − 1 | calculated | One draw |
 | p_reject | float | 0 – ≈ 1/3 | calculated | `threshold / 2^32`, the chance one draw is rejected |
 | E_draws | float | 1 – 1.5 | calculated | `1 / (1 − p_reject)`, the expected draws per call |
@@ -493,8 +552,13 @@ inputs give `(2^53 − 1) / 2^53`.
 
 The save_stream_bytes formula is defined as:
 
-`S_live = ships × slots + ships + S_unkeyed`
-`save_stream_bytes = S_live × (name_len + 16 + 16 + overhead)`
+`S_live = ships × slots + ships + fleets + S_unkeyed`
+`save_stream_bytes = S_live × (name_len + 16 + overhead)`
+
+A battle stream's record holds its name and total draw count only (16 hex
+characters), because a tick-indexed stream has no state at a tick boundary
+(Core Rule 10). Campaign stream records add 16 more characters for generator
+state; there are only about 20 of them.
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
@@ -502,18 +566,22 @@ The save_stream_bytes formula is defined as:
 | draw_count | int (u64) | 0 – 2^63 − 1 | calculated (saved) | Words drawn from one stream |
 | ships | int | 100 (stress: 200) | calculated | Simulation Tick & Pause D10 steady fixture |
 | slots | int | ≈ 6 (placeholder) | data file (Weapons & Damage #12 owns it) | Weapon slots per ship |
+| fleets | int | ≈ 4 | calculated | Fleets in the battle (Fleet Coordination tie-break streams) |
 | S_unkeyed | int | ≈ 20 | constant (registry) | Unkeyed battle streams |
 | name_len | int | ≈ 30 | calculated | Bytes in a keyed name such as `base:combat.hit#4294967296/12` |
 | overhead | int | ≈ 20 | constant (Save/Load #5 format) | Separators and field keys |
 | S_live | int | ≈ 720 (stress ≈ 1,420) | calculated | Battle streams alive at once |
 
-**Output Range:** about 720 streams at about 80 bytes each, so about 58 KB (about
-114 KB under stress), carried by **mid-battle saves only**. Campaign saves hold
-only the unkeyed campaign streams.
+**Output Range:** about 724 streams at about 66 bytes each, so about 48 KB
+(about 94 KB under stress), carried by **mid-battle saves only**. Campaign saves
+hold only the unkeyed campaign streams.
 - The busiest stream in a 20-minute battle (one AI tie-break per tick) makes
-  about 72,000 draws, far below 2^63. A 64-bit-period generator never wraps.
+  about 72,000 draws in total, far below 2^63. Because battle streams restart
+  every tick, no generator sequence in a battle runs longer than one tick's
+  draws.
 
-**Example:** `100 × 6 + 100 + 20 = 720` streams, and `720 × 82 = 59,040` bytes.
+**Example:** `100 × 6 + 100 + 4 + 20 = 724` streams, and `724 × 66 = 47,784`
+bytes.
 
 ### D8. Draw budget per tick
 
@@ -547,7 +615,8 @@ The rng_tick_cost formula is defined as:
 
 **The tick-rate spike must measure:**
 - p95 `t_draw` for each call type: `int_range`, `chance_permille`, `unit_float`,
-  and a first draw (lazy creation plus D1);
+  a stream's first draw in a tick (the per-tick seed, D1), and a stream's first
+  draw ever (lazy creation plus D1);
 - p95 and maximum `draws_per_tick` on Simulation Tick & Pause D10's steady and
   worst-case scenes, plus a full-broadside volley;
 - all of it headless, on the reference machine.
@@ -564,22 +633,249 @@ Every worked example was re-checked arithmetically.*
 - **D3:** the `next_u32` source, and unsigned compares on signed `int`.
 - **D5:** where the load-time sort and the `W ≤ 2^31` check run.
 - **D6:** the 27 + 26 bit layout.
-- **D7:** whether a generator's per-stream increment is derived from the name or
-  saved; restore versus fast-forward.
+- **D7:** whether a campaign generator's per-stream increment is derived from
+  the name or saved. A load restores stored state; it never fast-forwards
+  (Core Rule 10).
 - **D8:** sign off `RNG_SHARE`, and the `t_draw_us` threshold that triggers the
   GDExtension fallback.
 
 ## Edge Cases
 
-[To be designed]
+### Seeds and derivation
+
+- **If the master seed or a battle seed is 0**: it is valid and derives
+  normally. SplitMix64 has no degenerate input, so nothing is remapped.
+- **If a declared campaign name's hash equals the battle-seed input for some
+  ordinal**: the registry rejects the name at load (D2). Otherwise that battle's
+  seed would equal the campaign stream's seed.
+
+### Streams and names
+
+- **If a key is written with a leading zero (`#01042`)**: the name is rejected
+  as illegal (Core Rule 4). Keys are canonical decimal, so one ship can never
+  have two streams.
+- **If a declared key pattern's longest possible name exceeds
+  `NAME_MAX_BYTES`** (a long mod namespace plus a 20-digit ID plus a slot): the
+  declaration is rejected when the registry loads, never at first draw.
+- **If a name is drawn that is not declared, or a keyed name collides with a
+  live stream when it is created**: the draw is refused as Core Rule 7 says. It
+  consumes no word, returns the lowest legal result and is logged. It is a hard
+  error in debug builds.
+
+### Draw calls
+
+- **If `int_range(a, a)` is called**: it returns `a` and consumes exactly one
+  draw (D3, n = 1, never rejects). The draw count never depends on an edge
+  value.
+- **If `int_range` is called with `n > 2^31`, `a > b`, or a bound beyond
+  ±2^62**: it is an error (D3).
+- **If D3 rejects many draws in a row**: it keeps drawing. There is no iteration
+  cap, because a cap would change results. The generator's full period
+  guarantees the loop ends, and the expected number of draws is at most 1.5.
+- **If `shuffle` gets a list of 0 or 1 items**: it returns the list unchanged
+  and makes no call (Core Rule 7).
+- **If `weighted_pick` has one entry**: it still makes one
+  `int_range(0, W − 1)` call, so the draw count does not depend on table size.
+- **If a computed probability falls outside 0–1000 at run time** (accuracy
+  minus evasion): the consumer clamps it before the call, and
+  `chance_permille` asserts the range (Core Rule 7). Load-time validation does
+  not cover computed values.
+
+### Battles and contexts
+
+- **If a battle ends on its first tick, or the player retreats from the
+  Battle-start pause**: the ordinal is still used up. Streams that were never
+  drawn are never saved or hashed. The Battle Record header already holds the
+  battle seed.
+- **If a `BATTLE` context starts while another is live**: it is an error. Only
+  one battle seed exists at a time. Back-to-back engagements pass through
+  Battle end and Campaign in between.
+- **If Simulation Tick & Pause's tick-rate fallback offers the battle's
+  pre-battle state** (a mid-battle save from a different `TICK_RATE`): that state
+  holds `battle_ordinal` **before** the increment, so the battle starts again
+  under the same seed, not ordinal + 1.
+- **If the runner injects a battle seed**: `battle_ordinal` is neither read nor
+  written, and the Battle Record header records the seed with ordinal 0.
+- **If a ship is disabled and makes no decision on a tick**: it makes no
+  tie-break draw. Because battle streams are tick-indexed (Core Rule 3), a
+  skipped draw changes nothing on any later tick.
+- **If the World Clock passes an event's due time during a battle tick**: P8
+  queues the event and makes no draw (Core Rule 6). It draws at battle end, in
+  World Clock catch-up order.
+
+### Saves, loads and replay
+
+- **If a save is requested at battle end while deferred campaign draws are
+  running**: it waits until catch-up completes. That step is held by a `SYSTEM`
+  hold, like any save, and it is not a tick (Simulation Tick & Pause, rule 17).
+- **If a declared stream is missing from a save**: it is treated as never
+  drawn, and starts from its first position on first use. That matches Core
+  Rule 10, where a stream exists only after its first draw.
+- **If a stream record is malformed** (a bad name, non-hex or wrong-width hex, a
+  draw count above 2^63 − 1, or a duplicate name): the whole load is refused,
+  and the error names the stream. Nothing is partly restored or re-derived
+  (Core Rule 11).
+- **If a save holds a stream that is no longer declared** (its mod was removed):
+  the record is kept verbatim and inert. It is never drawn, it is written back
+  unchanged, and it **stays in `state_hash`** because it is saved state. Re-adding
+  the mod continues the stream where it stopped.
+- **If a save from an older registry version holds a renamed stream**: Save/Load
+  (#5) migrates the name as a remap, and the stored state continues the same
+  sequence. A load never fast-forwards (Core Rule 10).
+- **If a replay's stream-registry version differs from the build's**: the replay
+  is refused, as a different `TICK_RATE` is (Simulation Tick & Pause, rule 14).
+- **If the player reloads a mid-battle save after seeing a weapon miss**: the
+  same weapon fired on the same tick misses again. Firing it on a different tick
+  draws a different roll, and firing another weapon first changes nothing,
+  because rolls are tick-indexed (Core Rules 3 and 11).
+
+### Mods
+
+- **If a mod is added mid-campaign**: its streams are created lazily on first
+  draw, and base streams are unchanged (Core Rule 3).
+- **If a mod declares a `base:` name**: Content Data & Mod Loading (#4) rejects
+  the mod at load.
+- **If two mods' stream names collide by hash**: both declarations are
+  rejected at load, and the error names both mods. Which mod still loads is
+  #4's decision.
+
+### Runtime IDs
+
+- **If a ship is destroyed and another spawns**: the new ship gets a new Runtime
+  ID (never reused within a save, Core Rule 5), so it gets a fresh stream. The
+  destroyed ship's stream is never drawn again; it stays saved and hashed until
+  the battle ends.
+- **If a ship from battle N fights in battle N + 1**: the same stream name
+  under a new battle seed gives an unrelated sequence.
+
+### Performance
+
+- **If a tick exceeds `DRAW_BUDGET_PER_TICK`**: every draw still runs, and the
+  overrun is logged with `tick_index`. Nothing in the simulation skips or
+  throttles work because of the budget. Only the wall-time cap (Simulation Tick
+  & Pause, rule 8) slows the game, and the overrun shows in the spike report
+  (D8).
+
+### Presentation and tools
+
+- **If a Debrief replay runs while campaign state is live**: it uses an isolated
+  instance of this system and shares no handles with the live game.
+- **If the dev overlay displays streams**: it shows names and draw counts only,
+  never a next value (Core Rule 6: no peek).
+
+### Truth seeding
+
+- **If a new game is aborted before its first save**: the seed and the truth are
+  discarded, and the next new game draws fresh entropy. This is a new
+  campaign, not a re-roll of a save (Pillar 2).
+- **If a `base:truth.*` stream is drawn after the new-game step**: the draw is
+  refused like an undeclared draw. Truth Seeding (#16) declares these streams
+  as new-game-only.
+
+*Specialist consulted: `systems-designer`. It flagged six conflicts with the
+earlier draft, all resolved:*
+- *Ship AI and Fleet Coordination shared one tie-break stream; each now has its
+  own (Core Rule 5).*
+- *D3 did not say `n > 2^31` is an error.*
+- *`shuffle` gave −1 calls for an empty list.*
+- *Stream renames were ambiguous between restore and fast-forward; a load now
+  always restores (Core Rule 10).*
+- *Keys had no grammar (Core Rule 4).*
+- *Per-weapon streams let a reload "burn" a known roll. **Owner decision
+  (2026-10-29):** battle streams are tick-indexed (Core Rule 3).*
+
+*Still open: whether a deferred catch-up event can start a battle, and whether a
+mid-battle refit can change a weapon slot (Open Questions).*
 
 ## Dependencies
 
-[To be designed]
+### Upstream (what this system needs)
+
+**Hard dependencies: none.** The generator, the derivation, the draw calls and
+the registry work with nothing else designed. That is why the system sits in
+the Foundation layer.
+
+**Interface contracts** (soft). Each is data handed in, never a call back into
+another system's logic:
+
+| System | Hard / soft | Interface | Notes |
+|---|---|---|---|
+| Simulation Tick & Pause (#1) | Soft (data handed in) | Context (`BATTLE`/`CAMPAIGN`), the current phase, `tick_index` and `battle_start_tick` | Needed for tick-indexed battle streams (Core Rule 3) and the draw rules (Core Rule 6). Tick owns phase order and `state_hash`; this system supplies stream states to it |
+| Runtime ID Service (#3) | Soft, but **required for keyed streams** | Runtime IDs as stream keys, and the guarantee that **no ID is reused within a save** | Without it, keyed streams cannot be used. A reused ID would replay a destroyed ship's sequence |
+| Content Data & Mod Loading (#4) | Soft | Mod namespaces; streams declared by mods; permille and weight tables to validate | #4 enforces namespaces; this system validates names, permille values and weights |
+| Save/Load & Migration (#5) | Soft (reverse) | This system *provides* its section: master seed, `battle_ordinal`, battle seed, stream records, registry version | Save owns the format, integer-safe encoding and rename migration |
+| World Clock (#8) | Soft | The catch-up order for campaign events deferred from a battle | Provisional contract (Open Questions) |
+
+### Downstream (what depends on this system)
+
+**Listed in the systems index:**
+
+| System | Hard / soft | What it relies on |
+|---|---|---|
+| Weapons & Damage (#12) | Hard | `base:combat.hit#<ship_id>/<weapon_slot>`; `chance_permille`; permille hit odds shown exactly (D4) |
+| Truth Seeding & Candidates (#16) | Hard | `base:truth.*` streams, drawn at new game only; `weighted_pick` or `int_range` for the true maker |
+| Ship AI (#20) | Hard | `base:ai.tiebreak#<ship_id>`; the tie-break ranking rule (Core Rule 7) |
+| AI-vs-AI Runner & AI Debug Tools (#25) | Hard | Injected battle seeds; battles that replay from a battle seed alone (Core Rule 2); per-stream draw counts for divergence diagnosis |
+| Exposure & Rival Investigation (#32) | Hard | Campaign streams (for example `base:rivals.search`); the deferred-draw rule during battles |
+| Contracts & Missions (#38) | Hard | Campaign streams; `weighted_pick` |
+| Loot & Crafting (#39) | Hard | Campaign streams; `weighted_pick` with integer weights validated at load |
+
+**Not yet listed in the index.** Each needs this system in its own
+Dependencies, and the index should list it at the next update:
+
+| System | Hard / soft | What it relies on |
+|---|---|---|
+| Fleet Coordination (#21) | Hard | `base:fleet.tiebreak#<fleet_id>` |
+| Combat Event Bus & Battle Record (#9) | Soft | The battle seed and registry version for the record header |
+| After-Action Debrief (#24) | Soft | The battle seed for replay; an isolated instance for replays (Edge Cases) |
+| Sector Map & Travel (#26), Tier 1 procedural generation | Hard (Tier 1) | Campaign streams for seeded, deterministic generation |
+| Telemetry & Playtest Logging (#54) | Soft | The master seed in the bug-report bundle (Core Rule 8) |
+
+**Presentation (#45 Camera, #46 HUD, #52 Audio) does not depend on this
+system.** It uses its own cosmetic generators (Core Rule 9).
+
+**Bidirectional check:**
+- The only other existing GDD is Simulation Tick & Pause. Its Interactions table
+  lists this system (#2) and gives `tick_index` "for stream bookkeeping", and
+  its rule 14 puts RNG stream states into `state_hash`. That matches.
+- Its row should also name `battle_start_tick` and the context, which this
+  system now reads (Core Rule 3). Flag this for the Tick GDD's re-review.
+- Every system above must list Deterministic RNG & Seed Streams in its own
+  Dependencies when it is designed.
 
 ## Tuning Knobs
 
-[To be designed]
+**This system owns no gameplay tuning knobs.** Randomness that a designer
+tunes is a value in the *consumer's* data, validated here:
+- hit odds as permille (Weapons & Damage #12);
+- loot and mission weights (Loot & Crafting #39, Contracts & Missions #38);
+- AI utility weights (Ship AI #20).
+
+A knob here would let a designer change every consumer's results at once,
+which is exactly what Core Rule 3 forbids.
+
+### Engineering constants (versioned; not tuning knobs)
+
+Changing any of these changes stream outputs or the save format. Each change is
+a versioned, replay-breaking change, recorded with the stream-registry version.
+
+| Constant | Value | Why it is fixed |
+|---|---|---|
+| Generator algorithm and derivation hash H | PCG32 plus FNV-1a 64 and SplitMix64, recommended (ADR decides) | Defines every stream's output (D1) |
+| `NAME_MAX_BYTES` | 64 | Bounds stream names and keyed patterns (D1) |
+| Probability unit | permille (0–1000) | All outcome-deciding odds are integer permille (D4) |
+| `int_range` limits | `n ≤ 2^31`; bounds within ±2^62 | Unbiased rejection and no signed overflow (D3) |
+| `weighted_pick` limits | Weights 0 – 2^31, total 1 – 2^31, up to 2^16 entries | Keeps D5 within D3 (D5) |
+| Battle-seed collision range | Ordinals 1 – 65,536 checked | Registry check against campaign names (D2) |
+| `RNG_SHARE` | 0.15 (**provisional**) | This system's share of the per-tick pass line. Needs technical-director sign-off (D8) |
+| `DRAW_BUDGET_PER_TICK` | Set from the tick-rate spike (**provisional**) | A measurement target, never a throttle (D8, Edge Cases) |
+| Stream-registry version | Starts at 1 | Bumped on any rename, removal or derivation change. Written into saves and Battle Record headers |
+
+**Knobs owned elsewhere** (referenced, not duplicated):
+- hit odds (Weapons & Damage #12)
+- loot, mission and offer weights (#39, #38)
+- the true-maker candidate set and any weighting of it (Truth Seeding #16)
+- AI utility weights (Ship AI #20)
 
 ## Visual/Audio Requirements
 
