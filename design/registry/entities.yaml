@@ -54,7 +54,7 @@
 #   in any other shape is reported as unsupported layout, with its number.
 
 version: 1
-last_updated: "2026-10-28"
+last_updated: "2026-10-29"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -136,6 +136,44 @@ formulas:
     notes: "Seconds of simulation time per tick (D1). Fixed per build; never changes at runtime."
     added: 2026-10-28
 
+  - name: battle_seed
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    variables:
+      - master_seed
+      - battle_ordinal
+    output_range: [0, 18446744073709551615]
+    expression: "H(master_seed, 'base:battle' || u64le(battle_ordinal))"
+    notes: "Parent seed of every battle stream (D2). battle_ordinal is a saved campaign counter, +1 per BATTLE context; 0 = no battle yet. Written into the Battle Record header; the AI-vs-AI runner injects it directly. 64-bit: never a JSON number."
+    added: 2026-10-29
+
+  - name: chance_permille
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    variables:
+      - p
+    output_range: [0, 1]
+    expression: "int_range(0, 999) < p"
+    notes: "Every outcome-deciding probability (D4). p is integer permille 0-1000; true with probability exactly p/1000. Odds shown to the player are exactly p/10 percent to one decimal. Output is a bool (0 = false, 1 = true)."
+    added: 2026-10-29
+
+  - name: weighted_pick
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    variables:
+      - w_i
+      - W
+    output_range: [0, 65535]
+    expression: "first entry i with cum_i > int_range(0, W - 1)"
+    notes: "D5. Output is the picked entry's index. Integer weights 0 to 2^31, total 1 to 2^31, up to 2^16 entries, table sorted by stable_id at load; negative weights, zero totals and Dictionary tables are content errors."
+    added: 2026-10-29
+
 # Example:
 #
 # formulas:
@@ -173,6 +211,7 @@ constants:
     source: design/gdd/simulation-tick-and-pause.md
     referenced_by:
       - design/gdd/simulation-tick-and-pause.md
+      - design/gdd/deterministic-rng-and-seed-streams.md
     value: 60
     unit: Hz
     notes: "Target rate, gated by a headless spike (about 100 ships and 500 projectiles must fit the frame budget); fallback is 30 Hz. Versioned engineering constant: written into every save and replay header, and changing it breaks replays."
@@ -184,10 +223,55 @@ constants:
     source: design/gdd/simulation-tick-and-pause.md
     referenced_by:
       - design/gdd/simulation-tick-and-pause.md
+      - design/gdd/deterministic-rng-and-seed-streams.md
     value: 8
     unit: ms
     notes: "PROVISIONAL until technical-director sign-off. The simulation's share of a 16.67 ms frame; sets the spike pass line (4.0 ms per tick at 60 Hz, D10)."
     added: 2026-10-28
+    revised: ""
+
+  - name: permille_scale
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    value: 1000
+    unit: permille
+    notes: "The unit of every outcome-deciding probability (D4). Consumers (Weapons & Damage, Loot, Contracts) store odds as integer permille 0-1000."
+    added: 2026-10-29
+    revised: ""
+
+  - name: rng_share
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    value: 0.15
+    unit: fraction
+    notes: "PROVISIONAL until technical-director sign-off. The RNG system's share of the per-tick pass line L (Simulation Tick & Pause D10); sets DRAW_BUDGET_PER_TICK (D8)."
+    added: 2026-10-29
+    revised: ""
+
+  - name: name_max_bytes
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    value: 64
+    unit: bytes
+    notes: "Longest legal stream name including its key suffix (D1). Mod namespaces and keyed patterns must fit; checked when the registry loads."
+    added: 2026-10-29
+    revised: ""
+
+  - name: rng_save_ceiling_kb
+    status: active
+    source: design/gdd/deterministic-rng-and-seed-streams.md
+    referenced_by:
+      - design/gdd/deterministic-rng-and-seed-streams.md
+    value: 64
+    unit: KB
+    notes: "PROVISIONAL. Ceiling on the RNG section of a mid-battle save at the Tick D10 steady fixture (D7, AC-41). Save/Load must budget for it."
+    added: 2026-10-29
     revised: ""
 
 # Example:

@@ -5,12 +5,20 @@
 > **Last Updated**: 2026-10-28
 > **Last Verified**: 2026-10-28
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — one fixed, hidden truth seeded per save); Pillar 1 (Every Defeat Is a Lead — same-seed replay behind a trustworthy Debrief)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-29 — CONCERNS resolved. The reload promise reworded honestly, plus a mid-battle save-policy question (Open Questions #9); odds surfacing made a contract on every outcome-deciding consumer (UI Requirements 2, AC-43); the Pillar 2 guarantee bounded to in-game and shareable paths (Core Rule 8)
 
 ## Summary
 
-[To be designed]
+Deterministic RNG & Seed Streams is the simulation's only source of random
+numbers. It derives an independent named stream for every consumer from one
+master seed per save, with each battle on its own seed and its rolls indexed by
+tick. For the player, it means the hidden truth is fixed from the first moment,
+defeats replay exactly and can be explained, and loading a save never re-rolls
+the world. It exists because the seeded mystery, the headless AI-vs-AI runner
+and every system that rolls dice depend on draws that never disturb one
+another.
 
-> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `None`
+> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `None` (hard); soft contracts with Simulation Tick & Pause, Runtime ID Service, Content Data & Mod Loading, Save/Load, World Clock. Depended on by Weapons & Damage, Truth Seeding, Ship AI, Fleet Coordination, AI-vs-AI Runner, Exposure, Contracts, Loot & Crafting
 
 ## Overview
 
@@ -69,8 +77,9 @@ Nothing the player does can change it, re-roll it or look it up. Every fragment
 they find is a real piece of a real case, not something produced to suit their
 theory. A detective can only solve a crime that actually happened. The same
 holds in battle and in the salvage hold. What happened, happened, and it is
-still the same after the player loads a save. **A bad result is answered by
-changing what you do, not by asking the world to roll again.**
+still the same after the player loads a save. **The moment is fixed: a bad
+result is answered by changing what you do, and acting at a different moment
+is a different action.**
 
 *Anchor moment:* two fragments independently contradict the player's favourite
 suspect. The Case File marks the theory ruled out. The player knows the galaxy
@@ -101,8 +110,8 @@ holds."*
   believed, shared or reloaded.
 - **That the world is watching their saves.** No hidden rubber-banding, pity
   timers, or difficulty that reacts to reloads. Each draw depends only on the
-  seed, the stream's name and that stream's own draw count, and the game says
-  so.
+  seed, the stream's name and its position in that stream (in battle, the tick
+  and the draw within it), and the game says so.
 - **That a defeat was luck.** Where a random roll decides an outcome, the odds
   are readable before the fight (Pillar 4), and the Debrief names a cause the
   player can counter, never "bad luck".
@@ -123,8 +132,9 @@ exactly, and the game says so.*
    - Engine-global random calls, `RandomNumberGenerator`, `shuffle` and
      `pick_random` are banned in simulation code (Simulation Tick & Pause,
      AC-34). Shuffles and weighted picks are this system's own helpers (rule 7).
-   - Nothing in the simulation reads OS entropy, time or any other outside
-     source of variation.
+   - Nothing in the simulation reads OS entropy, time, or any other source on
+     the lint lists of Simulation Tick & Pause AC-34 and this GDD's AC-31. The
+     one exception is the master seed's entropy, read by the driver (rule 8).
 2. **Two levels: campaign streams and battle streams.**
    - **Campaign streams** are derived from the save's **master seed** and the
      stream's name.
@@ -245,11 +255,14 @@ exactly, and the game says so.*
      created) consumes no word and returns the lowest legal result: `a` for
      `int_range`, false for `chance_permille`, 0.0 for `unit_float`, and "no
      pick" for `weighted_pick`. It is logged. It is a hard error in debug builds,
-     and in release builds it stays deterministic.
+     and in release builds it stays deterministic. The refusal mode and the
+     name hash are injected, so tests can run both modes and force a collision
+     (Acceptance Criteria).
    - **AI tie-breaks:** each AI decision draws exactly one value per actor per
      tick from that actor's tie-break stream, whether or not a tie exists.
      Candidates are ranked by utility, then by that value mixed with the
-     candidate's ID, then by the candidate's Runtime ID. A tie therefore resolves
+     candidate's ID (the mixing function is defined in the ADR and pinned by a
+     known-answer test), then by the candidate's Runtime ID. A tie therefore resolves
      the same way every run, and adding an unrelated candidate never flips which
      of a tied pair wins. Candidate lists are built in ascending Runtime ID.
    - **Sorting:** every simulation sort uses a total order ending in Runtime ID
@@ -263,13 +276,21 @@ exactly, and the game says so.*
      re-roll it or look it up"*, Player Fantasy).
    - **The seed is not shown in normal UI.** It is written into the bug-report
      bundle and the dev debug overlay only, so problems can be reproduced.
+   - **Where the Pillar 2 guarantee stops.** No in-game or shareable path reveals
+     the truth: no seed entry, no seed in normal UI, and no seed carried from one
+     save to another. Inspecting save files or game code is out of scope; the
+     seed is in every save by necessity.
+   - The bug-report bundle **never prints the results of `base:truth.*` draws**
+     in readable form. It carries the seed, which reproduces them, and nothing
+     that names the maker.
    - The headless runner and tests pass an explicit master or battle seed.
 9. **Presentation randomness is separate.**
    - VFX jitter, camera shake, audio variation and other cosmetic randomness use
      presentation-owned generators that are not seeded from the save.
    - Their output never enters `SimState`. Simulation code cannot reference
      them, and presentation cannot draw a simulation stream. Both are enforced by
-     lint (AC-34, Acceptance Criteria). The replay hash test catches any leak.
+     lint: Simulation Tick & Pause AC-34, and this GDD's AC-31 and AC-32. The
+     replay hash test (AC-34 here) catches any leak.
 10. **Persistence and hashing.**
     - **Saved:** the master seed, `battle_ordinal`, and for each campaign
       stream that has been drawn: its full name, its generator state and its
@@ -295,13 +316,18 @@ exactly, and the game says so.*
     actions after a load gives the same results, and doing something different
     gives different results. Because battle rolls are tick-indexed (rule 3),
     acting at a different moment gives a different roll, and a known roll
-    cannot be "used up" by firing something else first. The game states this once, plainly (Player
-    Fantasy; wording goes to `narrative-director`). Nothing in the game reacts
-    to reloads: no pity timers and no difficulty that adapts to them.
-12. **Platform scope.** A stream's raw output is integer-only, so it is the same
-    on every platform. Floats computed from it are covered by Simulation Tick &
-    Pause rule 14: verification is same-platform only at MVP, and cross-platform
-    replays are marked "unverified".
+    cannot be "used up" by firing something else first.
+    - **The statement:** string key `ui.rng.reload_statement` (Player Fantasy).
+      `narrative-director` owns the wording; the screen that shows it, and when,
+      are set in the UX spec (Open Questions).
+    - **No reaction to reloads:** outcomes are invariant to the number of
+      reloads (AC-39). There are no pity timers and no difficulty that adapts to
+      reloads.
+12. **Platform scope.** A stream's raw output is integer-only. Each shipped
+    platform's build must match the golden tables (AC-38). Floats computed from
+    it are covered by Simulation Tick & Pause rule 14: verification is
+    same-platform only at MVP, and cross-platform replays are marked
+    "unverified".
 
 ### States and Transitions
 
@@ -394,8 +420,12 @@ The stream_seed formula is defined as:
 | NAME_MAX_BYTES | int | 64 | constant (engineering) | Longest legal full name |
 | stream_seed | int (u64) | 0 – 2^64 − 1 | calculated | The stream's initial generator seed |
 
+"SplitMix64" here and in every formula means the **full SplitMix64 step**: add
+the constant `0x9e3779b97f4a7c15`, then apply the finaliser. The bare finaliser
+maps 0 to 0. The full step does not: `SplitMix64(0) = 0xe220a8397b1dcdaf`.
+
 **Output Range:** the full 64 bits.
-- The SplitMix64 finaliser is a bijection, so two names with different
+- The full SplitMix64 step is a bijection, so two names with different
   `FNV1a64` values never give the same seed under the same parent.
 - **Collision rule:** the registry rejects any two declared names with equal
   `FNV1a64(name)`. That check holds for every parent seed. A keyed name whose
@@ -573,7 +603,9 @@ state; there are only about 20 of them.
 | S_live | int | ≈ 720 (stress ≈ 1,420) | calculated | Battle streams alive at once |
 
 **Output Range:** about 724 streams at about 66 bytes each, so about 48 KB
-(about 94 KB under stress), carried by **mid-battle saves only**. Campaign saves
+(about 94 KB under stress), carried by **mid-battle saves only**. **Ceiling:
+the RNG section of a mid-battle save at the D10 steady fixture is at most
+64 KB** (`RNG_SAVE_CEILING_KB`, provisional; AC-41). Campaign saves
 hold only the unkeyed campaign streams.
 - The busiest stream in a 20-minute battle (one AI tie-break per tick) makes
   about 72,000 draws in total, far below 2^63. Because battle streams restart
@@ -725,9 +757,12 @@ Every worked example was re-checked arithmetically.*
 - **If a replay's stream-registry version differs from the build's**: the replay
   is refused, as a different `TICK_RATE` is (Simulation Tick & Pause, rule 14).
 - **If the player reloads a mid-battle save after seeing a weapon miss**: the
-  same weapon fired on the same tick misses again. Firing it on a different tick
-  draws a different roll, and firing another weapon first changes nothing,
-  because rolls are tick-indexed (Core Rules 3 and 11).
+  same weapon fired on the same tick misses again. Firing another weapon first
+  changes nothing, because rolls are tick-indexed (Core Rules 3 and 11). Waiting
+  a tick and firing again is a different action, and it gets a different roll.
+  This system cannot stop repeated mid-battle reloads from being used that way;
+  the mid-battle save policy decides whether defeat keeps its cost (Open
+  Questions).
 
 ### Mods
 
@@ -812,13 +847,13 @@ another system's logic:
 
 | System | Hard / soft | What it relies on |
 |---|---|---|
-| Weapons & Damage (#12) | Hard | `base:combat.hit#<ship_id>/<weapon_slot>`; `chance_permille`; permille hit odds shown exactly (D4) |
+| Weapons & Damage (#12) | Hard | `base:combat.hit#<ship_id>/<weapon_slot>`; `chance_permille`; permille hit odds shown exactly (D4). **Must declare and surface its hit odds** (UI Requirements 2) |
 | Truth Seeding & Candidates (#16) | Hard | `base:truth.*` streams, drawn at new game only; `weighted_pick` or `int_range` for the true maker |
 | Ship AI (#20) | Hard | `base:ai.tiebreak#<ship_id>`; the tie-break ranking rule (Core Rule 7) |
 | AI-vs-AI Runner & AI Debug Tools (#25) | Hard | Injected battle seeds; battles that replay from a battle seed alone (Core Rule 2); per-stream draw counts for divergence diagnosis |
 | Exposure & Rival Investigation (#32) | Hard | Campaign streams (for example `base:rivals.search`); the deferred-draw rule during battles |
-| Contracts & Missions (#38) | Hard | Campaign streams; `weighted_pick` |
-| Loot & Crafting (#39) | Hard | Campaign streams; `weighted_pick` with integer weights validated at load |
+| Contracts & Missions (#38) | Hard | Campaign streams; `weighted_pick`. **Must declare and surface its offer odds** (UI Requirements 2) |
+| Loot & Crafting (#39) | Hard | Campaign streams; `weighted_pick` with integer weights validated at load. **Must declare and surface its drop odds** (UI Requirements 2) |
 
 **Not yet listed in the index.** Each needs this system in its own
 Dependencies, and the index should list it at the next update:
@@ -827,7 +862,7 @@ Dependencies, and the index should list it at the next update:
 |---|---|---|
 | Fleet Coordination (#21) | Hard | `base:fleet.tiebreak#<fleet_id>` |
 | Combat Event Bus & Battle Record (#9) | Soft | The battle seed and registry version for the record header |
-| After-Action Debrief (#24) | Soft | The battle seed for replay; an isolated instance for replays (Edge Cases) |
+| After-Action Debrief (#24) | Soft | The battle seed for replay; an isolated instance for replays (Edge Cases). **Cites the odds next to the counter** when a roll is part of a loss's cause, and never names "bad luck" (UI Requirements 2) |
 | Sector Map & Travel (#26), Tier 1 procedural generation | Hard (Tier 1) | Campaign streams for seeded, deterministic generation |
 | Telemetry & Playtest Logging (#54) | Soft | The master seed in the bug-report bundle (Core Rule 8) |
 
@@ -869,6 +904,7 @@ a versioned, replay-breaking change, recorded with the stream-registry version.
 | Battle-seed collision range | Ordinals 1 – 65,536 checked | Registry check against campaign names (D2) |
 | `RNG_SHARE` | 0.15 (**provisional**) | This system's share of the per-tick pass line. Needs technical-director sign-off (D8) |
 | `DRAW_BUDGET_PER_TICK` | Set from the tick-rate spike (**provisional**) | A measurement target, never a throttle (D8, Edge Cases) |
+| `RNG_SAVE_CEILING_KB` | 64 (**provisional**) | Ceiling on the RNG section of a mid-battle save at the D10 fixture (D7, AC-41) |
 | Stream-registry version | Starts at 1 | Bumped on any rename, removal or derivation change. Written into saves and Battle Record headers |
 
 **Knobs owned elsewhere** (referenced, not duplicated):
@@ -879,24 +915,392 @@ a versioned, replay-breaking change, recorded with the stream-registry version.
 
 ## Visual/Audio Requirements
 
-[To be designed]
+**None of its own.** The system has no art or sound. It sets one rule for
+visuals and audio:
+- **Cosmetic randomness never comes from a simulation stream** (Core Rule 9).
+  VFX jitter, debris scatter, camera shake, audio pitch and sample variation use
+  presentation-owned generators.
+- The **outcome** a visual shows (a hit or a miss, the loot that drops) comes
+  from the simulation. Only its look varies cosmetically, so two viewings of a
+  replay show the same results, though sparks may scatter differently.
+
+*`art-director` and `audio-director` were not consulted: Visual/Audio is
+optional for `Core` systems, and this system has no visual or audio surface.*
 
 ## Game Feel
 
-[To be designed]
+**Not applicable.** The player never operates this system directly. Its feel
+contribution is indirect, and it is already fixed by the rules: odds shown
+exactly (D4), no hidden reaction to reloads (Core Rule 11), and outcomes that
+replay identically (Core Rules 2 and 3).
 
 ## UI Requirements
 
-[To be designed]
+This system contributes three small things. None is a screen of its own.
+
+1. **The reload statement** (Core Rule 11). One plain line, string key
+   `ui.rng.reload_statement`, telling the player that loading returns them to
+   the moment but does not change what the moment holds.
+   - `narrative-director` owns the wording, in the archival tone of the Player
+     Fantasy. It must never say "luck", "fate", "RNG", "dice" or "roll" (AC-42).
+   - The UX spec chooses its screen and timing: for example the load screen,
+     shown the first time the player loads a save (Open Questions).
+2. **Odds are always surfaced (a contract on every consumer).**
+   - Every stream whose draws decide an outcome (a `chance_permille` or
+     `weighted_pick` that changes a hit, a drop, an offer or a result) must
+     **surface its odds to the player before the outcome matters**, in the
+     Dossier, the Ledger, the combat HUD, or the consumer's own screen.
+   - Each such stream declares its odds surface in the stream registry
+     (`odds_surface`). A stream with no declaration fails CI (AC-43). Streams
+     whose draws are not outcome-deciding (AI tie-breaks, spread angles)
+     declare `odds_surface: none` with a reason.
+   - The odds are shown as `p / 10` percent to one decimal place ("65.0%"),
+     never as a rounded float (D4).
+   - **The Debrief cites the odds** next to the counter whenever a roll is part
+     of a loss's cause. It never names "bad luck" as a cause (Player Fantasy;
+     Pillar 1).
+3. **Developer-only surfaces.**
+   - The **bug-report bundle** includes the master seed, the current battle
+     seed, and the stream-registry version, as 16-character hex (Core Rule 8).
+   - The **dev debug overlay** lists live streams with names and draw counts
+     only, never a next value (Core Rule 6).
+   - Neither appears in a release build's normal UI.
+
+> **📌 UX Flag — Deterministic RNG & Seed Streams**: this system has UI
+> requirements: the reload statement, and the shared odds-display format. In
+> Phase 4 (Pre-Production), run `/ux-design` for the load/save flow before
+> writing epics, and decide where the statement appears. Stories that reference
+> this UI should cite `design/ux/[screen].md`, not this GDD.
 
 ## Cross-References
 
-[To be designed]
+| This GDD references | Document | Section | What is relied on |
+|---|---|---|---|
+| Pillar 2, *The Truth Is Yours to Tell* | `design/gdd/game-concept.md` | Game Pillars | "The truth about who built the machines is fixed"; one hidden truth seeded per save |
+| Pillar 1 and the pillar tensions | `design/gdd/game-concept.md` | Game Pillars; Anti-Pillars | Defeats explainable; what follows "obeys no hidden rule and is legible after the fact" |
+| Tier 0 boundary test | `design/gdd/systems-index.md` | Technical Director Note | "The headless runner reproduces the same battle twice from one seed" (AC-34, AC-37) |
+| System role and consumers | `design/gdd/systems-index.md` | Overview; Systems Enumeration | Named streams per consumer derived from the save seed; consumers #12, #16, #20, #25, #32, #38, #39 |
+| Phase order, ascending Runtime ID | `design/gdd/simulation-tick-and-pause.md` | Core Rules, rule 3 | The order in which battle streams are drawn (Core Rule 6) |
+| `tick_index`, `battle_start_tick` | `design/gdd/simulation-tick-and-pause.md` | Core Rules, rule 1 | `battle_tick` for tick-indexed battle streams (Core Rule 3, D1) |
+| `state_hash`, header, platform scope | `design/gdd/simulation-tick-and-pause.md` | Core Rules, rule 14; AC-53 | Stream states hashed in name order; integers above 2^53 never JSON numbers; same-platform verification |
+| Engine RNG ban and lint | `design/gdd/simulation-tick-and-pause.md` | Acceptance Criteria, AC-34 | Engine random calls banned in simulation code |
+| Per-tick pass line `L` | `design/gdd/simulation-tick-and-pause.md` | Formulas, D10 | The budget `RNG_SHARE` takes its share from (D8) |
+| Saves at tick boundaries | `design/gdd/simulation-tick-and-pause.md` | Core Rules, rule 17 | Battle streams carry no state at a boundary (Core Rule 10) |
+| Generator choice | `design/gdd/simulation-tick-and-pause.md` | Open Questions, row 4 | "Our own small PRNG vs pinning `RandomNumberGenerator`", handed to the ADR |
+| Engine facts | `docs/engine-reference/godot/` | `breaking-changes.md` (4.7.2 `rand_weighted`) | Negative weights rejected. Everything else about the engine's RNG, integers, hashing and JSON is NOT SOURCEABLE (no `modules/core.md`) |
+
+No other system GDD exists yet. Each system in Dependencies → Downstream must
+cross-reference this GDD when it is written.
 
 ## Acceptance Criteria
 
-[To be designed]
+**How tests stay isolated.** No criterion reads OS entropy or the wall clock.
+The fixtures:
+- **`FakeEntropySource`** returns a scripted 64-bit master seed and counts its
+  calls.
+- **`ScriptedWordSource`** stands in for `next_u32()` with a scripted word list,
+  so D3–D6 known-answer tests choose their own draws.
+- **`StubNameHash`** is injected in place of `FNV1a64`, so collision tests can
+  force a collision without searching for a real one.
+- **`RefusalMode`** (`DEBUG` / `RELEASE`) is injected, so both refusal behaviours
+  run in one build.
+- **`RngFixtures`** holds the pinned seeds `M_FIX` and `B_FIX` and the stream
+  names. No magic numbers appear inline, except boundary values where the exact
+  number is the point of the test.
+- **`state_hash(SimState)`** is Simulation Tick & Pause rule 14; its AC-53 proves
+  it can fail.
+
+Unit tests do no file I/O: saves round-trip through an in-memory buffer, and
+golden tables load only in integration tests. Test files are named
+`rng_[feature]_test.gd`, and functions `test_[scenario]_[expected]`. Every
+expected value is an integer or an exact power-of-two float, compared with `==`,
+never approximately.
+
+### Logic: unit tests, `tests/unit/rng/` (BLOCKING)
+
+- **AC-01 (D1, known answers)**: **GIVEN** the reference implementations,
+  **WHEN** the hash and the generators run, **THEN**:
+  - `FNV1a64("") == 0xcbf29ce484222325`, `FNV1a64("a") == 0xaf63dc4c8601ec8c`
+    and `FNV1a64("foobar") == 0x85944171f73967e8`;
+  - PCG32 seeded with `(initstate 42, initseq 54)` returns `0xa15c02b7`,
+    `0x7b47f409`, `0xba1d3330`, `0x83d2f293`, `0xbfa4784b`, `0xcbed606e`;
+  - the full SplitMix64 step from state 0 returns `0xe220a8397b1dcdaf`.
+
+  *These values were checked against independent reimplementations of the FNV
+  spec, pcg-c and SplitMix64 (2026-10-29). If the ADR chooses a different
+  generator, this AC is replaced by that generator's published vector.*
+- **AC-02 (rule 3, D1)**: **GIVEN** `M_FIX`, **WHEN** streams A and B are
+  registered as A then B in one run and B then A in another, **THEN** each
+  stream's seed and its first 64 words are identical in both runs. Registering a
+  stream that is never drawn leaves `state_hash` unchanged.
+- **AC-03 (rule 2, D2)**: **GIVEN** `M_FIX` and `battle_ordinal = 6`, **WHEN** a
+  battle starts, **THEN** the ordinal is 7 and
+  `battle_seed == H(M_FIX, "base:battle" ‖ 07 00 00 00 00 00 00 00)`. **GIVEN** a
+  reload of that save, **THEN** the next battle seed is identical. Ordinal 0
+  never seeds a battle.
+- **AC-04 (rule 3, independence)**: **GIVEN** streams X and Y, **WHEN** X makes
+  one extra draw, **THEN** Y's next 1,000 words are unchanged.
+- **AC-05 (rule 3, D1, tick-indexed)**: **GIVEN** weapon W's stream at
+  `battle_tick = T`:
+  - **WHEN** weapon V fires first on T, or W draws 5 extra times on T − 1,
+    **THEN** W's first word on T is unchanged.
+  - **WHEN** W fires on T + 1 instead, **THEN** it gets the word at position
+    `(T + 1, 0)`.
+  - `draw_index_in_tick` is 0 at every tick boundary.
+- **AC-06 (rule 4)**: **GIVEN** the name grammar:
+  - **THEN** `base:combat.hit#1042/3`, `mymod:raid.spawn` and
+    `base:ai.tiebreak#0` are accepted;
+  - **THEN** `base:combat.hit#01042`, `Base:x`, `base:combat.hit#` and any
+    non-ASCII name are rejected;
+  - **THEN** a key pattern whose longest name is 65 bytes is rejected when the
+    registry loads, and a 64-byte one is accepted.
+- **AC-07 (rule 4, D1, D2)**: **GIVEN** `StubNameHash`, **WHEN** the registry
+  loads:
+  - **THEN** a duplicate name is rejected;
+  - **THEN** two names with equal hashes are both rejected, and the error names
+    both;
+  - **THEN** a campaign name whose hash equals that of `"base:battle" ‖ u64le(k)`
+    is rejected, at `k = 1` and at `k = 65,536`;
+  - **THEN** a keyed name that collides with a live stream when it is created is
+    refused, as in AC-08.
+- **AC-08 (rules 4, 7, refused draw)**: **GIVEN** an undeclared name:
+  - **WHEN** each call type draws in `RefusalMode.RELEASE`, **THEN** 0 words are
+    consumed, the results are `a` / false / 0.0 / no pick, and one error is
+    logged per call;
+  - **WHEN** the same draws run in `DEBUG`, **THEN** each is a hard error.
+- **AC-09 (rule 5)**: **GIVEN** a battle with ships {3, 8}, **WHEN** it is re-run
+  with ship 12 added, **THEN** ship 3's and ship 8's hit sequences are identical
+  in both runs, slot by slot and tick by tick.
+- **AC-10 (rule 6)**: **GIVEN** a fixture battle state, **WHEN** an odds preview,
+  a presentation frame, a save, a load and `state_hash` run in turn, **THEN**
+  every stream's draw count and state are unchanged. **GIVEN** the stream
+  handle's public methods, **THEN** none of them peeks, skips, re-seeds or
+  returns the seed.
+- **AC-11 (rule 6)**: **GIVEN** `BATTLE`:
+  - **WHEN** a campaign stream is drawn, **THEN** the draw is refused;
+  - **WHEN** a stub World Clock event falls due mid-battle, **THEN** it makes no
+    draw until battle end, then draws in catch-up order;
+  - **WHEN** a save is requested during catch-up, **THEN** it waits until
+    catch-up ends.
+- **AC-12 (rule 6)**: **GIVEN** a handle held across a load, **WHEN** it draws,
+  **THEN** it returns the restored stream's next word.
+- **AC-13 (D3)**: **GIVEN** `ScriptedWordSource`:
+  - **WHEN** `int_range(1, 6)` runs on `[4,000,000,123]`, **THEN** it returns 2,
+    using 1 word;
+  - **WHEN** `int_range(0, 999)` runs on `[200, 123,456,789]`, **THEN** it
+    returns 789, using 2 words;
+  - **WHEN** `int_range(5, 5)` runs, **THEN** it returns 5, using 1 word;
+  - **GIVEN** `n = 1,431,655,766`, **THEN** the threshold is 1,431,655,764: word
+    1,431,655,763 is rejected and word 1,431,655,764 is accepted;
+  - **GIVEN** a source that rejects 3 times in a row, **THEN** the call takes the
+    4th word (there is no iteration cap);
+  - **THEN** `a > b`, `n = 2^31 + 1` and a bound of `2^62 + 1` are each an error.
+- **AC-14 (D3, exact uniformity)**: **GIVEN** `n` in {1, 2, 3, 6, 7, 1000,
+  2^31 − 1, 2^31, 1,431,655,766}, **THEN** `(2^32 − threshold) mod n == 0`, and
+  `threshold == 0` exactly when `n` is a power of two.
+- **AC-15 (rule 7, D4)**: **GIVEN** scripted draws:
+  - **THEN** `p = 0` is false and `p = 1000` is true, each using exactly one
+    `int_range` call;
+  - **THEN** with `p = 650`, the draw 649 gives true, and 650 and 789 give false;
+  - **THEN** `p = −1` and `p = 1001` assert;
+  - **THEN** the display formatter shows "65.0%" for 650, "0.1%" for 1 and
+    "100.0%" for 1000.
+- **AC-16 (rule 7, D5)**: **GIVEN** `[(gamma, 5), (alpha, 3), (beta, 0)]`,
+  authored in that order:
+  - **THEN** it is sorted to alpha, beta, gamma;
+  - **THEN** `r` from 0 to 2 picks alpha, `r` from 3 to 7 picks gamma, and beta is
+    never picked;
+  - **THEN** a one-entry table uses 1 call, and an empty table returns no pick
+    using 0 words;
+  - **THEN** a negative weight, a total of 0, a total of `2^31 + 1`, a duplicate
+    `stable_id` and a `Dictionary` table are each rejected at load.
+- **AC-17 (rule 7, D6)**: **GIVEN** the words `(0x80000000, 0)`, **THEN**
+  `unit_float() == 0.5`. `(0, 0)` gives `0.0`, and all-ones gives
+  `(2^53 − 1) / 2^53`, which is `< 1.0`. Every call uses exactly 2 words.
+- **AC-18 (rule 7, shuffle)**: **GIVEN** lists of 0, 1, 2, 5 and 100 items,
+  **THEN** the call counts are 0, 0, 1, 4 and 99, and scripted `int_range`
+  results give the expected permutation exactly.
+- **AC-19 (rule 7, AI tie-breaks)**:
+  - **GIVEN** 3 actors over 10 ticks, with and without ties, **THEN** each actor
+    makes exactly one tie-break draw per tick;
+  - **GIVEN** a tied pair, **WHEN** an unrelated candidate is added, **THEN** the
+    same candidate wins;
+  - **GIVEN** a ship disabled on tick T, **THEN** it makes no draw on T, and its
+    draws on T + 1 onward are unchanged.
+- **AC-20 (rule 8)**: **GIVEN** a new game, **THEN** `FakeEntropySource` is called
+  exactly once, and a load calls it 0 times. The bug-report bundle and the debug
+  overlay model contain the seed as 16-character hex, and no other view model
+  contains that string.
+- **AC-21 (rule 10, saves)**: **GIVEN** a mid-battle save:
+  - **THEN** only streams that have been drawn are present;
+  - **THEN** each campaign record holds its name, state and count, and each
+    battle record holds its name and count;
+  - **THEN** every 64-bit value is 16-character lowercase hex, never a JSON
+    number.
+- **AC-22 (rule 10, hash)**: **GIVEN** the same streams created in two different
+  orders, **THEN** the hashes are equal. **WHEN** one stream's state or count
+  changes, or the battle seed changes in `BATTLE`, **THEN** the hash changes.
+- **AC-23 (edge: malformed or missing records)**:
+  - **GIVEN** in turn a bad name, non-hex, 15-character hex, a draw count of
+    `2^63`, and a duplicate name, **THEN** the whole load is refused, the error
+    names the stream, and nothing is restored;
+  - **GIVEN** a declared stream missing from the save, **THEN** it starts at
+    position 0;
+  - **GIVEN** a record for a stream that is no longer declared, **THEN** it is
+    never drawn, is re-saved byte-identical, and stays in `state_hash`.
+- **AC-24 (edge: battle contexts)**:
+  - **GIVEN** a live battle, **WHEN** a second `BATTLE` starts, **THEN** it is an
+    error;
+  - **GIVEN** a battle that ends on its first tick, **THEN** its ordinal is used
+    up;
+  - **GIVEN** an injected battle seed, **THEN** `battle_ordinal` is neither read
+    nor written, and the header records ordinal 0;
+  - **GIVEN** a `base:truth.*` draw after the new-game step, **THEN** it is
+    refused.
+- **AC-25 (edge: performance overrun)**: **GIVEN** `DRAW_BUDGET_PER_TICK = 10` and
+  a tick that needs 15 draws, **THEN** all 15 draws run, one overrun is logged
+  with `tick_index`, and the results equal those of an unbudgeted run.
+- **AC-26 (edge: zero seeds)**: **GIVEN** master seed 0 or battle seed 0, **THEN**
+  derivation equals the golden values (AC-38), and no two registered streams
+  share a seed.
+
+### Engine-behaviour probes: `tests/unit/rng/rng_engine_probe_test.gd` (BLOCKING)
+
+These behaviours are **NOT SOURCEABLE** in `docs/engine-reference/godot/` (there
+is no `modules/core.md`). The probes make an engine upgrade that changes them
+fail loudly instead of silently changing every stream.
+
+- **AC-27 (int wrap)**: **GIVEN** `MAX = (1 << 62) − 1 + (1 << 62)`, **THEN**
+  `MAX + 1 == 1 << 63`, and `1 << 63` is negative. A PCG multiply step's product
+  equals the reference implementation's low 64 bits, held in the fixture.
+- **AC-28 (shifts)**: **THEN** `−8 >> 1 == −4` and `−1 >> 63 == −1`, so the engine
+  shift is arithmetic. The project's logical shift gives
+  `lsr(−1, 32) == 4294967295` and `lsr(1 << 63, 63) == 1`, and its unsigned
+  compare gives `ult(0, −1) == true`.
+- **AC-29 (int to float)**: **THEN** `int(float(2^53 − 1)) == 2^53 − 1`, and
+  `float(2^53 + 1) == float(2^53)`, which shows where exactness ends. D6's largest
+  numerator converts exactly.
+- **AC-30 (hex round trip)**: **GIVEN** 0, −1, `2^63 − 1` and `−2^63` (built as
+  `1 << 63`), **THEN** the codec writes `0000000000000000`, `ffffffffffffffff`,
+  `7fffffffffffffff` and `8000000000000000`, and decodes each back to the same
+  `int`. The engine's own hex parse is called on the same strings and its result
+  is recorded as an observation. If it does not round-trip, the codec must not
+  use it.
+
+### Static checks, CI lint (BLOCKING)
+
+- **AC-31 (rules 1, 9)**: **GIVEN** `src/sim/**`, **including the RNG system**,
+  **WHEN** CI lints it, **THEN** it fails on any reference to a presentation or
+  cosmetic generator, or to the engine RNG calls listed in Simulation Tick &
+  Pause AC-34. (That AC excludes the RNG system from its scan; this one does not,
+  because Core Rule 7's helpers must not use the engine calls either.)
+- **AC-32 (rules 6, 9)**: **GIVEN** presentation and UI code, **THEN** the lint
+  fails on any reference to a simulation stream handle or the stream registry,
+  and on a name-string lookup at a call site.
+- **AC-33 (rules 4, 6, 8)**: **THEN** the lint fails on:
+  - a stream name absent from the registry;
+  - a draw on another system's stream;
+  - a write to the master seed outside the driver and Save/Load.
+
+  **Shown to fail:** one planted violation per item lives in
+  `tests/fixtures/lint/rng/bad_<item>.gd`: `bad_sim_calls_cosmetic`,
+  `bad_rng_uses_engine_rand`, `bad_presentation_draws_sim`,
+  `bad_callsite_name_lookup`, `bad_undeclared_stream`, `bad_foreign_stream` and
+  `bad_sets_master_seed`. CI must exit non-zero on every fixture, and exit 0 on
+  the production scan, which excludes the fixtures.
+
+### Integration: `tests/integration/rng/` (BLOCKING)
+
+- **AC-34 (Tick, `state_hash`)**: **GIVEN** a battle, **WHEN** the headless runner
+  plays it twice, **THEN** the per-tick `state_hash` sequences are identical.
+  **WHEN** one extra draw is planted at tick T, **THEN** the sequences first
+  diverge at T.
+- **AC-35 (Save/Load round trip)**: **GIVEN** a campaign save and a mid-battle
+  save at tick T, **WHEN** each is loaded and run to T + 600, **THEN** the hashes
+  equal those of an uninterrupted run, and re-saving at T gives byte-identical
+  stream records.
+- **AC-36 (battle replay from the seed alone)**: **GIVEN** only the Battle Record
+  header's seed and registry version, plus the command log, **WHEN** an isolated
+  instance with no campaign replays the battle, **THEN** the hashes match the
+  original, and a live game's streams are unchanged during the replay. A
+  registry-version mismatch is refused.
+- **AC-37 (runner injection, rule 2)**:
+  - **GIVEN** `B_FIX` injected twice, **THEN** the two runs are identical, and a
+    different seed gives a different run;
+  - **GIVEN** 50 extra campaign draws before a battle, **THEN** the battle's
+    hashes are unchanged;
+  - **GIVEN** two different battle command logs, **THEN** the campaign stream
+    states after the battle are identical.
+- **AC-38 (golden tables, rule 12)**: **GIVEN** `tests/fixtures/rng/<stream>.golden`,
+  one per registered stream, **THEN**:
+  - campaign streams match their first 16 words under `M_FIX`;
+  - battle streams match their first 16 words under `B_FIX` at `battle_tick` 0,
+    1 and 1000;
+  - a golden table that changes without a registry-version bump fails CI;
+  - loading a fixture mod changes no base golden table;
+  - each shipped platform's build passes the same tables.
+- **AC-39 (rules 10, 11, reload)**:
+  - **GIVEN** a mid-battle save, **WHEN** the same weapon fires on the same tick
+    after 0 reloads and after 5 reloads, **THEN** the outcomes are identical;
+  - **WHEN** it fires one tick later, **THEN** it uses that tick's roll;
+  - **GIVEN** an old-registry save with a renamed stream, **WHEN** it is migrated,
+    **THEN** it continues the same sequence.
+
+### Performance: `tests/performance/rng/` (BLOCKING for the GDExtension decision)
+
+- **AC-40 (D8)**: **GIVEN** a headless run on the ADR's reference machine, **WHEN**
+  the tick-rate spike runs, **THEN** the report records:
+  - p95 `t_draw` for `int_range`, `chance_permille`, `unit_float`, a stream's
+    first draw in a tick, and a stream's first draw ever;
+  - p95 and maximum `draws_per_tick` on Simulation Tick & Pause D10's steady
+    scene, its worst-case scenes and a full-broadside volley;
+  - the machine and the build.
+
+  It **FAILS** if `rng_ms > RNG_SHARE × L` on any scene, and a fail triggers the
+  GDExtension fallback. While `RNG_SHARE` is provisional, a pass reports
+  `PROVISIONAL`, not `PASS`.
+- **AC-41 (D7)**: **GIVEN** 100 ships × 6 slots and 4 fleets, **THEN**
+  `S_live == 724`, and the RNG section of a mid-battle save is at most
+  `RNG_SAVE_CEILING_KB` (64 KB). The measured size is recorded.
+
+- **AC-43 (UI Requirements 2, odds contract)**: **GIVEN** the stream registry,
+  **WHEN** CI checks it, **THEN** every declared stream has an `odds_surface`
+  value, and every `odds_surface: none` carries a reason. **Shown to fail:** the
+  fixture `tests/fixtures/lint/rng/bad_missing_odds_surface.gd` declares a stream
+  without one, and CI must exit non-zero on it. **GIVEN** a bug-report bundle
+  built from a fixture save, **THEN** it contains the master seed and no
+  readable `base:truth.*` result (Core Rule 8).
+
+### UI: manual, retained screenshot in `production/qa/evidence/rng/` (BLOCKING)
+
+- **AC-42 (rule 11)**: **GIVEN** the string key `ui.rng.reload_statement`,
+  **THEN** it exists in the string table and is not empty, and an automated
+  check confirms it contains none of "luck", "fate", "RNG", "dice" or "roll".
+  **WHEN** the screen that hosts it (set by the UX spec) is opened, **THEN** the
+  statement is visible, and a retained screenshot is filed.
+
+*Specialist consulted: `qa-lead`. It flagged nine rules as not testable as
+written. The fixes:*
+- *Rules 1, 11 and 12 were reworded against lints, `AC-39` and golden tables.*
+- *The refusal mode and the name hash are injectable (rule 7).*
+- *The tie-break mixing function is pinned by the ADR (rule 7).*
+- *D7 has a 64 KB ceiling.*
+- *The "full period" loop guarantee is a proof, so it goes to the ADR.*
+
+*It also caught a Player Fantasy line that contradicted rule 3, and that the
+bare SplitMix64 finaliser maps 0 to 0. D1 now names the full step. All four
+of its conflicts are resolved.*
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Resolve by |
+|---|---|---|---|
+| 1 | **Deferred campaign draws.** Campaign streams are not drawn during a battle; events due mid-battle draw at battle end in catch-up order (Core Rule 6). Does the World Clock queue them, in what order, and does any campaign system *need* to act inside a battle? This contract is provisional. | World Clock (#8), Exposure & Rival Investigation (#32) | When #8 is designed |
+| 2 | **Can a deferred catch-up event start a battle?** If so, do the remaining deferred events finish first, or wait until after that battle? | World Clock (#8) | When #8 is designed |
+| 3 | **Can a mid-battle refit change the weapon in a slot?** If yes, the new weapon inherits the slot's stream `base:combat.hit#<ship_id>/<slot>` (Core Rule 5). If slots can be added, their keys must stay stable. | Weapons & Damage (#12), Refit & Loadout (#35) | When #12 is designed |
+| 4 | **Generator, derivation and encoding.** Own PCG32 or pinned `RandomNumberGenerator`; FNV-1a 64 plus SplitMix64 for H; the tick-indexed construction (D1); the tie-break mixing function; unsigned 64-bit maths on signed `int`; the hex codec. All engine facts are NOT SOURCEABLE; the AC-27–AC-30 probes settle them. | technical-director | Tick/Pause/Determinism ADR (Simulation Tick & Pause, Open Question 4) |
+| 5 | **Is `RNG_SHARE = 0.15` signed off, and is GDScript fast enough?** If the spike's `t_draw` breaks the budget on a volley tick (D8), a GDExtension generator is the fallback, which changes the build. | technical-director, engine-programmer, devops-engineer | Tick-rate spike |
+| 6 | **Where and when does the reload statement appear?** For example the load screen, on the first load. And who confirms its wording? | UX spec (`/ux-design`), `narrative-director` | Phase 4, before epics |
+| 7 | **A player-chosen seed after MVP?** A custom-game seed that excludes the truth streams (so the maker stays unknowable) could support shared challenge runs without breaking Pillar 2. | creative-director | Post-MVP |
+| 8 | **Cross-platform golden tables.** MVP verifies on one platform. Add CI runs of AC-38 on every shipped platform post-MVP (ties to Simulation Tick & Pause Open Question 7). | technical-director | Post-MVP |
+| 9 | **Mid-battle save policy.** Tick-indexed rolls stop a reload from "burning" a known roll, but repeated mid-battle reloads let a player try the same moment again one tick later. Should mid-battle saves exist only to suspend the game (deleted on load), or as a checkpoint at battle start, so that defeat keeps its time and resource cost (Pillar 1)? | Save/Load & Migration (#5), creative-director | When #5 is designed |
