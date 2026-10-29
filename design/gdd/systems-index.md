@@ -195,7 +195,7 @@ Later tiers:
 
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
-| 1 | Simulation Tick & Pause | Core | MVP | Designed | design/gdd/simulation-tick-and-pause.md | — |
+| 1 | Simulation Tick & Pause | Core | MVP | In Review | design/gdd/simulation-tick-and-pause.md | — |
 | 2 | Deterministic RNG & Seed Streams (inferred) | Core | MVP | Not Started | — | — |
 | 3 | Runtime ID Service (inferred) | Core | MVP | Not Started | — | — |
 | 4 | Content Data & Mod Loading | Core | MVP | Not Started | — | — |
@@ -478,7 +478,7 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 |--------|-------|
 | Total systems identified | 57 |
 | Design docs started | 1 |
-| Design docs reviewed | 0 |
+| Design docs reviewed | 1 |
 | Design docs approved | 0 |
 | MVP systems designed | 1/43 (pending review) |
 | Vertical Slice systems designed | 0/6 |
