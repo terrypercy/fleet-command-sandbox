@@ -178,6 +178,10 @@ exactly, and the game says so.*
      `^[a-z][a-z0-9_]*:[a-z][a-z0-9_.]*(#(0|[1-9][0-9]*)(/(0|[1-9][0-9]*))*)?$`.
      The optional key suffix (rule 5) is canonical unsigned decimal with no
      leading zeros, so one ship can never have two spellings of its stream.
+     A key part that is a Runtime ID is at least 1, because `NONE` (0) is never
+     issued (Runtime ID Service, Core Rule 1); a draw keyed by Runtime ID 0 is
+     refused like an undeclared name. Other key parts, such as a weapon slot,
+     may be 0.
      There is no Unicode, so there is nothing to normalise.
    - A declared key pattern whose longest possible name exceeds
      `NAME_MAX_BYTES` (D1) is rejected when the registry loads, never at first
@@ -687,7 +691,8 @@ Every worked example was re-checked arithmetically.*
   as illegal (Core Rule 4). Keys are canonical decimal, so one ship can never
   have two streams.
 - **If a declared key pattern's longest possible name exceeds
-  `NAME_MAX_BYTES`** (a long mod namespace plus a 20-digit ID plus a slot): the
+  `NAME_MAX_BYTES`** (a long mod namespace plus a 16-digit ID, up to
+  `MAX_RUNTIME_ID` in Runtime ID Service D1, plus a slot): the
   declaration is rejected when the registry loads, never at first draw.
 - **If a name is drawn that is not declared, or a keyed name collides with a
   live stream when it is created**: the draw is refused as Core Rule 7 says. It
@@ -1048,8 +1053,10 @@ never approximately.
     `(T + 1, 0)`.
   - `draw_index_in_tick` is 0 at every tick boundary.
 - **AC-06 (rule 4)**: **GIVEN** the name grammar:
-  - **THEN** `base:combat.hit#1042/3`, `mymod:raid.spawn` and
-    `base:ai.tiebreak#0` are accepted;
+  - **THEN** `base:combat.hit#1042/3`, `base:combat.hit#1042/0` (slot 0),
+    `mymod:raid.spawn` and `base:ai.tiebreak#1` are accepted;
+  - **THEN** a draw on `base:ai.tiebreak#0` (Runtime ID 0, `NONE`) is refused
+    as in AC-08;
   - **THEN** `base:combat.hit#01042`, `Base:x`, `base:combat.hit#` and any
     non-ASCII name are rejected;
   - **THEN** a key pattern whose longest name is 65 bytes is rejected when the
