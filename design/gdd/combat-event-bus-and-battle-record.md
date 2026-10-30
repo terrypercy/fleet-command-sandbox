@@ -162,7 +162,10 @@ thing" or "I can't see what killed me".
       as a record-tier `KillWindow` at the moment of `Destroyed`, so its
       precision never depends on `DAMAGE_WINDOW` or coarsening (deterministic,
       because the bus is);
-    - per fleet: the Coherence timeline and every link cut, with actor and tick.
+    - per fleet: the Coherence timeline and every link cut, with actor and tick;
+    - a `CoherenceSummary` (Coherence & Links rule 19): time in each band per
+      fleet, and per relay its subtree size, damage taken, and whether it was
+      ever struck, strained or stalled.
     Aggregates are computed by the Record from the log, never by the simulation.
 14. **The Debrief contract** (data only; classification is Defeat & Debrief's):
     - *"Links cut at 3:12 by X"*: `LinkState(to = SNAPPED, cause, actor)` with

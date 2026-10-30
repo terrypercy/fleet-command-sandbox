@@ -604,6 +604,18 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: coherence_share_ms
+    status: active
+    source: design/gdd/coherence-and-links.md
+    referenced_by:
+      - design/gdd/coherence-and-links.md
+      - design/gdd/weapons-and-damage.md
+    value: 0.3
+    unit: ms
+    notes: "Coherence rule 16: p95 cap for steady P6 Coherence work at the Tick D10 fixture; full recompute <= 1.5 ms on event ticks. With Combat Space 1.2, RNG 0.6 and Weapons 1.2 ms, about 0.7 ms of L remains."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:
