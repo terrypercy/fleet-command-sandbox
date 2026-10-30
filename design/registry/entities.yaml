@@ -628,6 +628,18 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: tell_ticks
+    status: active
+    source: design/gdd/fleet-coordination.md
+    referenced_by:
+      - design/gdd/fleet-coordination.md
+      - design/gdd/ship-ai.md
+    value: 90
+    unit: ticks
+    notes: "Fleet Coordination rule 11: lead between declaring and applying a doctrine phase change, reflow or contraction (1.5 s at 60 Hz). Same at every AI level; must exceed the slowest Ship AI ExecParams reaction delay. BROKEN suspension and flagship focus locks are shown immediately."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:

@@ -3,8 +3,8 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — enemy doctrine is fixed and readable, so a loss names a counter); Pillar 5 (Living Against Made — machine doctrine depends on the link graph); Pillar 4 (Plan in the Open — doctrine is learnable and shown in the Dossier)
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (SR shown, reveal events, flagship lock, splinter credit, scope note)
+> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — enemy doctrine is fixed and readable, so a loss names a counter); Pillar 5 (Living Against Made — machine doctrine depends on the link graph); Pillar 4 (Plan in the Open — doctrine is learnable and shown in the Dossier). Out of scope: player machine ships (Coherence & Links rule 17, post-MVP) and organic enemy fleets (Ship AI Open Q2); each needs its own doctrine family under Pillar 5, not a reuse of this one.
 
 ## Summary
 
@@ -48,7 +48,8 @@ five escorts stop where they are, each firing at whatever is nearest.
 - **Pillar 4:** doctrine is described from its own data; changes are telegraphed.
 
 **This system must never make the player feel:** "they changed tactics for no
-reason" or "the Dossier lied about how they fight".
+reason", "the Dossier lied about how they fight", or "the AI just broke"; the
+splinter must read as my cut working.
 
 ## Detailed Design
 
@@ -72,7 +73,13 @@ reason" or "the Dossier lied about how they fight".
    & Modifiers rule 10).
 3. **The Dossier text is generated from the doctrine's fields** (template plus
    values), never written by hand; if the data changes, the description
-   changes with it.
+   changes with it. It states `consolidate_sr` and `withdraw_sr` as ratios
+   (e.g. "falls back when outmatched 5:3; breaks at 1:4"). Fleet Coordination
+   supplies one generated sentence per doctrine field, each tagged with the
+   event that reveals it (e.g. `on_cut` by a logged reflow, contraction or
+   gap-hold; `focus_split` by a logged `FocusAssigned`). The Dossier owns when
+   sentences are revealed; this system guarantees every field has a reveal
+   event that can be seen in battle.
 4. **Anchors.** Each root relay or keystone anchors one formation of the ships in
    its subtree (Coherence & Links rule 2). The relay itself holds at
    `anchor_back` behind the screen.
@@ -116,10 +123,14 @@ reason" or "the Dossier lied about how they fight".
     and takes effect at T + `TELL_TICKS` (90 ticks, 1.5 s), shown as a pulse on
     the anchor relay and slot ghosts. The lead is the same at every AI level and
     longer than the slowest reaction delay. BROKEN suspension is immediate: the
-    snapped lines are its tell.
+    snapped lines are its tell. A `FocusAssigned` whose target is the flagship
+    is shown at once as a lock marker from each assigned ship, visible while the
+    assignment holds; focus is not delayed by `TELL_TICKS`, only made visible
+    immediately.
 12. **The record.** Record-tier events (never dropped like `TargetChosen`):
     `DoctrinePhase(fleet, doctrine, from, to, cause, declared_tick,
-    effective_tick)` and `FocusAssigned(fleet, target, ships, reason)`; and an
+    effective_tick)` (for BROKEN, `cause` names the destroyed ship and the
+    snapped link) and `FocusAssigned(fleet, target, ships, reason)`; and an
     end-of-battle `DoctrineSummary` (ticks per phase, slot occupancy, focus
     targets) in the Battle Record's aggregates.
 
@@ -234,7 +245,9 @@ All in `assets/data/doctrine/`.
 
 - Tells: the anchor relay pulses and slot ghosts appear for `TELL_TICKS`.
 - The splinter (BROKEN) must read at once: formation lines vanish and ships stop
-  moving as one.
+  moving as one. BROKEN plays a distinct audio sting, and the Debrief credits
+  the kill that caused it (`DoctrinePhase.cause`).
+- Flagship focus: a lock marker from each assigned ship (rule 11).
 
 ## Game Feel
 
@@ -244,7 +257,9 @@ All in `assets/data/doctrine/`.
 ## UI Requirements
 
 - Paused: the formation's slots and phase name over each enemy fleet; the tell
-  countdown when one is running.
+  countdown when one is running; each enemy fleet's strength ratio against the
+  player's fleet, marked with its `consolidate_sr` and `withdraw_sr` thresholds.
+- Live: flagship lock markers (rule 11).
 - Dossier: the generated doctrine description per node.
 - 📌 **UX Flag — Fleet Coordination**: include formation slots, phase names and
   tells in the Combat HUD UX spec; the doctrine text in the Dossier spec.
@@ -275,6 +290,9 @@ All in `assets/data/doctrine/`.
 - **AC-12 (Logic; rule 12)**: `DoctrinePhase` and `FocusAssigned` survive a full Battle Record.
 - **AC-13 (Logic; rule 5)**: a roaming fleet withdraws at SR ≤ 250; a stronghold never withdraws.
 - **AC-14 (Playtest)**: 4 of 5 testers can describe a formation's weakness after one loss.
+- **AC-15 (Logic; D2, UI)**: when paused, the displayed SR equals D2's SR‰ ±1 for every enemy fleet.
+- **AC-16 (Logic; rule 3)**: every doctrine field has a reveal event that a Battle Record fixture can produce.
+- **AC-17 (Logic; rule 11)**: every flagship-targeted `FocusAssigned` emits a visible lock on the same tick.
 
 ## Open Questions
 
