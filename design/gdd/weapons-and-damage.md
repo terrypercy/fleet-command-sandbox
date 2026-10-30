@@ -233,7 +233,7 @@ lost to a dice roll", or "I can't tell what that weapon is doing".
 | Combat Space (#11) | both | `query_segment` sweeps; projectiles inserted into the grid; ranges constrain `FIELD_R` |
 | Vigor (#13) | both | `vigor_per_shot` and membrane draws granted or refused; core damage |
 | Coherence & Links (#14) | both | Fed weapons and wards depend on link state; link strain; ward decay when cut |
-| Flagship Piloting (#15), Ship AI (#20) | → #12 | Target and fire intent per slot |
+| Flagship Piloting (#15), Ship AI (#20) | → #12 | Target and fire intent per slot; Ship AI owns AI ships' aim, including lead (Ship AI rule 6) |
 | Gameplay Settings & Modifiers (#7) | #7 → #12 | Stronghold strength scales stats by `modifier_compose` (rule 10 of #7) |
 | Combat HUD (#46) | #12 → #46 | Ranges, arcs, shown hit chance, cooldowns |
 | Machine Nodes & Strongholds (#23), Debrief | #12 → them | Type-to-counter mapping |
