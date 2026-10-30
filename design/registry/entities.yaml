@@ -664,41 +664,47 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: name_pm
+    status: active
+    source: design/gdd/faction-belief-and-blame.md
+    referenced_by:
+      - design/gdd/faction-belief-and-blame.md
+      - design/gdd/public-history-screen.md
+      - design/gdd/allied-lending.md
+    value: 600
+    unit: permille
+    notes: "Faction Belief D3: public blame needed to name a race (with LEAD_PM 200 and NAME_H 50 hysteresis). Must exceed the symmetric start p0. Public History draws the naming line at 24 of 40 bar segments."
+    added: 2026-10-30
+    revised: ""
+
+  - name: lost_salvage_pm
+    status: active
+    source: design/gdd/credits-upkeep-and-sinks.md
+    referenced_by:
+      - design/gdd/credits-upkeep-and-sinks.md
+      - design/gdd/battle-resolution-and-retreat.md
+      - design/gdd/markets-and-trade.md
+    value: 500
+    unit: permille of the hold
+    notes: "Credits D2: lost salvage = hold x LOST_SALVAGE_PM x (1000 - retreated_pm) / 1e6, so a full retreat loses none and a DEFEAT loses all (Battle Resolution rule 18)."
+    added: 2026-10-30
+    revised: ""
+
+  - name: standoff_warn_s
+    status: active
+    source: design/gdd/battle-resolution-and-retreat.md
+    referenced_by:
+      - design/gdd/battle-resolution-and-retreat.md
+      - design/gdd/combat-hud-and-tactical-overlay.md
+    value: 120
+    unit: simulated seconds
+    notes: "Battle Resolution rule 5: StandoffWarning fires once at BATTLE_LIMIT_S - STANDOFF_WARN_S; the HUD shows the countdown after it."
+    added: 2026-10-30
+    revised: ""
+
   - name: defeat_base_s
     status: active
     source: design/gdd/after-action-debrief.md
     referenced_by:
       - design/gdd/after-action-debrief.md
-      - design/gdd/world-clock.md
-      - design/gdd/credits-upkeep-and-sinks.md
-    value: 86400
-    unit: game seconds
-    notes: "Debrief D5: day cost of any loss = DEFEAT_BASE_S (1 day) + DEFEAT_SPAN_S (518,400, 6 days) x share left behind, scaled by defeat_cost_permille, floored at 1 day, clamped to DEFEAT_MAX_S. 1-7 days at Standard; (BASE+SPAN) x 2 must not exceed DEFEAT_MAX_S."
-    added: 2026-10-30
-    revised: ""
-
-# Example:
-#
-# constants:
-#   - name: gold_carry_limit
-#     status: active
-#     source: design/gdd/economy.md
-#     referenced_by:
-#       - design/gdd/economy.md
-#       - design/gdd/inventory.md   # inventory enforces the carry limit
-#       - design/gdd/ui.md          # HUD displays current gold vs limit
-#     value: 9999
-#     unit: gold
-#     added: 2026-03-26
-#     revised: ""
-#
-#   - name: base_inventory_slots
-#     status: active
-#     source: design/gdd/inventory.md
-#     referenced_by:
-#       - design/gdd/inventory.md
-#       - design/gdd/progression.md  # progression unlocks additional slots
-#     value: 20
-#     unit: slots
-#     added: 2026-03-26
-#     revised: ""
+      - design/gdd/gameplay-settings-and-modifiers.md

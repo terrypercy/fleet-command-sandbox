@@ -875,6 +875,23 @@ on the specialist's recommendation:*
 - *`SIM_BUDGET_MS = 8` is provisional until the technical-director signs it off
   (Open Questions).*
 
+**Per-system shares of `L` (4.0 ms at 2× speed; all provisional, one
+technical-director sign-off):**
+
+| System | Share (ms) | Source |
+|---|---|---|
+| Combat Space | 1.20 | Combat Space |
+| Deterministic RNG | 0.60 | RNG |
+| Weapons & Damage | 1.20 | Weapons & Damage |
+| Coherence & Links | 0.30 | Coherence & Links rule 16 |
+| Ship AI and Fleet Coordination (P2) | 0.35 | Ship AI rule 15 |
+| Event emission and P9 flush | 0.25 | Combat Event Bus & Battle Record AC-19 |
+| Vigor and the rest of P6–P8 | 0.10 | Vigor |
+| **Total** | **4.00** | |
+
+Runtime ID lookups (`RESOLVE_SHARE`) are counted inside each consumer's share,
+not added to the tally (Runtime ID Service D4).
+
 ## Edge Cases
 
 ### Holds and resume

@@ -406,12 +406,12 @@ screen of its own.
 - **AC-11 (Logic; rule 14)**: in the fixture "relay killed at tick 11,520 with `battle_start_tick` 0", the record holds `LinkState(SNAPPED, relay_lost, actor)` at tick 11,520, shown as 3:12.
 - **AC-12 (Logic; rule 13)**: in a 3-attacker focus-fire fixture, the kill window lists all 3 attackers and their damage shares sum to 100 %.
 - **AC-13 (Logic; rule 14)**: a ship whose Vigor band goes to EMPTY and which is destroyed within `KILL_WINDOW` has both events in that order; no fixture produces `Disabled` with a Vigor cause.
-- **AC-14 (Logic; rule 17, D2)**: a heavy fixture run for 40 minutes keeps the log ≤ `EVENT_LOG_MAX` + `EVENT_OVERFLOW_MAX`; windows double exactly at 50 % and 75 % and never exceed 240 ticks; buckets and tracks stop at 90 %; no never-dropped event is missing compared with an uncapped run; kill windows equal the uncapped run's exactly.
+- **AC-14 (Logic; rule 17, D2)**: a heavy fixture run for 40 minutes (a deliberate stress run beyond `BATTLE_LIMIT_S`, 30 minutes) keeps the log ≤ `EVENT_LOG_MAX` + `EVENT_OVERFLOW_MAX`; windows double exactly at 50 % and 75 % and never exceed 240 ticks; buckets and tracks stop at 90 %; no never-dropped event is missing compared with an uncapped run; kill windows equal the uncapped run's exactly.
 - **AC-15 (Logic; rule 17)**: a command log forced past `CMD_LOG_MAX` sets `replay_truncated`; the event log is complete.
 - **AC-16 (Logic; rule 18, D3)**: after 10 battles, at most `K_FULL` full records remain plus pinned defeats, their total ≤ `ARCHIVE_FULL_MAX`; the 9th-oldest is a summary; its enemy-only tombstones are compacted at the next campaign save; the summary still names those enemies correctly.
 - **AC-17 (Logic; Edge Cases)**: a suspend save mid-battle, resumed, continues the record with no gap or duplicate `seq`, and the final record equals an uninterrupted run's.
 - **AC-18 (Logic; D4)**: with `base:battle_archive` registered at 5 MiB, Save/Load's computed `SAVE_MAX` is 42 MiB.
-- **AC-19 (Performance)**: emission plus the P9 flush take ≤ 10 % of the simulation budget at the 95th percentile in Simulation Tick & Pause's steady fixture; a 20-kill tick's P9 takes ≤ 0.5 ms; after warm-up there are 0 per-event Object or Dictionary allocations.
+- **AC-19 (Performance)**: emission plus the P9 flush take ≤ 0.25 ms (6.25 % of `L`; Simulation Tick & Pause D10 tally) at the 95th percentile in Simulation Tick & Pause's steady fixture; a 20-kill tick's P9 takes ≤ 0.5 ms; after warm-up there are 0 per-event Object or Dictionary allocations.
 - **AC-20 (Logic; edge)**: a battle ending on tick 0 produces a record with exactly the header, `BattleStart` and `BattleEnd`.
 
 ## Open Questions

@@ -492,7 +492,7 @@ live count divided by the lifetime in ticks.
 |----------|------|-------|--------|-------------|
 | P_live | int | 500 (stress: 1,000) | calculated | Live projectiles (Simulation Tick & Pause D10 fixture) |
 | T_life | int (ticks) | 30 – 600 (180) | data file (Weapons & Damage #12 owns it) | Mean projectile lifetime |
-| T_battle | int (ticks) | 72,000 (worst: 216,000) | calculated | A 20-minute battle (worst: 60 minutes) at 60 Hz |
+| T_battle | int (ticks) | 72,000 (worst: 108,000; stress: 216,000) | calculated | A 20-minute battle; worst is `BATTLE_LIMIT_S` 1,800 s (Battle Resolution); the 60-minute stress case is deliberate, beyond any legal battle |
 | proj_seq_max | int | 1 – ≈ 7.2 million in practice; capped at 2^53 − 1 (fatal past it) | calculated | Highest sequence number issued in one battle |
 
 **Output Range:**
@@ -530,7 +530,7 @@ The resolve_cost formula is defined as:
 | k | int | ≈ 5 | calculated | ID lookups per entity per tick |
 | t_resolve_us | float (µs) | 0.1 – 1.0 | calculated (measured by the spike) | Cost of one `status()` or owner `get_*()` lookup |
 | L | float (ms) | 4.0 | calculated (Simulation Tick & Pause D10) | Per-tick pass line |
-| RESOLVE_SHARE | float | **0.10, provisional** | constant (engineering; needs technical-director sign-off) | Share of `L` that lookups may use |
+| RESOLVE_SHARE | float | **0.10, provisional; informational** | constant (engineering; needs technical-director sign-off) | Share of `L` that lookups may use. Lookups are counted **inside** each consumer's own share (Combat Space, Weapons, Coherence, Ship AI), not added to the tally (Simulation Tick & Pause D10) |
 
 **Output Range:** 3,000 lookups per tick cost 0.3 ms at 0.1 µs each (7.5% of
 `L`), and 3.0 ms at 1.0 µs each (75% of `L`). To fit a 0.4 ms share, one lookup
@@ -758,7 +758,7 @@ the game plays, and a knob here could only break determinism or saves.
 | 32-bit warning threshold | 2^31 | One warning when `next_id` crosses it; storing an ID in 32 bits is banned (D1) |
 | Projectile sequence start | 1 per battle (0 = no projectile) | Reset at battle setup (D3) |
 | `IDENTITY_TABLE_SAVE_CEILING_MB` | 8 (**provisional**) | Largest the uncompressed identity section may be (D2) |
-| `RESOLVE_SHARE` | 0.10 (**provisional**) | Share of the per-tick pass line that ID lookups may use. Needs technical-director sign-off (D4) |
+| `RESOLVE_SHARE` | 0.10 (**provisional; informational**) | Share of the per-tick pass line that ID lookups may use, counted inside the consumers' shares, not added to them. Needs technical-director sign-off (D4) |
 | Retire point | End of each tick, after P8 and before P9 | Fixed by Core Rule 6; moving it changes what each phase sees |
 
 **Knobs owned elsewhere** (referenced, not duplicated):

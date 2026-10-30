@@ -105,6 +105,13 @@ the terms of my war", which put the settings screen at the centre).*
    trigger itself is evaluated either way (Simulation Tick & Pause D7, amended
    2026-10-30). Every new Tier P setting must show the same separation, or it
    is Tier C.
+   Presentation keys added by later GDDs are Tier P: `CAMERA_SHAKE_PM` (0 –
+   1,000 ‰, default 500; Camera & Combat View), `RESUME_RECENTRE` (on), the
+   palette, Reduce motion (zeroes shake and replaces full-screen flashes with a
+   tint), held-tier layer defaults (Combat HUD), `onboarding_hints`
+   (Onboarding), window mode, resolution, VSync and audio volumes (Menus,
+   Settings & Save UI). None reaches the simulation, the save's sim state or
+   the replay.
 4. **Simulation systems receive a frozen `ModifierSet`** (integer values keyed by
    name) when they are constructed or when a context starts. No simulation code
    reads the profile store, an autoload or a global for a gameplay value. A test
@@ -301,9 +308,11 @@ Absolute modifier: `eff = clamp(base + delta, lo, hi)`.
 
 **Output Range:** non-negative; at most twice the base. A consumer whose base
 could exceed 2^53 ÷ 2000 must widen its type (refused by review otherwise).
-**Example:** a defeat that costs 12 days at Standard costs (12 × 500 + 500) div
-1000 = 6 days on Chronicler and (12 × 1500 + 500) div 1000 = 18 days on
-Admiral. Chronicler never reaches 0 here because of D3.
+**Example:** a defeat that costs 7 days at Standard (604,800 s, the most a
+Standard defeat can cost; After-Action Debrief D5) costs (604,800 × 500 + 500)
+div 1000 = 302,400 s (3.5 days) on Chronicler and (604,800 × 1500 + 500) div
+1000 = 907,200 s (10.5 days) on Admiral, both under `DEFEAT_MAX_S` (14 days).
+Chronicler never reaches 0 here because of D3.
 
 ### D3. Floors that no setting can cross
 
