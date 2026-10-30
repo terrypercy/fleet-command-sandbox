@@ -343,9 +343,10 @@ carried into Game Feel and Acceptance Criteria instead.*
     - **Platform scope (MVP): verification is same-platform only.** Floating-point
       results can differ across OS and CPU (libm, FMA). A save loads on any
       platform, because it is a complete state. A replay, or a replay check,
-      from a different OS or CPU architecture is marked **"unverified"**, and the
-      Debrief shows the Battle Record without treating the replay as proof
-      (Edge Cases). A cross-platform hash test is post-MVP (Open Questions).
+      from a different OS or CPU architecture is **"not re-verified"**: the label
+      shows in debug views and the AI-vs-AI Runner only, with no player-facing
+      badge (Battle Record rule 15), and the Debrief reads the Battle Record,
+      never the replay, as its evidence (Edge Cases). A cross-platform hash test is post-MVP (Open Questions).
     - Every replay and save records the engine version, build ID, OS, CPU
       architecture, `TICK_RATE` and a content hash. A mismatch is refused, or
       warned about where Save/Load allows it.
@@ -983,10 +984,11 @@ on the specialist's recommendation:*
 - **If a save or replay has a different build ID, OS or CPU architecture**: a
   save warns where the build differs, then goes through migration (Save/Load
   #5). A save from another OS or CPU loads normally, because it is a complete
-  state. A replay plays as **"unverified"** (rule 14).
-- **What the Debrief shows for an unverified replay**: the Battle Record, which
-  is unchanged, with the tag "recorded, not re-verified". The Debrief never
-  presents an unverified replay as proof, and never re-derives a cause from it.
+  state. A replay is **"not re-verified"** (rule 14).
+- **What the Debrief shows for a replay that is not re-verified**: the Battle
+  Record, unchanged and with no player-facing badge (Battle Record rule 15;
+  the label is shown in debug views and the Runner only). The Debrief never
+  presents a replay as proof, and never re-derives a cause from one.
 - **If the replay log is missing an entry**:
   - A flagship command absent from the log means "unchanged", which is valid.
   - A gap in the order sequence numbers, or a mismatch with the per-tick state
@@ -1519,8 +1521,9 @@ counts are compared as exact integers.
   player-path run.
 - **AC-43 (rules 13, 14: headers)**: **GIVEN** a replay with a different
   `TICK_RATE`, **THEN** it is refused. **GIVEN** a different build ID, OS or CPU
-  architecture, **THEN** it plays flagged "unverified", and the Debrief view
-  model for it carries "recorded, not re-verified". **GIVEN** a different content
+  architecture, **THEN** it is "not re-verified" in debug views and the Runner,
+  and the player-facing Debrief view model carries no badge (Battle Record
+  rule 15). **GIVEN** a different content
   hash, **THEN** it is handled as Save/Load (#5) specifies, and never plays
   as verified.
 

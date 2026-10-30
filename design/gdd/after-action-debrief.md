@@ -679,7 +679,7 @@ proceed (the owner may revisit any of them at review):
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Battle Record rule 15 says an unverified replay shows the log "with no player-facing badge"; Simulation Tick & Pause says "recorded, not re-verified". The Debrief never replays, but the two GDDs must agree. | lead-programmer | Next review of #1 or #9 |
+| 1 | ~~Replay badge wording~~ **Resolved 2026-10-30:** Tick now matches Battle Record rule 15 ("not re-verified" in debug views and the Runner only; no player-facing badge). | lead-programmer | Closed |
 | 2 | Player-facing wording of every cause, action and the membrane line. | narrative-director, ux-designer | Debrief UX spec |
 | 3 | Does any battle stream declare an `odds_surface`, and do record events carry the roll? If none, rule 16 is dormant at MVP. | lead-programmer | Before implementation |
 | 4 | Calibrate `CAUSE_MIN_PM`, `CAUSE_PRIMARY_PM`, `LINK_SHARE_PM` and `RETREAT_GRACE_S` against the Runner's fixtures (AC-21, AC-22). Also `outmatched`'s score compresses badly (a 2:1 gap scores only 166); recalibrate it so it can be primary when the gap is the biggest story. | systems-designer | Runner tuning |

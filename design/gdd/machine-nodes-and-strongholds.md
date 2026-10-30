@@ -215,12 +215,13 @@ combat-facing system. SDT:
 21. **The proof obligation (Runner).** For every node and every solo counter on
     it, the Runner fights the node with the **counter fleet** (the MVP reference
     fleet plus the counter's cheapest kit, playing the counter's scripted plan)
-    over `PROOF_SEEDS` (10) fixed seeds, at `s` 1000 and 1200. The counter passes
+    over `PROOF_SEEDS` (10) fixed seeds, at `s` 1000 and 1200, each at the
+    `enemy_ai_level` of the Settings preset with that `s` (2 and 3). The counter passes
     if it wins at least `PROOF_WIN_MIN` (7) (D5). A failing counter blocks release
     of that node.
 21a. **Every loss names a cause.** For every node, each of the unprepared
     reference fleet's losses trips at least one listed counter's predicate in
-    every one of the `PROOF_SEEDS` battles, so the Debrief always has a cause
+    every one of the `PROOF_SEEDS` battles at `s` 1000 and its preset level, so the Debrief always has a cause
     to name (Pillar 1).
 22. **The first stronghold still wins first** (Settings rule 10a). A node with
     `first_encounter` true must also pass the inverse proof: the unprepared MVP
@@ -487,7 +488,7 @@ Solo counter passes: `wins ≥ PROOF_WIN_MIN` over `PROOF_SEEDS` seeds at each o
 - **AC-14 (Logic; rule 17)**: broken with a win-class outcome grants the fragment at battle end; with a loss-class outcome it grants on the next arrival, with no battle.
 - **AC-15 (Logic; rule 19)**: a node with no solo counter fails with `NODE_NO_SOLO_COUNTER`.
 - **AC-16 (Logic; rule 20, D6)**: a base node whose counter's cheapest kit costs 4,801 fails `COUNTER_UNAFFORDABLE`.
-- **AC-17 (Integration; D4)**: over the Runner's calibration set, across `s` ∈ {500, 750, 1000, 1200} and every `enemy_ai_level`, battles shown Ready win at least 70%, Contested 30–70% and Outmatched at most 30%; and the Runner's win rate falls inside the shown range in ≥ 80% of calibration battles at each `known` value.
+- **AC-17 (Integration; D4; "in range" read by Runner D3: the win rate falls in the win-rate bands the shown range touches, Outmatched 0–300, Contested 300–700, Ready 700–1,000)**: over the Runner's calibration set, across `s` ∈ {500, 750, 1000, 1200} and every `enemy_ai_level`, battles shown Ready win at least 70%, Contested 30–70% and Outmatched at most 30%; and the Runner's win rate falls inside the shown range in ≥ 80% of calibration battles at each `known` value.
 - **AC-18 (Logic; D4)**: the worked example gives 442 – 858, "Outmatched to Contested".
 - **AC-19 (Integration; rule 21)**: every MVP node's every solo counter wins ≥ 7 of 10 at `s` 1000 and 1200 in the Runner.
 - **AC-20 (Integration; rule 22)**: the unprepared reference fleet loses 10 of 10 against the opening stronghold at `s` 500 and `enemy_ai_level` 0.

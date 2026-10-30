@@ -892,7 +892,7 @@ another system's logic:
 | Hulls & Ship Definition (#10) | Hard | Owns the hull kind's schema; reads frozen hull definitions |
 | Truth Seeding & Candidates (#16) | Hard | Candidate races and the per-race attribute table as content. **Must materialise the seeded case into the save at seeding; declares its truth kinds** (Core Rule 18) |
 | Faction Reputation & Standing (#17) | Hard | Faction definitions |
-| Machine Nodes & Strongholds (#23) | Hard | Owns the `counter` and `machine_node` base kinds. Every counter must carry a name, a Debrief cause, a counter-action, inbound and outbound references, an evidence predicate, `requires_allies` and a kit (Core Rule 17). Node errors: `NODE_TREE`, `NODE_NO_SOLO_COUNTER`, `NODE_COUNTER_NO_TARGET`, `COUNTER_UNAFFORDABLE` (post-load cross-kind) |
+| Machine Nodes & Strongholds (#23) | Hard | Owns the `counter` and `machine_node` base kinds. Every counter must carry a name, a Debrief cause, a counter-action, inbound and outbound references, an evidence predicate, `requires_allies` and a kit (Core Rule 17). Node errors: `NODE_TREE`, `NODE_NO_SOLO_COUNTER`, `NODE_COUNTER_NO_TARGET`, `COUNTER_UNAFFORDABLE` (post-load cross-kind); `RUNNER_NO_PLAN` (a counter without an AI-vs-AI Runner plan: error for `base`, warning for mods) |
 | Sector Map & Travel (#26) | Hard | Systems, lanes and hand-placed anchors as content |
 | Archive Fragments & Evidence (#28) | Hard | Claim templates and fragment definitions. **Seeded fragments are stored with their claims filled; truth kinds are never substituted** (Core Rule 18) |
 | Loot & Crafting (#39) | Hard | Loot tables, validated by D4 and Core Rule 8 |
