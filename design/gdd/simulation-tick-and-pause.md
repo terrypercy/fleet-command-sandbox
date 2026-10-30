@@ -684,7 +684,14 @@ The trigger_fire formula is defined as:
 `cooldown_ticks = ceil(cooldown_s × TICK_RATE − 1e-6)`
 `rearm_ticks = max(1, ceil(rearm_s × TICK_RATE − 1e-6))`
 `crossing(t) = armed AND condition(t)`
-`fires(t) = enabled AND crossing(t) AND (t − last_fire_tick ≥ cooldown_ticks)`
+`fires(t) = crossing(t) AND (t − last_fire_tick ≥ cooldown_ticks)`
+`holds(t) = fires(t) AND enabled`
+
+- **`enabled` only decides whether a fire adds its `AUTO_PAUSE` hold** (and
+  its banner entry). Triggers are evaluated, and their `armed` and
+  `last_fire_tick` updated, whether enabled or not, so the hashed trigger state
+  never depends on a player setting (Gameplay Settings & Modifiers, Core Rule
+  3; amended 2026-10-30).
 
 - **On every crossing, `armed` becomes false**, whether or not it fires. If
   it fires, `last_fire_tick = t`.
@@ -716,7 +723,7 @@ The trigger_fire formula is defined as:
 |----------|------|-------|--------|-------------|
 | cooldown_s | float (simulation s) | 0 – 60 (per-trigger table) | data file (tuning knob, per trigger) | Minimum simulation time between fires. Always 0 for Safety triggers |
 | rearm_s | float (simulation s) | 0 – 10 (per-trigger table); at least 1 tick after conversion | data file (tuning knob, per trigger) | How long the condition must stay clear before the trigger re-arms |
-| enabled | bool | — | data file (Gameplay Settings) | The player's per-trigger toggle |
+| enabled | bool | — | profile setting (Gameplay Settings & Modifiers) | The player's per-trigger toggle; gates only the hold, never the trigger state |
 | armed | bool | — | calculated (saved) | Whether the next crossing can fire |
 | last_fire_tick | int | ≥ `battle_start_tick − cooldown_ticks` | calculated (saved; reset each battle) | Tick of the last fire in this battle |
 
