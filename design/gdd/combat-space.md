@@ -4,6 +4,7 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on the soft edge not holding fast ships, accidental retreat by geometry, overclaiming ghost paths, unannounced pushes on the flagship, and no stated movement-modifier channel; all five revised
 > **Implements Pillar**: Pillar 3 (Hands on the Helm — the flagship moves exactly as flown); Pillar 4 (Plan in the Open — ranges, arcs and positions are readable and exact)
 
 ## Summary
@@ -53,7 +54,8 @@ cover it.
 
 **Pillars served:**
 - **Pillar 3, *Hands on the Helm*:** the flagship moves exactly as flown, at its
-  hull's rates (rule 5).
+  hull's rates (rule 5), except where contact or the edge pushes it, and both
+  are shown with a cue (Game Feel).
 - **Pillar 4, *Plan in the Open*:** positions and ranges are exact; the ghost
   path makes momentum predictable (rule 8).
 
@@ -102,13 +104,24 @@ couldn't predict" or "two ships merged into one blob".
    bounded by `a_step`, the motion is fully predictable.
 6. **Mass** decides only the share of separation push (rule 9) and any future
    knockback. Acceleration is already the hull's `accel`.
+6a. **Other systems change movement only through published multipliers.** Each
+   tick, `v_cap`, `a_step` and `t_step` are computed from the hull's base
+   values times permille multipliers that named systems publish for that ship
+   (Vigor #13, Coherence & Links #14, and later Weapons & Damage effects),
+   applied in a fixed order (ascending system number) with `modifier_compose`
+   rounding (Gameplay Settings & Modifiers D2). Combat Space stays neutral to
+   both sides; the organic/machine asymmetry lives in the systems that publish.
+   Every active multiplier is visible on the HUD (Pillar 4).
 7. **Placement.** Ships appear or move discontinuously only through
    `place(id, x, y, h)` during battle setup or P3: velocity is zeroed, the grid
    is updated, and a record event is emitted. Nothing else may set a position.
-8. **The ghost path** is presentation's: while paused, it runs this same
-   integrator forward on a copy of the state for `GHOST_S` seconds with each
-   ship's current intent, and draws the result. It never touches the
-   simulation.
+8. **The ghost path** is presentation's: while paused, it runs the full P3 step
+   (movement, separation and the edge rule) forward on a copy of the state for
+   `GHOST_S` seconds with each ship's current intent, and draws the result,
+   labelled **"if nothing changes"**. Friendly ghosts (the flagship and ships
+   under direct orders) are drawn in full; enemy ghosts are drawn shorter and
+   dimmer, as momentum only, because enemy AI may choose a new intent any tick.
+   It never touches the simulation.
 
 **C. Contact and bounds**
 
@@ -121,9 +134,13 @@ couldn't predict" or "two ships merged into one blob".
    damage are not at MVP (a capital bulldozing everything would be a degenerate
    strategy).
 10. **The battlefield is a circle** of radius `FIELD_R` (3,000 u). Within the
-    edge band (`EDGE_W`, 400 u inside the edge), a ship gets an inward
-    acceleration of `EDGE_ACCEL`; it slows and turns back, never takes damage,
-    and a visible edge line appears as it nears. `FIELD_R` must be at least 2.5
+    edge band (`EDGE_W`, 400 u inside the edge), after the steering step, the
+    **outward part of a ship's velocity is clamped** to at most
+    `v_cap × (FIELD_R − r) ÷ EDGE_W`, falling linearly to 0 at `FIELD_R`, where
+    `r` is its distance from the centre (Formulas D4). So no ship, however fast
+    or however hard it is flown outward, passes `FIELD_R`; it slides along the
+    edge, never takes damage, and a visible edge line appears as it nears.
+    Content validation checks the fastest hull against the smallest `EDGE_W`. `FIELD_R` must be at least 2.5
     times the longest weapon range (Weapons & Damage) and larger than the
     largest `link_range` (Hulls), so a ship can stand outside a relay's reach.
 11. **Hard limit.** Any coordinate is clamped to ±`HARD_LIMIT` (16,384 u =
@@ -132,9 +149,14 @@ couldn't predict" or "two ships merged into one blob".
 12. **Deployment and retreat zones.** Each side has a deployment arc on the
     circle (its direction comes from the battle setup) and a **retreat zone**:
     the part of the edge band within ±`RETREAT_ARC` (60°) of its own
-    deployment direction. A ship held in its own retreat zone for
-    `RETREAT_HOLD` ticks is reported to Battle Resolution, which owns the
-    retreat rules.
+    deployment direction. **Only a ship carrying an explicit retreat intent**
+    (from Flagship Piloting for the flagship, from a fleet order through Ship AI
+    for others) enters the Retreating state there; inside its own zone the edge
+    clamp does not apply to it, and a countdown shows on the ship. A retreating
+    ship that stays in its zone for `RETREAT_HOLD` ticks, or reaches `FIELD_R`
+    in it, is reported to Battle Resolution, which owns the retreat rules. A
+    ship without retreat intent is never reported, however long it stays in the
+    zone; geometry never retreats a ship for the player.
 13. **No obstacles at MVP.** The battle layout carries an empty `obstacles[]`
     list as a hook; line of sight is always clear at MVP.
 
@@ -162,7 +184,7 @@ couldn't predict" or "two ships merged into one blob".
 | State | Entered when | Behaviour | Leaves to |
 |---|---|---|---|
 | Active | placed at battle setup | Moves, collides, queryable | Retreating, Destroyed |
-| Retreating | inside its own retreat zone | Timer counts to `RETREAT_HOLD` | Active (leaves the zone), Departed |
+| Retreating | inside its own retreat zone **with retreat intent** | Edge clamp off; countdown shown; timer counts to `RETREAT_HOLD` | Active (leaves the zone or intent cancelled), Departed |
 | Departed | timer reached | Removed from the grid; reported to Battle Resolution | — |
 | Destroyed | hull reaches 0 (Weapons & Damage) | Removed from the grid at the end-of-tick step | — |
 
@@ -219,6 +241,15 @@ tick, the rest on later ticks.
 Coordinates ≤ 2³⁰ sub-units; differences ≤ 2³¹; after `>> 8`, squares ≤ 2⁴⁶ and
 a sum of two ≤ 2⁴⁷, far below 2⁶³.
 
+### D4. Edge clamp
+
+`v_out_max = v_cap × (FIELD_R − r) div EDGE_W` for `FIELD_R − EDGE_W ≤ r ≤ FIELD_R`;
+the outward (radial) component of velocity is reduced to `v_out_max` if larger.
+
+**Example:** `v_cap` 436,906 (400 u/s), `EDGE_W` 200 u: at r = FIELD_R − 100 u
+the outward speed may be at most half of `v_cap`; at r = FIELD_R it is 0. The
+tangential component is untouched, so the ship slides along the edge.
+
 ## Edge Cases
 
 - **If a coordinate passes `HARD_LIMIT`**: it is clamped, logged and asserted in
@@ -226,8 +257,8 @@ a sum of two ≤ 2⁴⁷, far below 2⁶³.
 - **If a hull's mass is below 1**: content validation refuses it; the code also
   uses `max(1, mass)`.
 - **If two centres coincide exactly**: rule 9's x-axis tie-break.
-- **If a ship is faster than its cap** (after a slow effect lowers `v_cap`): it
-  loses `a_step` per tick until under the cap.
+- **If a ship is faster than its cap** (after a published multiplier lowers
+  `v_cap`, rule 6a): it loses `a_step` per tick until under the cap.
 - **If many ships overlap at once** (a crowded spawn): each tick pushes at most
   `PUSH_MAX` per pair; crowds spread over a few ticks without jumps.
 - **If a ship leaves the field at full speed**: the edge acceleration turns it
@@ -248,6 +279,7 @@ a sum of two ≤ 2⁴⁷, far below 2⁶³.
 | Runtime ID Service (#3) | Hard | IDs |
 | Hulls & Ship Definition (#10) | Hard | Motion stats, radius, mass |
 | #12, #14, #15, #20, Battle Resolution, #9, #45, #46 | Hard (reverse) | Queries, intents, positions |
+| Vigor (#13), Coherence & Links (#14) | Hard (reverse) | Publish movement multipliers (rule 6a) |
 
 Bidirectional check: Simulation Tick & Pause and Hulls already reference Combat
 Space (AIM_QUANTUM, world unit); downstream GDDs must cite the query API.
@@ -258,7 +290,6 @@ Space (AIM_QUANTUM, world unit); downstream GDDs must cite the query API.
 |---|---|---|---|---|---|
 | `FIELD_R` | 3,000 u | 2,000 – 4,096 | Battlefield size | Cramped, no room outside relay reach | Long approaches |
 | `EDGE_W` | 400 u | 200 – 800 | Edge softness | Abrupt edge | Edge eats space |
-| `EDGE_ACCEL` | 60 u/s² | 30 – 200 | Turn-back strength | Ships drift out | Ships bounce |
 | `RETREAT_ARC` | 60° | 30 – 90° | Retreat zone width | Hard to retreat | Retreat too easy |
 | `RETREAT_HOLD` | 180 ticks | 60 – 600 | Time to leave | Accidental retreats | Retreat feels stuck |
 | `PUSH_MAX` | 2 u/tick | 1 – 8 | Separation speed | Lingering overlap | Visible shoving |
@@ -270,13 +301,18 @@ Space (AIM_QUANTUM, world unit); downstream GDDs must cite the query API.
 
 - Edge line: appears within `EDGE_W` of the edge, never colour-only.
 - Retreat zone and deployment arcs shown on the first paused frame of a battle.
-- Ghost paths while paused: faint, per ship, flagship emphasised.
+- Ghost paths while paused: per ship, flagship emphasised, labelled "if
+  nothing changes"; enemy ghosts shorter and dimmer (rule 8).
+- Push and edge cue on the flagship (Game Feel); retreat countdown on a
+  retreating ship.
 
 ## Game Feel
 
 - **Heavy but exact.** A heavy hull visibly overshoots a 90° turn at full speed;
   it reads as weight, not lag (playtest AC-15).
 - **No merging.** Hulls never draw overlapping for more than a few ticks.
+- **No unexplained drift.** Whenever the flagship is pushed by contact or
+  clamped at the edge, a short cue shows on it, so the player sees the cause.
 - Presentation interpolates between the last two ticks (Simulation Tick & Pause
   D4), so 60 Hz motion looks smooth at any frame rate.
 
@@ -309,11 +345,14 @@ Space (AIM_QUANTUM, world unit); downstream GDDs must cite the query API.
 - **AC-09 (Logic; rule 15)**: over 1,000 seeded layouts of 40 ships, `query_circle` returns exactly the brute-force set, sorted by ID; `query_nearest` ties go to the lower ID.
 - **AC-10 (Logic; rule 14)**: grid rebuild and queries allocate nothing over 3,600 ticks (allocation-count delta 0).
 - **AC-11 (Logic; determinism)**: 3,600 ticks with 40 ships give identical `state_hash` sequences over 3 runs.
-- **AC-12 (Logic; rule 10)**: a ship flying outward at full speed turns back within `EDGE_W` of the edge under `EDGE_ACCEL`, takes no damage, and never passes `FIELD_R + EDGE_W`.
-- **AC-13 (Logic; rule 12)**: a ship held in its own retreat zone is reported on exactly tick `RETREAT_HOLD`; one in the enemy's zone is never reported.
+- **AC-12 (Logic; rule 10, D4)**: the fastest hull (`max_speed` 400) with throttle held outward and `EDGE_W` 200 never passes `FIELD_R`, takes no damage, and slides along the edge; a hull with retreat intent in its own zone does pass the clamp.
+- **AC-13 (Logic; rule 12)**: a ship with retreat intent held in its own retreat zone is reported on exactly tick `RETREAT_HOLD`; a ship without retreat intent is never reported, however long it stays; one in the enemy's zone is never reported.
 - **AC-14 (Performance)**: Combat Space's own work (movement, separation, grid) at Simulation Tick & Pause's D10 fixture takes ≤ 1.2 ms at the 95th percentile; projectile sweeps count against Weapons & Damage.
 - **AC-15 (Playtest; Game Feel)**: at full speed the Spiralward visibly overshoots a 90° turn, and testers describe it as "heavy", not "laggy".
-- **AC-16 (Playtest; rule 8)**: paused at any moment, the flagship's ghost path predicts its position 3 s later within one hull radius (with no new input).
+- **AC-16 (Playtest; rule 8)**: paused at any moment, the flagship's ghost path, and the ghost of a ship under a direct order, predicts its position 3 s later within one hull radius (with no new input), including separation and the edge.
+- **AC-16b (Visual; rule 8)**: enemy ghosts are visibly shorter and dimmer than friendly ones, and every ghost is labelled "if nothing changes".
+- **AC-18 (Logic; rule 6a)**: a Vigor multiplier of 800 and a Coherence multiplier of 500 on `v_cap` 218,453 apply in ascending system order with `modifier_compose` rounding, giving (218,453 × 800 + 500) div 1,000 = 174,762, then (174,762 × 500 + 500) div 1,000 = 87,381; both multipliers appear on the HUD.
+- **AC-19 (Visual; Game Feel)**: whenever the flagship is moved by separation or clamped at the edge, a short cue shows on it within one frame.
 - **AC-17 (Visual)**: in screenshots of a 12-ship melee, no two hulls draw overlapping for more than `ceil(overlap ÷ PUSH_MAX)` ticks.
 
 ## Open Questions
