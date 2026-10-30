@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — the truth costs standing now; a lie costs standing to keep up); Pillar 1 (Every Defeat Is a Lead — standing earns the allies a return attempt can use)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on the preview leaking the truth (hostility now keyed on accusation), care for machine ships, hidden hysteresis, and pillar-list mismatch; all four revised
+> **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — the truth costs standing now; a lie costs standing to keep up); Pillar 4 (Plan in the Open — every change is logged with its cause); Pillar 1 (Every Defeat Is a Lead — standing earns care and allies for a return attempt); Pillar 5 (care is the living races' side)
 
 ## Summary
 
@@ -13,7 +14,7 @@ the player, five bands (Hostile, Wary, Neutral, Trusted, Allied) that decide
 docking, care and lending eligibility, and a log in which every change carries
 its cause. Belief and blame write it; care and suppression spend it; naming the
 true maker sets that race Hostile and locks it. It is the currency of the
-truth's cost and a lie's upkeep (Pillars 2 and 4).
+truth's cost and a lie's upkeep (Pillars 2, 4, 1 and 5).
 
 > **Quick reference** — Layer: `Core` · Priority: `MVP` · Key deps: `Content Data & Mod Loading, Save/Load & Migration`
 
@@ -42,7 +43,7 @@ feel earned and readable.
 
 *Anchor moment:* the player opens the Shell ledger: "+120, shared the base-12
 relic (day 31); −10, suppression upkeep (day 40); −21, care for the Spiralward
-(day 44)". They see exactly what their silence is costing them.
+(day 44)". They see exactly what keeping their lie is costing them.
 
 **Pillars served:**
 - **Pillar 2:** the truth's cost (hostility, locked) and a lie's upkeep are both
@@ -50,6 +51,8 @@ relic (day 31); −10, suppression upkeep (day 40); −21, care for the Spiralwa
 - **Pillar 4:** every change is logged with its cause; no hidden modifier
   (rule 10).
 - **Pillar 1:** standing earns care and lending eligibility for a return attempt.
+- **Pillar 5, *Living Against Made*:** care is the living races' side of the
+  asymmetry; it restores Vigor, never Coherence.
 
 **This system must never make the player feel:** "they hate me and I don't know
 why" or "I can keep a lie forever for free".
@@ -105,8 +108,15 @@ why" or "I can keep a lie forever for free".
 
 **C. The truth's consequence**
 
-8. **Naming the true maker sets that race Hostile and locks it.** Faction Belief
-   & Blame calls `set_hostile(f, cause)`, a **set**, not a delta: `s` becomes
+8. **Publicly naming a race as the maker sets that race Hostile and locks it.**
+   The trigger is keyed on the **accusation** (Faction Belief & Blame's public
+   belief state), **never on the hidden truth**: a race named as the maker is
+   hostile whether or not it is the true maker, so nothing about the
+   consequence reveals the answer (Pillar 2; the sharing preview is
+   truth-blind). The truth and a lie differ later, not here: a true accusation
+   compounds trust as confirming fragments surface; a false one must be kept up
+   by suppression and risks exposure. Faction Belief & Blame calls
+   `set_hostile(f, cause)`, a **set**, not a delta: `s` becomes
    `min(s, HOSTILE_SET)` (−600), the band is forced to Hostile, and
    `enmity_lock` is set. Under the lock, positive changes still apply but `s` is
    capped at −501. Only Faction Belief & Blame may release the lock; at MVP
@@ -124,7 +134,11 @@ why" or "I can keep a lie forever for free".
     ones fold into per-cause totals. The log is shown in the faction panel (the
     Ledger). No write skips it.
 11. **Preview.** `preview(ops)` returns the band changes and lost privileges a
-    set of operations would cause, without applying them. The sharing preview
+    set of operations would cause, without applying them. It receives only the
+    first-order, **truth-blind** operations Faction Belief & Blame supplies;
+    changes that depend on the truth (compounding trust, exposure) are never
+    previewed; results are shown as band names and lost privileges, never
+    numbers. The sharing preview
     uses it, including the loss of scar care Hulls & Ship Definition rule 8
     requires.
 12. **Save section** `base:faction_standing` (Save/Load & Migration Core Rule 7):
@@ -204,6 +218,8 @@ after`.
   port applies (rule 9).
 - **If a faction ID is unknown**: programmer error.
 - **If a mod faction has no start value**: 0.
+- **If care is asked for a ship without Vigor** (a machine hull): `quote_care`
+  returns UNAVAILABLE (not applicable). Standing never restores Coherence.
 - **If suppression upkeep can no longer be paid**: the spend is refused and
   Faction Belief & Blame resolves the lapsed lie; standing never goes below its
   floor through a spend.
@@ -251,7 +267,9 @@ None of its own. The faction panel shows the band, the value and the log.
 ## UI Requirements
 
 - Faction panel (Ledger): band, value, recent log with causes, folded totals,
-  lock indicator.
+  lock indicator, the band boundaries and the current drop point ("drops to
+  Neutral below 100").
+- The care quote shows how the spend changes the band (via `preview`).
 - Port screens: care price quote, or why care is unavailable.
 - Sharing preview: band changes and lost privileges from `preview` (owned by
   Faction Belief & Blame's UI).
@@ -279,7 +297,9 @@ None of its own. The faction panel shows the band, the value and the log.
 - **AC-07 (Logic; D3)**: drift matches the worked values and never takes `s` above 0 from below.
 - **AC-08 (Logic; economy)**: with no play, a suppression upkeep stream drives spendable standing to refusal within the computed number of days.
 - **AC-09 (Logic; rule 10)**: every change of `s` has exactly one log entry with a cause (a test walks every writer).
-- **AC-10 (Logic; rule 11)**: `preview` lists the loss of care, scar care included, before a share that would make a faction Hostile.
+- **AC-10 (Logic; rule 11)**: `preview` lists the loss of care, scar care included, before a share that would make a faction Hostile; the preview is identical whether or not the named race is the true maker, and shows no numbers.
+- **AC-15 (Logic; rule 8)**: naming a race that is not the true maker sets it Hostile and locked exactly as naming the true maker does.
+- **AC-16 (Logic; Edge Cases)**: `quote_care` for a machine hull returns UNAVAILABLE.
 - **AC-11 (Logic; rule 12)**: a save round trip is byte-identical; the section is registered with a ceiling and version 1.
 - **AC-12 (Logic; rule 7)**: standing values are identical on Chronicler, Standard and Admiral for the same inputs.
 - **AC-13 (Logic; rule 6)**: drift results do not depend on tick size or game speed.
@@ -293,3 +313,4 @@ None of its own. The faction panel shows the band, the value and the log.
 | 2 | **MVP faucets without contracts** may make care scarce; check in playtest. | economy-designer | First campaign playtest |
 | 3 | **Free unaligned ports** (rule 9) must be designed into Ports, Rest & Care and Sector Map. | #27, #26 | When designed |
 | 4 | **Reaction magnitudes** per kind of share come from Faction Belief & Blame's reaction matrix. | #30 | When #30 is designed |
+| 5 | **Accusation-keyed hostility** (rule 8): Faction Belief & Blame must confirm that naming any race as maker sets it Hostile (or name a truth-blind alternative). | #30 | When #30 is designed |
