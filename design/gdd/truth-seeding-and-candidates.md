@@ -55,8 +55,8 @@ Its texture is *the archive does not lie, but people do*: stamped relics and
 machine logs can be trusted; testimony and forgeries are marked, and the player
 learns to weigh them.
 
-*Anchor moment:* the player holds a relic inscribed in glyph script and, from a
-different archive, a machine log in the same script. Neither names anyone; two
+*Anchor moment:* the player holds a relic inscribed in incised script and, from
+a different archive, a machine log in the same script. Neither names anyone; two
 races share that script. Together, two independent sources, they rule the third
 race out. The Case File says so, and only so.
 
@@ -84,8 +84,12 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
    the race that lends the player ships.
 3. **Mod races** join the candidate pool at new game only if they pass the table
    rule (rule 5). If more than `C_MAX` are eligible, the set is drawn on
-   `base:truth.candidates`; base races always stay in. A mod never joins an
-   existing campaign's case (Content Data Core Rule 18).
+   `base:truth.candidates`; the two playable races always stay in, and the
+   rest of the set is drawn from every other eligible race, base or mod. The
+   table rule (rule 5) is checked on **every candidate set that can be
+   drawn**, not on the whole pool (with 8 axes, rule 5 cannot hold across five
+   or more races at once). Mods may add axes. A mod never joins an existing
+   campaign's case (Content Data Core Rule 18).
 
 **B. The attribute table and claims**
 
@@ -127,9 +131,14 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
 
 9. **Guarantees** checked on every case (Formulas D3):
    - **G1** every reliable fragment is consistent with the truth;
-   - **G2 no fragment decides alone**: a reliable fragment contradicts between 1
-     and `C − 2` false candidates (exactly 1 at `C` = 3), so fragments must be
-     combined;
+   - **G2 no fragment decides alone**: a reliable fragment contradicts at least
+     1 false candidate and never the truth, and **no two reliable fragments
+     from different groups together rule out every false candidate**, so at
+     least three must be combined. (One fragment can never rule anything out,
+     because ruling out needs two groups; rule 8.) The earlier form, "contradicts
+     at most `C − 2`", was dropped: at `C` = 3 it allowed only axes where the
+     maker shares a value with one other candidate, so *which axes appear*
+     would have pointed to the maker (a G6 leak);
    - **G3** each false candidate is contradicted by reliable fragments from at
      least 2 different groups;
    - **G4** at least `H` (1) FORGERY fragments exist (rule 7);
@@ -143,7 +152,10 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
      balance mentions (rule 7).
 10. **Generate, check, retry.** The case is generated on `base:truth.fragments`,
     checked against G1–G6, and regenerated up to `MAX_ATTEMPTS` (32) times on the
-    same stream (deterministic). If none passes, a **fixed fallback build** is
+    same stream (deterministic). **Each reliable fragment's axis is drawn
+    uniformly over every axis of the table**, whatever the maker: every axis
+    yields a true claim that contradicts at least one false candidate, so axis
+    frequency carries nothing about the maker (G6). If none passes, a **fixed fallback build** is
     used: axes in `stable_id` order, the first claims that satisfy G1–G5, with no
     draws; the table rule guarantees it exists. A fallback is logged, never shown.
 11. **Seeding** happens once, at new game, in the campaign step, on three
@@ -221,25 +233,33 @@ A case is valid when G1–G6 hold, `contra(truth)` = 0 over the reliable set, an
 exactly the truth survives, whatever the order of discovery; and no single
 reliable fragment rules anything out.
 
-### Worked example (C = 3, truth = B)
+### Worked example (C = 3, truth = Orrowen)
 
-| Axis | A | B | C | Pattern |
+Candidates Halsk, Orrowen and Ithren; values from the lore bible
+(`design/narrative/lore-bible.md` §5).
+
+| Axis | Halsk | Orrowen | Ithren | A true claim contradicts |
 |---|---|---|---|---|
-| solvent | water | water | ammonia | A–B share |
-| script | glyph | glyph | knot | A–B share |
-| numbering base | 6 | 12 | 6 | A–C share (never used when B is true: it would rule out both A and C) |
-| motif | spiral | lattice | spiral | A–C share |
-| region | rim | core | core | B–C share |
-| era | 3rd | 1st | 1st | B–C share |
-| doctrine, material | all differ | | | testimony and forgery only |
+| solvent | saline | saline | ammonia | Ithren |
+| script | incised | knotted | incised | Halsk, Ithren |
+| numbering base | base twelve | base eight | base eight | Halsk |
+| building motif | spiralled | spiralled | branching | Ithren |
+| star region | rimward | coreward | rimward | Halsk, Ithren |
+| founding era | Early Tide | Late Tide | Late Tide | Halsk |
+| command doctrine | consensus | hereditary | rotational | Halsk, Ithren |
+| material signature | cobalt | copper | barium | Halsk, Ithren |
 
-Fragments: f1 solvent = water (DIRECT, g1, contradicts C); f2 script = glyph
-(RECORD, g2, contradicts C); f3 region = core (DIRECT, g3, contradicts A); f4 era =
-1st (RECORD, g4, contradicts A); f5 region = core (RECORD, g5, slack, contradicts
-A); f6 TESTIMONY doctrine (weight only); f7 FORGERY doctrine (value drawn
-uniformly, weight only).
-**Check:** contra(A) = 3, contra(C) = 2, contra(B) = 0. Holding only f1 and f3
-rules out nothing; at least four reliable fragments prove the case.
+Every axis yields a usable true claim, so axes are drawn uniformly (rule 10).
+
+Fragments: f1 script = knotted (DIRECT, g1, contradicts Halsk and Ithren); f2
+solvent = saline (RECORD, g2, contradicts Ithren); f3 numbering base = base eight
+(DIRECT, g3, contradicts Halsk); f4 era = Late Tide (RECORD, g4, slack,
+contradicts Halsk); f5 TESTIMONY doctrine (weight only); f6 FORGERY material
+(value drawn uniformly, weight only).
+**Check:** contra(Halsk) = 3 (g1, g3, g4), contra(Ithren) = 2 (g1, g2),
+contra(Orrowen) = 0. **G2:** f1 + f2 rules out Ithren only; f1 + f3 Halsk only;
+f1 + f4 Halsk only; f2 + f3, f2 + f4 and f3 + f4 rule out at most one. No two
+fragments solve the case; f1, f2 and f3 together do.
 
 ## Edge Cases
 
@@ -317,7 +337,9 @@ rule 14).
 - **AC-02 (Logic; rule 2, D1)**: over 30,000 seeds each MVP candidate is the maker in 33 % ± 1.5 %.
 - **AC-03 (Logic; D3; fuzz)**: over 1,000,000 seeds, at C = 3 and C = 4, with base content and a fixture mod race, every case passes D3.
 - **AC-04 (Logic; rule 10)**: on the same run the fallback rate is ≤ 0.1 %, and every fallback case passes D3.
-- **AC-05 (Logic; G2)**: in every case no single reliable fragment contradicts more than `C − 2` candidates, and no single reliable fragment rules a candidate out.
+- **AC-05 (Logic; G2)**: in every case no single reliable fragment rules a candidate out, every reliable fragment contradicts at least one false candidate and never the truth, and no two reliable fragments from different groups together rule out every false candidate.
+- **AC-05b (Logic; rule 10, G6)**: over 30,000 seeds at C = 3 and C = 4, the axis distribution of reliable fragments is the same for every maker (each axis within 1 ÷ 8 ± 1 %).
+- **AC-09b (Logic; rule 3)**: with four base races and one fixture mod race, every drawable candidate set passes the table rule; a mod race that fails for some drawable set is excluded with a warning.
 - **AC-06 (Logic; G3)**: every false candidate has `contra ≥ 2` from different groups; the truth has `contra` = 0.
 - **AC-07 (Logic; rule 7)**: over 30,000 seeds, the candidate a FORGERY's value points to is the maker in 1 ÷ C ± 1.5 % of cases, and testimony matches the truth in 700 ‰ ± 15 ‰, with its false values spread uniformly over the non-maker candidates (neither can be read backwards).
 - **AC-08 (Logic; G6)**: over 30,000 seeds, a classifier given only non-content features (display order, template wording, string length, provenance stamp, group ID, package, location) predicts the maker no better than chance (≤ 1 ÷ C + 2 %); and with claim values hidden, which axes appear predicts the maker no better than chance by the same threshold.
@@ -334,7 +356,7 @@ rule 14).
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **A truth-neutral lore bible** (shared backstory; each race's motive, means and innocent gap; the attribute table values) is needed before #28 and the writer start. | narrative-director, writer, world-builder; scope by producer | Before #28 is designed |
+| 1 | ~~**A truth-neutral lore bible**~~ **Drafted 2026-10-30:** `design/narrative/lore-bible.md` (pending review and the clean-room check). Original text: **A truth-neutral lore bible** (shared backstory; each race's motive, means and innocent gap; the attribute table values) is needed before #28 and the writer start. | narrative-director, writer, world-builder; scope by producer | Before #28 is designed |
 | 2 | **Race names and attribute values** are placeholders. | narrative-director | Lore bible |
 | 3 | **`TESTIMONY_TRUE_PM`** value: testimony must feel worth weighing without being proof. | game-designer | Mystery playtest |
 | 4 | ~~**Testimony and the concept's wording**~~ **Resolved 2026-10-30**: creative-director approved the intent; the concept's Unique Hook now reads "except the marked red herrings and testimony" (concept edit, owner's standing instruction). | creative-director | Resolved |

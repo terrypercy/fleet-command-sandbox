@@ -41,7 +41,7 @@ race and spends on their care; a lie is a loan that keeps charging upkeep. Every
 gain and loss is written in the faction's ledger with its cause, so allegiances
 feel earned and readable.
 
-*Anchor moment:* the player opens the Shell ledger: "+120, shared the base-12
+*Anchor moment:* the player opens the Halsk ledger: "+120, shared the base twelve
 relic (day 31); −10, suppression upkeep (day 40); −21, care for the Spiralward
 (day 44)". They see exactly what keeping their lie is costing them.
 

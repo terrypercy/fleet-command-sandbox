@@ -54,7 +54,7 @@ test: **the hull tells you how it fights.**
 
 *Anchor moment:* the player's Spiralward limps out of a lost battle with its
 rear arc scorched. Over three days of travel its wounds close, but a pale scar
-stays until it rests at a Shell port. In the Debrief, the enemy's Lattice Relay,
+stays until it rests at a Halsk port. In the Debrief, the enemy's Lattice Relay,
 designation L-07, is marked as the ship to kill first next time.
 
 **Pillars served:**
@@ -225,9 +225,9 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
 
 | Hull | Race | Size | Role | Identity |
 |---|---|---|---|---|
-| Seedcaller | Growers (coral/seed-pod) | Line | support | Armour regrows fast; a slow, healing anchor |
-| Thornbrood | Growers | Light | skirmisher | High `vigor_flow`, small ceiling: spends hard, fades fast |
-| Spiralward | Shell race (spiral) | Heavy | brawler (flagship candidate) | Large ceiling, a blind rear arc; rewards facing discipline |
+| Seedcaller | Orrowen (coral/seed-pod) | Line | support | Armour regrows fast; a slow, healing anchor |
+| Thornbrood | Orrowen | Light | skirmisher | High `vigor_flow`, small ceiling: spends hard, fades fast |
+| Spiralward | Halsk (spiral) | Heavy | brawler (flagship candidate) | Large ceiling, a blind rear arc; rewards facing discipline |
 | Lattice Relay | Instrument | Light | relay | `relay_capacity` 40, lightly armed: the ship you hunt first |
 | Vector Line | Instrument | Line | brawler | Mostly `network_fed` mounts; cut, it is an ordinary ship |
 | Keystone | Instrument | Capital | anchor | A small relay itself plus heavy guns; holds a stronghold together |
