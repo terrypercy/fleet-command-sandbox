@@ -220,7 +220,7 @@ options; **competence** through exact, truthful time and risk previews.
     content only. No map fact, marker, reveal or contact varies with the seeded
     maker. Hostility reaches the map only through the faction band, which is
     truth-blind (Faction Reputation rule 8). Starting faction bands are
-    authored and seed-independent: before the first public naming, no band,
+    authored and seed-independent: before the first committed share or naming, no band,
     patrol or docking right may differ between two seeds with identical
     orders.
 

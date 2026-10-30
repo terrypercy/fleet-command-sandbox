@@ -121,7 +121,9 @@ where".
    is suppressed and when; this system charges it: purchase
    `D2(SUPPRESS_BUY_BASE, yield_permille)` (5,000 base) and upkeep
    `D2(SUPPRESS_UPKEEP_BASE, yield_permille)` (60 base) per day per suppressed
-   fragment, both atomic spends. Because both scale with `yield_permille`, a
+   fragment, both atomic spends. Seals apply to HELD fragments only at MVP, and
+   Faction Belief & Blame counts the keeper faction's unpaid standing days with
+   the same `SUPPRESS_GRACE_DAYS`. Because both scale with `yield_permille`, a
    lie costs the same share of income on every preset (Gameplay Settings &
    Modifiers rule 9). **Suppression upkeep is charged before fleet upkeep** each
    day. An unpaid day starts a **grace period**: a suppression lapses only after

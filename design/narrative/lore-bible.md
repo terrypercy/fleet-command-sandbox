@@ -484,7 +484,7 @@ Names are working names pending the clean-room check (Open Question 2).
 |---|---|---|
 | 1 | Which race is the MVP text-only third candidate, and which race is absent at MVP? Recommendation: Halsk and Orrowen playable; Ithren or Quorrin text-only. | owner, producer |
 | 2 | **Open.** Clean-room lore check against Starsector, and Mass Effect for the Instrument and the Patchwork (names, the Dimming, the Turning, the Patchwork), before this bible is approved (concept, Originality). The 2026-10-30 revision addressed the CD's flagged echoes but does not replace this check. | creative-director |
-| 3 | Starting beliefs: lore suggests a symmetric blame cycle (Halsk suspect Quorrin, Quorrin suspect Ithren, Ithren suspect Orrowen, Orrowen suspect Halsk), seed-independent. It breaks at C = 3. Input for #30, not a decision. | game-designer (#30) |
+| 3 | **Answered 2026-10-30 (Faction Belief & Blame D0):** every race suspects the others equally (100 ‰ on itself, the rest split evenly), seed-independent; the blame cycle was dropped because it breaks at C = 3. | game-designer (#30) |
 | 4 | Hues for Ithren and Quorrin, and confirmation that "bone" on machines does not read as shell or carapace. | art-director |
 | 5 | **Answered 2026-10-30 (Archive Fragments #28): never.** Should a forger's identity ever appear on a fragment? Recommendation: never at MVP. | game-designer (#28) |
 | 6 | Confirm the Reckoning's "origin" is the Midwater Common Yards in every seed. | #34 owner |

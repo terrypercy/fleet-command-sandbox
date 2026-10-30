@@ -109,8 +109,8 @@ why" or "I can keep a lie forever for free".
 **C. The truth's consequence**
 
 8. **Publicly naming a race as the maker sets that race Hostile and locks it.**
-   The trigger is keyed on the **accusation** (Faction Belief & Blame's public
-   belief state), **never on the hidden truth**: a race named as the maker is
+   The trigger is keyed on the **public verdict entering NAMES(X), from any
+   cause** (an accusation, shares or an exposure; Faction Belief & Blame D3), **never on the hidden truth**: a race named as the maker is
    hostile whether or not it is the true maker, so nothing about the
    consequence reveals the answer (Pillar 2; the sharing preview is
    truth-blind). The truth and a lie differ later, not here: a true accusation
@@ -312,5 +312,5 @@ None of its own. The faction panel shows the band, the value and the log.
 | 1 | **Releasing the enmity lock** (a later reconciliation). | game-designer | 1.0 |
 | 2 | **MVP faucets without contracts** may make care scarce; check in playtest. | economy-designer | First campaign playtest |
 | 3 | ~~**Free unaligned ports**~~ **Resolved 2026-10-30:** one per region (Sector Map & Travel rule 3); a free port always docks the player (Ports, Rest & Care rule 5). | #27 | Closed |
-| 4 | **Reaction magnitudes** per kind of share come from Faction Belief & Blame's reaction matrix. | #30 | When #30 is designed |
-| 5 | **Accusation-keyed hostility** (rule 8): Faction Belief & Blame must confirm that naming any race as maker sets it Hostile (or name a truth-blind alternative). | #30 | When #30 is designed |
+| 4 | ~~**Reaction magnitudes**~~ **Resolved 2026-10-30:** each faction reacts to the change in public blame on its own race, banded SLIGHT / MARKED / SEVERE at 20 / 80 / 200 ‰ (Faction Belief & Blame D5). | #30 | Closed |
+| 5 | ~~**Accusation-keyed hostility**~~ **Resolved 2026-10-30:** confirmed and generalised: the verdict entering NAMES(X) from any cause sets X Hostile (Faction Belief & Blame D3; rule 8 amended). | #30 | Closed |
