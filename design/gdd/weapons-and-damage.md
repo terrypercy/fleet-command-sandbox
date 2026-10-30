@@ -4,6 +4,7 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on the flux test (membrane now erodes the ceiling, no toggle/overload; blocking on #13), unrecorded shield and ward events, the membrane visual, missing expected-damage readout, and the stern claim; all five revised
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — every point of damage has a recorded source and type the Debrief can name); Pillar 4 (Plan in the Open — odds and ranges are shown, computed, never hidden); Pillar 5 (Living Against Made)
 
 ## Summary
@@ -45,7 +46,8 @@ doing: thorns grinding a coral hull's regrowth, a lance burning down a ward, a
 filament snapping a relay link with a spark. A loss is never "they did more
 damage"; it is "my energy never reached their wards because the relay kept
 refilling them", and the Debrief says so. On the flagship, *where* you hit
-matters too: a core, a relay, the blind stern.
+matters too: a core, a relay, and at MVP the blind stern through weapon arcs
+(a hull with no guns covering its stern; Hulls `blind_rear`).
 
 *Anchor moment:* the player's Glowlance burns a Vector Line's ward to nothing,
 but it refills. Paused, they see the Lattice Relay behind it. They swap targets
@@ -125,9 +127,15 @@ lost to a dice roll", or "I can't tell what that weapon is doing".
    damage: no type dominates.
 7. **Shields are asymmetric** (Pillar 5):
    - **Organic membrane**: absorbs `membrane_permille` of each hit (a new
-     `organic` field in Hulls). The absorbed amount is a Vigor draw request to
-     Vigor (#13); if refused, nothing is absorbed. The membrane is paid in the
-     ship's living energy, never a separate bar.
+     `organic` field in Hulls), **scaled by the ship's current Vigor** (a spent
+     ship's membrane is thin). What it absorbs is taken from the **Vigor
+     ceiling**, not from the spendable pool: the membrane trades long-term
+     endurance, which only care or port rest restores, for surviving this hit.
+     It has **no toggle and no overload state**. If Vigor (#13) refuses, nothing
+     is absorbed. This keeps shots (spending) and the membrane (erosion) on
+     different parts of Vigor, so the pair never reproduces a single
+     flux-and-overload pool (Pillar 5). **Blocking dependency:** the exact
+     maths are Vigor's, and this rule is provisional until #13 confirms it.
    - **Machine ward**: a pool of `ward_points` (new `machine` field in Hulls)
      that refills at `ward_refill` per second **only while the ship is linked**;
      cut, it stops refilling and decays (rate owned by #14). Cutting a link
@@ -169,9 +177,14 @@ lost to a dice roll", or "I can't tell what that weapon is doing".
 12. **Destruction.** A ship whose hull reaches 0 is flagged for P7. Its killer is
     the hit that first crossed 0. Further hits on it that tick are recorded as
     overkill with no kill credit.
-13. **New events** (raising `EVENT_SCHEMA_VERSION`, Battle Record rule 9):
-    `CoreStruck(ship, core_id, amount)` and `LinkStrain(target, amount, actor)`,
-    both record-tier, to be confirmed by Vigor (#13) and Coherence & Links (#14).
+13. **New events** (raising `EVENT_SCHEMA_VERSION`, Battle Record rule 9), all
+    record-tier: `CoreStruck(ship, core_id, amount)`, `LinkStrain(target,
+    amount, actor)`, `ShieldAbsorbed(ship, layer, amount, dmg_type)` (layer:
+    membrane or ward, aggregated per `DAMAGE_WINDOW` like `DamageBucket`) and
+    `WardRefilled(ship, amount, relay_id)` (aggregated per window). Each
+    `DamageBucket` also gains an `absorbed` total. These let the Debrief name a
+    loss such as "your energy never reached their wards because the relay kept
+    refilling them". To be confirmed by Vigor (#13) and Coherence & Links (#14).
 14. **Budget.** P4 and P5 together, including projectile sweeps, take ≤
     `WEAPONS_SHARE_MS` (1.2 ms, 30 % of the 4.0 ms per-tick budget `L`) at the
     95th percentile on Simulation Tick & Pause's D10 fixture. RNG draw time counts
@@ -306,8 +319,8 @@ in **20 – 40 s**; a capital dies to **4** line ships in **60 – 120 s**.
 - **If a player reloads a suspend and fires one tick later**: the draw comes
   from that later tick's position; no value is "burned" (RNG tick-indexing).
 - **Degenerate strategies**: kiting is bounded by the edge clamp; severing spam
-  by link recovery (#14); reload-scumming by tick-indexing; stern hunting is
-  intended mastery.
+  by link recovery (#14); reload-scumming by tick-indexing; hunting a blind
+  stern (no guns covering it) is intended mastery.
 
 ## Dependencies
 
@@ -346,8 +359,10 @@ All in `assets/data/weapons/`.
   pulse at a core.
 - The reserved **white-hot damage flash** (concept) reads as damage on both
   sides.
-- Membrane absorption shows as the hull's glow flaring (Vigor spent); a ward
-  shows as a geometric barrier that visibly drops when cut.
+- Membrane absorption shows as a **ripple across the hull skin** (shape and
+  motion), followed by a visible dip in the core's pulse. A core never
+  brightens when Vigor is spent (Vigor is core brightness). A ward shows as a
+  geometric barrier that visibly drops when cut.
 - Fed weapons visibly go dark when Silent.
 
 ## Game Feel
@@ -359,7 +374,11 @@ All in `assets/data/weapons/`.
 ## UI Requirements
 
 - Per weapon on the HUD: range ring, arc, cooldown, state (Ready / Starved /
-  Silent), and the shown hit chance on the hovered or locked target.
+  Silent), and, on the hovered or locked target, the shown hit chance **and the
+  expected hull damage per hit** (computed from D1–D3 with no draw), both
+  labelled "if nothing changes".
+- The Dossier and Debrief show the type table as each type's counters ("good
+  against wards"), never as raw multipliers.
 - Hull and weapon cards show damage type icons with the counter they serve.
 - 📌 **UX Flag — Weapons & Damage**: include weapon readouts and type icons in
   the Combat HUD UX spec before epics.
@@ -387,7 +406,10 @@ All in `assets/data/weapons/`.
 - **AC-09 (Logic; D5)**: the worked case shows 229 ‰; over 10,000 headless shots the measured hit rate is within ±30 ‰.
 - **AC-10 (Logic; rules 3, 7)**: a fed weapon and a ward stop within 1 tick of `LinkState → SNAPPED`; a refused Vigor cost gives no fire and no draw.
 - **AC-11 (Logic; rule 11)**: a RUPTURE hit whose contact point is inside a glow anchor's radius emits `CoreStruck` with that `core_id`; a SEVERING hit emits `LinkStrain`.
-- **AC-12 (Logic; Battle Record)**: every `Hit` sets its type's bit in the bucket's `dmg_type_mask`, and the record resolves slot → weapon.
+- **AC-12 (Logic; Battle Record)**: every `Hit` sets its type's bit in the bucket's `dmg_type_mask`, and the record resolves slot → weapon; membrane and ward absorption appear as `ShieldAbsorbed` and in the bucket's `absorbed` total; ward refills appear as `WardRefilled` with the relay.
+- **AC-18 (Review; rule 7, Pillar 5)**: Vigor (#13)'s review confirms the membrane and `vigor_per_shot` contract does not reproduce a flux-and-overload loop; a Starsector-literate playtester cannot describe Vigor as "flux with a different name".
+- **AC-19 (UI)**: the expected-damage readout for a locked target equals D1–D3 computed on the current state and makes zero draws.
+- **AC-20 (Playtest)**: AC-17 passes on a scripted ward-refill loss specifically (players name SEVERING the relay as the counter).
 - **AC-13 (Logic; rule 5)**: projectile sequence numbers are contiguous from 1 in a battle, and a suspend reload continues them.
 - **AC-14 (Logic; rule 4)**: with phase stagger, 40 ships × 3 mounts never fire more than twice the mean shots in any tick over 3,600 ticks.
 - **AC-15 (Simulation; D6)**: over 100 seeded duels of reference loadouts, 2 line ships kill 1 line ship in a median of 20 – 40 s, and 4 line ships kill a capital in 60 – 120 s.
@@ -399,7 +421,7 @@ All in `assets/data/weapons/`.
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Budget split** — with Combat Space 1.2 ms, RNG 0.6 ms and Weapons 1.2 ms, about 1.0 ms of `L` remains for Ship AI, Vigor, Coherence and the record. | technical-director, performance-analyst | Tick/determinism ADR spike |
-| 2 | **Vigor draw and membrane maths** (rule 7, `vigor_per_shot`). | Vigor (#13) | When #13 is designed |
+| 2 | **Blocking: Vigor draw and membrane maths** (rule 7, `vigor_per_shot`), including how membrane absorption erodes the ceiling and scales with current Vigor. This GDD is not approvable until #13 confirms it. | Vigor (#13) | Before approval |
 | 3 | **Ward decay and link strain maths** (rules 6–7). | Coherence & Links (#14) | When #14 is designed |
 | 4 | **Stern armour** (half armour inside the stern arc) as optional positional play. | game-designer | Post-MVP |
 | 5 | **Point defence / targetable projectiles** — not at MVP. | game-designer | Post-MVP |
