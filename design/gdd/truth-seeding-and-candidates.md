@@ -215,7 +215,7 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
 | Content Data & Mod Loading (#4) | both | Truth kinds (candidates, attribute table, claim templates, provenance classes); table rule at load; Core Rule 18 |
 | Save/Load & Migration (#5) | #16 → #5 | `base:truth_case` section |
 | Archive Fragments & Evidence (#28) | #16 → #28 | The fragment list. **Split:** #16 owns what a claim means and how the case is generated (schema, class reliability, generation, solvability); #28 owns template text, the provenance stamp, placement and how a discovery is shown |
-| Case File | #16 → Case File | `contra` and `support` meanings (rule 8) |
+| Case File | #16 → Case File | `contra` (rule 8); `support` is defined by Case File & Deduction D3 |
 | Faction Belief & Blame; Exposure & Rival Investigation (#32) | #16 → them | Per-fragment class, group and contradiction flags |
 | Dossier | #16 → Dossier | Public attribute table |
 | Gameplay Settings & Modifiers (#7) | — | No effect (rule 11) |
@@ -331,7 +331,7 @@ rule 14).
 ## UI Requirements
 
 - The Dossier shows the public attribute table.
-- The Case File (its own GDD) uses `contra` and `support`.
+- The Case File (its own GDD) uses `contra` (rule 8) and `support` (Case File D3).
 - 📌 **UX Flag — Truth Seeding & Candidates**: the attribute table view belongs
   in the Dossier UX spec.
 

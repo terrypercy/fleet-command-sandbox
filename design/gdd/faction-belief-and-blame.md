@@ -703,7 +703,7 @@ proceed (the owner may revisit any of them at review):
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **`support` meaning.** Truth Seeding names `support` for the Case File but rule 8 defines only `contra`. D7 assumes support = distinct consistent groups, with testimony in and forgeries out. | Case File owner, game-designer | Case File GDD |
+| 1 | ~~**`support` meaning**~~ **Resolved 2026-10-30:** Case File & Deduction D3 owns it: distinct fitting groups of relic, record or testimony fragments, forgeries out, sealed in. | Case File owner | Closed |
 | 2 | **Lending thresholds.** Recommended: grant when `max_{c≠race(f)} b_f[c] ≥ 600`, refuse or withdraw when `P[race(f)] ≥ 600`. #33 owns them and case (d), the seed landing on the escort's race. | #33 | #33 GDD |
 | 3 | **"In play" for the Reckoning.** Proposed: a reliable contradiction of the verdict is in play unless it is sealed and paid. Unfound ones count. | #34 | #34 design |
 | 4 | **Command step.** Commits happen in a planning hold. Confirm that a zero-duration simulation step applies them (Runtime ID rule 3 requires one for any issue). | World Clock owner | ADR on commands |
