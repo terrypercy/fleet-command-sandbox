@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (accusation strength grows with the shown case; the text-only faction owns a real port; preview adds drift, seal-lapse, faith and the confirmation line; per-class totals maker-blind; naming line on bars)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — what each faction believes about the makers is shaped by what the player shares, suppresses and accuses, never by the hidden truth); Pillar 4 (Plan in the Open — every share's consequences are previewed before commit)
 
 ## Summary
@@ -92,11 +92,14 @@ battle; each has a preview, a confirm step and no undo)
    counts once. A PUBLIC share is applied to each faction in faction ID order,
    and factions that already received `φ` are skipped.
 6. **Accuse** `accuse(X)` names candidate `X` in public. Every faction whose
-   race is not `X` moves `ACCUSE_PM` (600 ‰) of its blame on every other
-   candidate onto `X` (D2). `X`'s own faction does not move, because it denies
-   the charge. An accusation is refused while the verdict already NAMES(X). At
-   default values, an accusation from the symmetric start always produces
-   NAMES(X). After earlier shares it might not, and the preview says so.
+   race is not `X` moves `ACCUSE_PM` of its blame on every other candidate onto
+   `X` (D2). `ACCUSE_PM` grows with the case the player has **shown**:
+   `s_pub`, the distinct reliable groups consistent with `X` already shared
+   PUBLIC. `X`'s own faction does not move, because it denies the charge. An
+   accusation is refused while the verdict already NAMES(X). A bare accusation
+   from the symmetric start does **not** name (D2): naming takes one act of
+   showing evidence and one of speaking, as in a courtroom. The preview always
+   says whether this accusation names.
 7. **Suppress** `suppress(φ, keeper)` seals a HELD fragment that is not shared
    and not exposed. The fragment **stays HELD** in #28 with a #30 flag (this
    answers Archive Fragments OQ 3). A sealed fragment cannot be shared. It is
@@ -155,7 +158,9 @@ battle; each has a preview, a confirm step and no undo)
     earns standing with every faction whose race is not `X` (D10). The amount
     grows with each confirmation. It is judged on the claim only, and it is
     **never previewed** (Standing rule 11), because it depends on what is
-    still unfound.
+    still unfound. A lie can earn confirmations from fragments consistent
+    with it; the truth earns more, because more reliable fragments are
+    consistent with it.
 15. **Exposure** (this answers the #32 CD condition). Only #32 calls
     `expose(φ)`. #30 accepts the call only if the verdict NAMES(X), `φ` is
     DIRECT_PHYSICAL or RECORD, its claim contradicts `X`, and `φ` is not
@@ -170,7 +175,9 @@ battle; each has a preview, a confirm step and no undo)
 
 **D. Truth-blindness**
 
-16. **#30 never reads the maker.** It reads fragments through a claim view
+16. **#30 never reads the maker.** Truth Seeding guarantees per-class fragment
+    totals are identical across makers for a given content set, so
+    `unfound_count_by_class()` in the preview leaks nothing. It reads fragments through a claim view
     from Truth Seeding: the axis, value, class, group, and each candidate's
     attribute row. It reads nothing else. "Contradicts" and "consistent" are
     computed from the claim against the public attribute table (Truth Seeding
@@ -196,6 +203,14 @@ battle; each has a preview, a confirm step and no undo)
       and lost privileges, scar care included);
     - the lending result from #33 (`preview_lending(belief_after)`: "this
       share grants / loses the escort");
+    - each faction's drift target direction (rises / falls / unchanged; rule 12);
+    - seals whose keeper this action turns Hostile, and their lapse day;
+    - for a suppression, whether it turns the current naming to bad faith
+      (rule 13);
+    - on any action that changes the verdict to NAMES(X), the same fixed line
+      in every case: "While X stands named, each confirming find earns trust
+      with everyone else, growing with each find." (identical for a lie and the
+      truth, so it leaks nothing);
     - the exposure readout from #32 for the verdict after the action: held
       reliable contradictions (open / sealed) before and after, plus the
       rival's progress, unchanged;
@@ -333,30 +348,41 @@ Orrowen and Ithren each lose −40.
 
 ### D2. Accusation shift
 
+`ACCUSE_PM = min(ACCUSE_BASE + ACCUSE_PER_SUPPORT × s_pub, ACCUSE_MAX)`.
 For every faction `f` with `race(f) ≠ X`: `a_c = b_f[c] × ACCUSE_PM div 1,000`
 for each `c ≠ X`. Then `b_f'[c] = b_f[c] − a_c`, and `b_f'[X] = b_f[X] + Σ a_c`.
 
 | Variable | Type | Range | Description |
 |---|---|---|---|
-| ACCUSE_PM | int ‰ | 400 – 800; **600** | Share of blame on others moved onto X |
-| a_c | int ‰ | 0 – 800 | Moved from `c` |
+| ACCUSE_BASE | int ‰ | 150 – 350; **250** | A bare accusation's strength |
+| ACCUSE_PER_SUPPORT | int ‰ | 100 – 250; **150** | Added per publicly shared supporting group |
+| ACCUSE_MAX | int ‰ | 500 – 800; **700** | Cap |
+| s_pub | int | 0 – groups shared | Distinct reliable groups consistent with X, shared PUBLIC |
+| a_c | int ‰ | 0 – 700 | Moved from `c` |
 
 **Output:** conserved, and every value stays in [0, 1,000].
 
-**Worked example** (C = 3, start, accuse Halsk):
+**Worked example 1, a bare accusation** (C = 3, start, `s_pub` 0, so
+`ACCUSE_PM` 250; accuse Halsk):
 
-- Orrowen: a_O = 60, a_I = 270, giving H **780**, O **40**, I **180**.
-- Ithren: H **780**, O **180**, I **40**.
+- Orrowen: a_O = 25, a_I = 112, giving H **587**, O **75**, I **338**.
+- Ithren: H **587**, O **338**, I **75**.
 - Halsk is unchanged.
 
-P[H] = 780. P[O] = (450 + 180) div 2 = **315**, and P[I] = **315**. Lead 465
-≥ 200 and 780 ≥ 600, so the verdict is **NAMES(Halsk)** and `set_hostile(Halsk)`
-is called. ΔP[O] = ΔP[I] = −135 is MARKED, so Orrowen and Ithren each gain
-+120.
+P[H] = 587, P[O] = (450 + 338) div 2 = **394**, P[I] = **394**. 587 < 600, so
+the verdict stays **UNRESOLVED**: shouting is not a case. ΔP[O] = ΔP[I] = −56
+is SLIGHT, so Orrowen and Ithren each gain +40.
 
-At C = 4 the same accusation gives P[H] = 720 and P[others] = 180, so it also
-names Halsk. Checked at the safe-range floor (ACCUSE_PM 400, C = 3): P[H] =
-670, lead 310, so it still names.
+**Worked example 2, with one shared supporting group** (`s_pub` 1, so
+`ACCUSE_PM` 400). Even from the symmetric start (a lower bound, since the
+supporting share itself already raised blame on Halsk): Orrowen H = 450 + (40 +
+180) = **670**, O 60, I 270; Ithren likewise. P[H] = 670, P[O] = (450 + 270) div
+2 = 360, lead 310, so the verdict is **NAMES(Halsk)** and `set_hostile(Halsk)`
+is called. At `s_pub` 3 the cap (700) applies.
+
+At C = 4 from the start, `s_pub` 1 gives P[H] = 300 + 700 × 400 div 1,000 =
+580 (not named) and `s_pub` 2 gives 300 + 385 = **685** (named): a wider field
+needs a stronger shown case.
 
 ### D3. Verdict
 
@@ -374,8 +400,8 @@ first and `lead = P[top] − P[second]`.
 | LEAD_PM | int ‰ | 100 – 300; **200** | Margin over the next race |
 | NAME_H | int ‰ | 0 – 100; **50** | Hysteresis |
 
-**Example:** the D1 state (484 / 484 / 338) is UNRESOLVED. The D2 state (780,
-lead 465) is NAMES(Halsk). If P[H] later falls to 560 with the next race at 380
+**Example:** the D1 state (484 / 484 / 338) is UNRESOLVED. D2's example 1 (587)
+is UNRESOLVED; example 2 (670, lead 310) is NAMES(Halsk). If P[H] later falls to 560 with the next race at 380
 (lead 180), the verdict holds: 560 ≥ 550 and 180 ≥ 150. At 540 it becomes
 UNRESOLVED.
 
@@ -419,8 +445,9 @@ faction. Examples are in D1 and D2.
 | TARGET_CAP | int | 150 – 500; **300** | Limit |
 
 **Output:** [−300, +300], and 0 at the start (matching Standing's default).
-**Example (D2 state):** Orrowen (450 − 315) = **+135**. Halsk (450 − 780) =
-−330, clamped to **−300**.
+**Example (D2 example 2):** Orrowen (450 − 360) = **+90**. Halsk (450 − 670) =
+**−220** (inside the cap). A Halsk at P 800 would give −350, clamped to
+**−300**.
 
 ### D7. Good faith
 
@@ -568,7 +595,7 @@ needs a wording amendment (Open Question 6).
 | `SELF_START` | 100 | 0 – 200 (must make `1,000 − SELF_START` divisible by 6) | Starting self-blame |
 | `SHIFT_PM` DIRECT / RECORD / TESTIMONY / FORGERY | 250 / 250 / 120 / 40 | 150 – 400 / 150 – 400 / 50 – 200 / 0 – 80 | How far a share persuades. Above about 330, one public reliable share can name a race |
 | `CHAIN_ECHO_PM` | 500 | 0 – 1,000 | Repeat-chain weight |
-| `ACCUSE_PM` | 600 | 400 – 800 | Accusation strength |
+| `ACCUSE_BASE` / `ACCUSE_PER_SUPPORT` / `ACCUSE_MAX` | 250 / 150 / 700 | 150–350 / 100–250 / 500–800 | Accusation strength from a bare charge, per shown support, and its cap |
 | `NAME_PM` / `LEAD_PM` / `NAME_H` | 600 / 200 / 50 | 550 – 750 / 100 – 300 / 0 – 100 | When the public history names a race |
 | `REACT_T1/T2/T3` | 20 / 80 / 200 | ±50 % | Reaction bands, also preview bands |
 | `TARGET_PM` / `TARGET_CAP` | 1,000 / 300 | 500 – 1,500 / 150 – 500 | Long-run goodwill |
@@ -597,6 +624,8 @@ the faith judgement, so sound reveals nothing.
 
 ## UI Requirements
 
+- **Blame bars:** each bar shows a fixed naming line at `NAME_PM`, and the
+  leader is labelled Named, Leading or Contested by the D3 conditions.
 - **Share picker:** held fragments in `acq_seq` order, with "Shared with" and
   "Sealed" lines. Target: one faction or Public.
 - **Preview panel:** every rule 18 line. The Case File text panel (#49 stub)
@@ -629,11 +658,13 @@ the faith judgement, so sound reveals nothing.
 
 - **AC-01 (Logic; rule 2, D0)**: at C = 3 and C = 4, start beliefs match D0. All `P[c]` are equal (450 / 300). Two seeds with different makers give byte-identical belief sections.
 - **AC-02 (Logic; D1)**: the D1 worked example gives 338 / 156 / 506, 338 / 506 / 156 and 76 / 462 / 462, with P = 338 / 484 / 484. Every share conserves `Σ b + doubt = 1,000`, which a property test checks over 10,000 random claims and states.
-- **AC-03 (Logic; D2, D3)**: accusing Halsk from the start gives P = 780 / 315 / 315 and NAMES(Halsk). At C = 4 it gives 720 / 180.
+- **AC-03 (Logic; D2, D3)**: a bare accusation of Halsk from the start gives P = 587 / 394 / 394 and UNRESOLVED; with `s_pub` 1 from the start it gives P[H] 670 and NAMES(Halsk); at C = 4, `s_pub` 1 gives 580 (UNRESOLVED) and `s_pub` 2 gives 685 (NAMES).
+- **AC-03b (Logic; rule 18)**: every preview lists drift-target directions, seals whose keeper would turn Hostile with their lapse day, a suppression's effect on faith, and the fixed confirmation line on any action that names.
+- **AC-03c (Content; Open Questions, scapegoat)**: the text-only candidate's faction owns at least one port with care and trade on the MVP map; naming it loses that port in the preview.
 - **AC-04 (Logic; D3)**: the hysteresis example holds at 560 / lead 180 and drops to UNRESOLVED at 540. A top tie is UNRESOLVED.
 - **AC-05 (Logic; rules 10, D5)**: the D1 public share writes +120 to Halsk and −40 to Orrowen and Ithren, one entry each with a cause.
 - **AC-06 (Logic; rule 11)**: entering NAMES(X) calls `set_hostile(X)` once, after the reactions, whether the cause is an accusation, a share or an exposure. A race named earlier stays locked when the verdict moves on.
-- **AC-07 (Logic; rule 16)**: a fixture with the same claims and actions under each of the C makers gives identical beliefs, verdicts, standing writes, faith, targets and previews. The #30 module has no reference to the maker field (static check).
+- **AC-07 (Logic; rule 16)**: a fixture with the same claims and actions under each of the C makers gives identical beliefs, verdicts, standing writes, faith, targets and previews, and identical per-class fragment totals. The #30 module has no reference to the maker field (static check).
 - **AC-08 (Logic; rule 18)**: `preview` then commit gives exactly the previewed belief bands, verdict and `Standing.preview` result. The preview has no numeric belief values, no confirmation line and no exposure outcome.
 - **AC-09 (Logic; rule 18)**: the preview includes #33's escort line and #32's readout before and after for the verdict after the action.
 - **AC-10 (Logic; D7)**: the D7 worked example gives BAD / GOOD / GOOD. Suppressing a held reliable contradiction of the named race turns GOOD_FAITH into BAD_FAITH.
@@ -654,7 +685,10 @@ the faith judgement, so sound reveals nothing.
 Resolved with the recommended defaults under the owner's standing instruction to
 proceed (the owner may revisit any of them at review):
 - **The text-only third candidate has a faction** (a standing row, reactions
-  and a voice in public blame, but no playable ships at MVP). Without one,
+  and a voice in public blame, but no playable ships at MVP), and it owns at
+  least one port with care and trade on the MVP map, reached through the same
+  band privileges, so naming it always loses something real (lore bible §1.1:
+  absence is not guilt). Without one,
   naming it would cost nothing: a free scapegoat that would hollow out
   Pillar 2.
 - **Suppressing unfound fragments** waits for the Vertical Slice; MVP seals
@@ -672,5 +706,4 @@ proceed (the owner may revisit any of them at review):
 | 2 | **Lending thresholds.** Recommended: grant when `max_{c≠race(f)} b_f[c] ≥ 600`, refuse or withdraw when `P[race(f)] ≥ 600`. #33 owns them and case (d), the seed landing on the escort's race. | #33 | #33 GDD |
 | 3 | **"In play" for the Reckoning.** Proposed: a reliable contradiction of the verdict is in play unless it is sealed and paid. Unfound ones count. | #34 | #34 design |
 | 4 | **Command step.** Commits happen in a planning hold. Confirm that a zero-duration simulation step applies them (Runtime ID rule 3 requires one for any issue). | World Clock owner | ADR on commands |
-| 5 | **Showing `P` as bars without numbers.** Is that enough, or should the view use words such as "leading" and "contested"? | ux-designer | Public History UX spec |
-| 6 | **Releasing the enmity lock** (Standing OQ 1). Nothing releases it at MVP. | game-designer | 1.0 |
+| 5 | **Releasing the enmity lock** (Standing OQ 1). Nothing releases it at MVP. | game-designer | 1.0 |

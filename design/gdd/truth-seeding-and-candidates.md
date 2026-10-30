@@ -232,6 +232,8 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
 `R_min` = **3** reliable fragments at both C = 3 and C = 4: G2 forbids any two
 from solving the case, and three can (worked example).
 `R = R_min + R_SLACK`; `N = R + T + H`, capped at `FRAGMENT_CAP`.
+These per-class counts (`R`, `T`, `H`) are knobs, identical for every maker for a
+given content set (Faction Belief & Blame rule 16 relies on this).
 **MVP:** R = 3 + 1 = 4; N = 4 + 1 + 1 = **6** (the worked example). A slack
 fragment's axis is drawn **uniformly**, like every reliable fragment (rule 10),
 never aimed at the false candidate with the fewest contradictions (that would
