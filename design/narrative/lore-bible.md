@@ -2,6 +2,7 @@
 
 > **Status**: Draft for owner review (narrative-director)
 > **Date**: 2026-10-30
+> **Revised 2026-10-30 after CD review**
 > **Answers**: `design/gdd/truth-seeding-and-candidates.md` Open Questions 1 and 2
 > **Binding on**: #28 Archive Fragments & Evidence, the writer, #30 Faction Belief
 > & Blame, #34 Reckoning & Endings, #44 Breakaway Machine Faction
@@ -45,8 +46,8 @@ this list to every lore entry, template, barks file and codex page.
 5. **Attribution verbs spread evenly.** Narration never says "the makers did";
    it uses the slot. Verbs such as *built, forged, grew, raised, ordered* are
    not reserved for one race.
-6. **Equal stance toward made things.** All four races used made tools in the
-   Accord and all four rely on living ships now. No race is written as more
+6. **Equal stance toward made things.** Every race used made tools in the
+   Accord and every race relies on living ships now. No race is written as more
    or less at ease with machines than the others.
 7. **The Instrument carries no lineage** (Hulls rule 14; Machine Nodes rule 1a):
    no race's script, numerals, motif, hue, phonology or doctrine vocabulary
@@ -83,19 +84,19 @@ and connection.
 
 The Weir is a pocket of stars closed on most sides by a dense dark nebula. A
 few lanes run in from the rim and a knot of lanes crosses its middle, the
-**Midwater**. Rimward lies a scatter of cold outer bodies and tidal moons;
-coreward, the dense, metal-rich inner systems. Travel follows the lanes, so
+**Midwater**. Rimward lies a scatter of cold outer bodies, and among them
+tidally heated moons whose sealed oceans stay warm; coreward, the dense, metal-rich inner systems. Travel follows the lanes, so
 whoever holds a junction holds the trade through it.
 
 ### 3.2 The Accord years
 
-Four organic races settled the Weir across two arrival waves, the **Early Tide**
-and the **Late Tide**. For roughly four centuries they lived under the
-**Fourfold Accord**, a lane-and-trade compact kept in a common trade tongue,
+The organic races of the Weir settled it across two arrival waves, the **Early
+Tide** and the **Late Tide**. For roughly four centuries they lived under the
+**Lane Accord**, a lane-and-trade compact kept in a common trade tongue,
 **Lanespeech**. The Accord shared the Midwater as neutral ground. Each race kept
 berths, a records hall and a share of the yards there, the **Common Yards**.
-Trade in every craft was open: signalling, growth-patterning, lane-reckoning and
-heavy forging all moved freely between the races.
+Trade in every craft was open: beacon-building, growth-patterning,
+lane-reckoning and deep-ore refining all moved freely between the races.
 
 Accord law gave the game its title. A **maker's debt** is owed by whoever makes
 a thing for every harm that thing does. It was a commercial law about faulty
@@ -104,8 +105,8 @@ hulls and bad beacons. It is now the most dangerous phrase in the Weir.
 ### 3.3 The Long Dimming
 
 About a hundred and ninety years before the present, the nebula thickened
-across the Weir: the **Pall**. Starlight fell for some sixty years. All four
-races draw on what they call Vigor, the living energy of bodies and grown ships,
+across the Weir: the **Pall**. Starlight fell for some sixty years. Every race
+draws on what it calls Vigor, the living energy of bodies and grown ships,
 and every race's Vigor waned with the light. Crews tired faster, ships healed
 slowly, births fell. Lanes went unwatched, raiding rose, and the Accord frayed.
 
@@ -114,27 +115,28 @@ the root of every race's motive (section 4).
 
 ### 3.4 The pickets and the Turning
 
-Near the end of the Dimming, unmarked machine pickets began to appear at lane
-junctions. They asked for nothing and fired on raiders. Each race assumed they
-belonged to another and, in the frayed Accord, nobody asked aloud. They were
+Near the end of the Dimming, unmarked machine hulls began to appear in ones and
+twos across the Weir. They asked for nothing, answered no hail and stood off any
+ship that came near. Each race assumed they belonged to another and, in the frayed Accord, nobody asked aloud. They were
 called "the instrument" in Lanespeech, as one names a commissioned work before
 its maker signs it. The name stuck with a capital letter.
 
 In the year now counted as **Year 0 After the Turning (AT)**, the Instrument
-turned on everyone at once. In a single season it cut every beacon network,
-struck every race's ports and burned the four records halls of the Midwater.
-It did so across the whole Weir; no race was spared and no race was struck
-first in any record that survives.
+turned on everyone at once. In a single season it struck every race's ports,
+burned every race's records hall in the Midwater and wrecked the Common Yards.
+Each race lost its berth there, and with it the workshop of its native craft
+(section 4.5). It did so across the whole Weir; no race was spared and no race
+was struck first in any record that survives.
 
 ### 3.5 The Forgetting
 
 No one remembers who made the Instrument, for three reasons true in every save:
 
-1. **The Quiet.** The Instrument's first targets were records: beacon archives,
-   the Midwater halls and the Common Yards' build registers.
+1. **The Quiet.** The Instrument's first targets were records: the Midwater
+   halls and the Common Yards' build registers.
 2. **The Scouring.** In the panic that followed, every race purged its own
    engineering and yard records, so as not to be blamed under maker's-debt law.
-   Each race now says the others did this. All four did.
+   Each race now says the others did this. Every race did.
 3. **Time.** The Turning was 131 years ago. No one alive saw the Instrument
    built. What survives as testimony is inherited: an elder's account of a
    grandparent's account.
@@ -148,7 +150,7 @@ fragments come from.
 
 The Instrument holds strongholds across the Weir, each built round an immobile
 **keystone** and a tree of **relays**, and its fleets move along the lanes. The
-four races fight it and each other. They feud over lane tolls, port access and
+races fight it and each other. They feud over lane tolls, port access and
 above all the maker's debt: a race publicly named as the maker would owe the
 Weir for 131 years of harm. Every race suspects the others and fears being
 named. Into this the player arrives with a flagship, a borrowed escort and a
@@ -156,7 +158,7 @@ habit of reading what others would rather burn.
 
 ---
 
-## 4. The Four Races
+## 4. The Races
 
 Each race gets the same five blocks. Ship forms and hues are narrative input
 for the art-director to decide, taken from the concept's Visual Identity Anchor;
@@ -164,7 +166,8 @@ they are not decisions.
 
 ### 4.1 The Halsk — "the Shelled"
 
-- **How they live.** Saline-blooded, raised on tidal moons at the Weir's rim.
+- **How they live.** Saline-blooded, raised in the warm sealed oceans of
+  tidally heated moons at the Weir's rim.
   They accrete shell habitats and grow their ships the same way, layered spiral
   shells round a living mantle core.
 - **Vigor flavour.** Halsk Vigor rises and ebbs like a tide; a spent Halsk core
@@ -178,12 +181,12 @@ they are not decisions.
 - **Motive.** The Dimming emptied the rim lanes of pickets and their tolls
   collapsed. Ships that never tired would have kept the lanes and the houses
   alive.
-- **Means.** Signalling. The Halsk built and ran the Accord's beacon networks;
-  the Instrument's relay links are signalling by other means.
+- **Means.** Beacon hardware. The Halsk built the masts and transmitters the
+  Accord's beacons stood on; the Instrument's relays are hardware of that class.
 - **Innocent gap.** A work this size needed the consent of every house, and the
-  houses were split by the Toll Schism for the whole late Dimming. A council
-  that could not agree on tolls is unlikely to have agreed on this. *Weakness:*
-  a few houses could have acted outside council, and the minutes were scoured.
+  council minutes of the late Dimming recorded no agreement on any matter of
+  that scale. *Weakness:* the minutes were scoured, and a few houses could have
+  acted outside council.
 
 ### 4.2 The Orrowen — "the Grown"
 
@@ -195,16 +198,16 @@ they are not decisions.
 - **Culture.** Hereditary grower lineages. Every grown work is registered to a
   lineage at seeding and its record is knotted into a strand-book. Patient,
   generous with care, slow to forgive.
-- **Faction stance.** Guarded hosts; the best care in the core is theirs, given
-  at a price in standing.
+- **Faction stance.** Hosts of the coreward groves; give care to those whose
+  standing has earned it.
 - **Motive.** The Dimming starved the groves and seed-vaults failed. Defenders
-  that needed no Vigor could have guarded what was left.
+  that needed no Vigor could have kept what was left.
 - **Means.** Growth-patterning. The Orrowen understood self-building and
   self-repairing forms; the Instrument repairs and replicates.
-- **Innocent gap.** Lineage law requires every grown or patterned work to be
-  registered; an unregistered work of this size would have needed a whole
-  lineage to break the law that defines it. *Weakness:* the strand-books were
-  scoured, and a lineage that broke the law would also have destroyed its book.
+- **Innocent gap.** The strand-books registered every grown or patterned work at
+  seeding, and no lineage's book was ever known to list a work of this size.
+  *Weakness:* the strand-books were scoured, and a lineage that broke the law
+  would also have destroyed its book.
 
 ### 4.3 The Ithren — "the Drifting"
 
@@ -215,17 +218,17 @@ they are not decisions.
   dull. Care is re-skinning the membranes. (Art input: membrane-sail primitive,
   hue for the art-director to choose.)
 - **Culture.** Captaincy rotates by season. Navigators keep the lanes in
-  incised spar-charts and sung reckonings. Courteous, mobile and hard to find.
+  incised spar-charts and sung reckonings. Courteous, mobile, fond of song.
 - **Faction stance.** Scattered mediators who trade charts for passage; few
   fixed ports.
 - **Motive.** The Dimming stranded drift-fleets with no light to sail on.
   Tireless haulers could have carried the fleets home.
 - **Means.** Lane-reckoning. The Ithren held the Accord's star-charts and
   reckoning engines; the Instrument navigates the lanes without error.
-- **Innocent gap.** A people with rotating command and no fixed yards had no
-  single authority or place to build a fleet over decades. *Weakness:* the
-  Common Yards gave every race fixed berths, and a season's captain can give
-  long orders.
+- **Innocent gap.** Every rotation was logged in the Midwater halls, with copies
+  aboard the fleets, and by those logs no captain held a season's command long
+  enough to lead a build that took decades. *Weakness:* the rotation logs were
+  scoured, and a season's captain can give orders that outlast the season.
 
 ### 4.4 The Quorrin — "the Plated"
 
@@ -241,25 +244,26 @@ they are not decisions.
   hard fighting, on terms.
 - **Motive.** The Dimming left the mining holds short of crews while raids
   rose. Soldiers that never tired could have held the holds.
-- **Means.** Heavy forging. The Quorrin held the deep ore and the great forges;
-  the Instrument is heavy alloy.
+- **Means.** Deep-ore refining. The Quorrin refined the deep ore that yields the
+  trace metals in a ceramic composite; the Instrument's hulls are that composite.
 - **Innocent gap.** The Count tallies every ore weight; a fleet's worth of
   missing metal would have shown in the cords. *Weakness:* the cords were
   scoured, and an appointed warden can falsify a tally.
 
 ### 4.5 Balance notes
 
-- **No race had all four means.** The Instrument needs signalling, replication,
-  navigation and heavy alloy. Each race held one natively, and the Accord
-  traded all four openly. Any maker bought, borrowed or stole the other three.
-  This is the core of truth-neutrality: the machine shows all four crafts
-  equally.
+- **No race had every means.** The Instrument needs relay hardware,
+  replication, navigation and composite trace metals. Each race held one
+  natively, and the Accord traded every craft openly. Any maker bought,
+  borrowed or stole the rest. This is the core of truth-neutrality: the machine
+  shows every craft equally.
 - **Every gap rests on a record that was scoured**: council minutes, strand-books,
-  rotation logs (Ithren rotations were logged in the Midwater halls), ore cords.
-  No gap is proof.
-- **Each race lost something in the Turning**: Halsk their beacons, Orrowen
-  their Midwater groves, Ithren the charts kept in the halls, Quorrin the
-  Common Yards forges. No comparison of size is ever stated.
+  rotation logs, ore cords. No gap rests on law, custom or character alone, and
+  no gap is proof.
+- **Each race lost one thing of the same kind in the Turning**: its Common Yards
+  workshop. Halsk their beacon shops, Orrowen their pattern-groves, Ithren their
+  reckoning engines, Quorrin their ore refineries. No comparison of size is
+  ever stated, and no race's loss is described at greater length.
 - **MVP.** At MVP there are three candidates: the two playable races and one
   text-only race (concept, Mystery slice). The fourth race does not appear.
   Recommended playable pair: Halsk and Orrowen (they match the existing
@@ -344,6 +348,9 @@ it carries no lineage.
   maker (Machine Nodes rule 1a).
 - Its machines draw on **Coherence**, links from keystone through relays, not
   on Vigor. Cut the links and a formation falls apart (Pillar 5).
+- **Coherence links follow no known signalling scheme.** They match no Accord
+  beacon practice and no race's craft; whatever relay hardware carries them,
+  what passes through it has never been read.
 
 ### 6.3 Keystones and relays
 
@@ -363,12 +370,19 @@ the lore reason behind it.
 
 ### 6.5 The breakaway faction (Tier 2, #44)
 
-- Organic sailors call them **the Strays**. They keep the Instrument's geometry
-  but slowly lose its symmetry, and their signal drifts warmer.
-- **True in every seed:** they were cut from the Instrument's links at some
-  point after the Turning, and they stripped their own archives as they broke
-  away so the Instrument could not re-link through them.
-- What they recall is **testimony**: marked provenance, often right, never
+- Organic sailors call them **the Patchwork**. Their modules are overgrown with
+  rough growth of no race's make, their geometry blurs, and their signal drifts
+  warmer.
+- **True in every seed:** at some point after the Turning, some machines began
+  copying the repair they saw living ships perform. Instead of replacing a
+  broken module they grow over it. Each grown-over repair weakens that module's
+  link, and past a point a machine falls out of Coherence and does not return.
+  The habit spreads from machine to machine; it is never written as waking,
+  choice or grievance, only as a repair method that works and costs the link.
+- They hold no strongholds and raise no keystones; they move in small, loosely
+  linked groups.
+- Their memory modules were grown over in the same way, so what they recall
+  comes back partial: **testimony**, marked provenance, often right, never
   proof (Truth Seeding rule 7). They do not know their maker for certain, and
   no writer may give them that certainty.
 - They do not favour any race by seed. Which races they trust is a gameplay
@@ -394,7 +408,7 @@ Maker's-debt law makes blame expensive, so every race has a forging tradition:
 | Ithren | spar-charts re-incised with a changed season |
 | Quorrin | ore cords re-tied by a warden with a tally to hide |
 
-All four forged after the Scouring, and all four forged in every direction:
+Every race forged after the Scouring, and every race forged in every direction:
 to blame a rival, to clear themselves, and, for coin, to blame themselves.
 
 **Surface rule (G6):** a forgery's tell is always provenance (a wrong seal, an
@@ -414,15 +428,15 @@ Every race passes the past down by mouth, and every race misremembers:
 - Quorrin accounts drift toward the warden's version.
 
 Testimony sources at MVP are elders and inherited accounts; at Tier 2 the
-Strays are added. **Writers describe testimony as "often right, never proof"**
+Patchwork are added. **Writers describe testimony as "often right, never proof"**
 and never quote the figure. A wrong witness sounds exactly as sure as a right
 one; no tone, hedging or detail level may differ between the two branches.
 
 ### 7.3 Red herrings in the backstory
 
 The backstory deliberately contains true facts that look like evidence and are
-not, because each has a counterpart for every race: four motives, four means,
-four gaps, four losses, four forging traditions, four ways of misremembering.
+not, because each has a counterpart for every race: every race has a motive, a
+means, a gap, a loss, a forging tradition and a way of misremembering.
 A player who reasons from the backstory alone should arrive at exactly 1 ÷ C.
 
 ---
@@ -436,9 +450,9 @@ A player who reasons from the backstory alone should arrive at exactly 1 ÷ C.
 | Halsk | hard consonants, -sk, -ar, -esh | ship names are virtues or tolls: *Spiralward*, *Fair Measure*; persons: Varesk, Tolhar |
 | Orrowen | soft, doubled vowels and r, -wen, -ow | ships named as children of a lineage: *Bloom of Aesh*; persons: Orwyn, Leowen |
 | Ithren | th, -ren, -ae | ships named for stars and routes: *Thaer's Long Reach*; persons: Ithae, Sorren |
-| Quorrin | q, -rin, -ok | ships carry rank and hold: *Warden of Kett Hold*; persons: Quessok, Drurin |
+| Quorrin | q, -rin, -ok | ships carry rank and hold: *Warden of Quellok Hold*; persons: Quessok, Drurin |
 | Instrument | functional English geometry | formations and roles only: Vector Line, Hold Ring, Keystone |
-| Strays | as the Instrument, worn down | organic nicknames only, never a race's sounds |
+| Patchwork | as the Instrument, overgrown | organic nicknames only, never a race's sounds |
 
 Names are working names pending the clean-room check (Open Question 2).
 
@@ -447,7 +461,7 @@ Names are working names pending the clean-room check (Open Question 2).
 - **The Weir**: the nebula-closed region where the game takes place.
 - **Midwater**: the central lane knot; neutral Accord ground; site of the
   Common Yards and the Instrument's origin.
-- **Fourfold Accord**: the four-century lane-and-trade compact.
+- **Lane Accord**: the four-century lane-and-trade compact.
 - **Lanespeech**: the Accord's common trade tongue.
 - **Maker's debt**: Accord law: a maker owes for the harm its work does.
 - **Early Tide / Late Tide**: the two arrival waves (founding era axis).
@@ -459,7 +473,7 @@ Names are working names pending the clean-room check (Open Question 2).
 - **The Scouring**: every race's purge of its own records afterwards.
 - **The Forgetting**: the Quiet, the Scouring and time together.
 - **Keystone / relay**: the immobile anchor and link nodes of the Instrument.
-- **The Strays**: the breakaway machine faction.
+- **The Patchwork**: the breakaway machines that copy organic repair.
 - **Vigor**: organic living energy; **Coherence**: machine link integrity.
 
 ---
@@ -469,10 +483,11 @@ Names are working names pending the clean-room check (Open Question 2).
 | # | Question | Owner |
 |---|---|---|
 | 1 | Which race is the MVP text-only third candidate, and which race is absent at MVP? Recommendation: Halsk and Orrowen playable; Ithren or Quorrin text-only. | owner, producer |
-| 2 | Clean-room lore check against Starsector (names, the Dimming, the Turning, the Strays) before this bible is approved (concept, Originality). | creative-director |
+| 2 | **Open.** Clean-room lore check against Starsector, and Mass Effect for the Instrument and the Patchwork (names, the Dimming, the Turning, the Patchwork), before this bible is approved (concept, Originality). The 2026-10-30 revision addressed the CD's flagged echoes but does not replace this check. | creative-director |
 | 3 | Starting beliefs: lore suggests a symmetric blame cycle (Halsk suspect Quorrin, Quorrin suspect Ithren, Ithren suspect Orrowen, Orrowen suspect Halsk), seed-independent. It breaks at C = 3. Input for #30, not a decision. | game-designer (#30) |
 | 4 | Hues for Ithren and Quorrin, and confirmation that "bone" on machines does not read as shell or carapace. | art-director |
 | 5 | Should a forger's identity ever appear on a fragment? Recommendation: never at MVP. | game-designer (#28) |
 | 6 | Confirm the Reckoning's "origin" is the Midwater Common Yards in every seed. | #34 owner |
 | 7 | Localisation of value slots (grammar-neutral; Truth Seeding OQ 5). | localization-lead |
 | 8 | Scope: producer sign-off on codex volume implied by sections 4 and 7. | producer |
+| 9 | **Done 2026-10-30 (CD review).** Halsk means cut to beacon hardware; Coherence follows no known scheme; one same-kind Turning loss per race; pickets no longer fire at junctions; Quorrin means is deep-ore refining; every innocent gap is record-based; the named Halsk schism removed; checklist wording fixed; "Lane Accord" and every-race phrasing; Halsk moons tidally heated (§5 unchanged); breakaway faction recast as the Patchwork; network isolation dropped from the Turning; Quorrin hold renamed. Awaiting CD re-check. | creative-director |
