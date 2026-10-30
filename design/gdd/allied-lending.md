@@ -64,7 +64,7 @@ own losses, and the Orrowen remember.*
    concept MVP item 6, "one faction's lent escort"). Which faction is Open
    Question 1; the recommendation is the Orrowen faction. The text-only third
    race has no faction ships and never lends.
-2. **The package is organic hulls of the lender's race.** `LEND_PACKAGE`
+2. **No loan before the opening battle has ended** (Onboarding & Opening Sequence). **The package is organic hulls of the lender's race.** `LEND_PACKAGE`
    defaults to one Seedcaller and one Thornbrood (Hulls rule E) with the
    lender's default loadouts. A package entry that is a machine hull, or a
    hull of another race, is a load error `LEND_HULL_INVALID`. There are no

@@ -169,7 +169,9 @@ one defeat at a time.
     (≈ {Y} upkeep)", and, while suppression upkeep is active, "suppression
     covered for {N} days after a worst-case bill". On a node with
     `exempt_lasting_cost` true, the opening node included, the line reads
-    "A loss here costs nothing" (Credits rule 8). Planning information is
+    "A loss here costs nothing" (Credits rule 8) while the exemption is unused
+    (Onboarding & Opening Sequence's exactly-once rule); after it is used the
+    ordinary defeat-cost line returns. Planning information is
     never withheld.
 
 **E. Truth, determinism and the Runner**
