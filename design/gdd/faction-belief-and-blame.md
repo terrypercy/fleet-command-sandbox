@@ -163,8 +163,10 @@ battle; each has a preview, a confirm step and no undo)
     consistent with it.
 15. **Exposure** (this answers the #32 CD condition). Only #32 calls
     `expose(φ)`. #30 accepts the call only if the verdict NAMES(X), `φ` is
-    DIRECT_PHYSICAL or RECORD, its claim contradicts `X`, and `φ` is not
-    suppressed. Otherwise it returns `NOT_CONTRADICTING` and nothing changes,
+    DIRECT_PHYSICAL or RECORD, its claim contradicts `X`, `φ` is not
+    suppressed, and either `φ` is unfound, or `φ` is HELD, in #32's
+    `known(r)` (the rival copied it while it was unfound), and not shared.
+    Otherwise it returns `NOT_CONTRADICTING` and nothing changes,
     so an exposure never fires on a timer alone. When accepted:
     - `φ` becomes a public record entry (EXPOSED) and is applied as a PUBLIC
       share (D1);
@@ -268,7 +270,7 @@ battle; each has a preview, a confirm step and no undo)
 | Fragment (#30 view) | UNSHARED | Grant (#28) | SHARED, SUPPRESSED |
 | Fragment | SHARED (per faction or public) | `share` | — (permanent) |
 | Fragment | SUPPRESSED | `suppress` | UNSHARED, via release or lapse |
-| Fragment | EXPOSED | `expose` accepted (an unfound fragment found by a rival) | — |
+| Fragment | EXPOSED | `expose` accepted (a fragment a rival copied while it was unfound) | — |
 
 ### Interactions with Other Systems
 
@@ -673,7 +675,7 @@ the faith judgement, so sound reveals nothing.
 - **AC-10 (Logic; D7)**: the D7 worked example gives BAD / GOOD / GOOD. Suppressing a held reliable contradiction of the named race turns GOOD_FAITH into BAD_FAITH.
 - **AC-11 (Logic; rule 7)**: a suppression with a keeper below the price is refused. Neither money nor standing is charged.
 - **AC-12 (Logic; rule 9)**: three standing-refused days in a row lapse a seal. Two days followed by a paid day do not. A money-side lapse from Credits unseals it and emits `suppression_lapsed`.
-- **AC-13 (Logic; rule 15)**: `expose` on a non-contradicting, testimony, suppressed or held fragment, or under UNRESOLVED, returns its refusal and changes nothing. An accepted one applies D9 once per naming (SEVERE for a lie, SLIGHT for a good-faith or WORLD naming).
+- **AC-13 (Logic; rule 15)**: `expose` on a non-contradicting, testimony, suppressed or held fragment not in `known(r)`, or under UNRESOLVED, returns its refusal and changes nothing; `expose` on a held, unshared, unsealed fragment in `known(r)` is accepted. An accepted one applies D9 once per naming (SEVERE for a lie, SLIGHT for a good-faith or WORLD naming).
 - **AC-14 (Logic; D10)**: four confirmations give 40 / 80 / 120 / 120 to each non-X faction, and none while UNRESOLVED.
 - **AC-15 (Logic; edge cases)**: every refusal code (`ALREADY_SHARED`, `ALREADY_NAMED`, `PUBLIC_ALREADY`, `SEALED`, `NOT_CONTRADICTING`, `HELD`) fires on its fixture, and state is unchanged.
 - **AC-16 (Logic; rule 22)**: a save round trip is byte-identical. The section is registered with version 1 and a ceiling.

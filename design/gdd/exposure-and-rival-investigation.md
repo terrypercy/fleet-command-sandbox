@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (Faction Belief rule 15/AC-13 accept held copies in known(r); naming-to-probe edge and pace target before the Tier 0 playtest; seal preview explains the rival's silence)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — a public lie can be exposed only by real evidence a rival finds, never by a timer alone); Pillar 4 (Plan in the Open — the rival's progress and target are visible)
 
 ## Summary
@@ -422,7 +422,14 @@ contradicts H. The derelict D1 holds a RECORD fragment, fD, that contradicts H.
   #30 refuses the exposure (already public). The retest stops after that
   call (rule 11).
 - **If the player seals a held fragment in `known(r)`**: #30 refuses
-  `SUPPRESSED`, and `known_open` falls. If the seal lapses, a retest is
+  `SUPPRESSED`, and `known_open` falls. The seal preview says so in the
+  fiction: "Sealing this also buys the Inquest's silence on its copy"
+  (wording owned by narrative-director, Open Question 4).
+- **Naming to probe**: a retest that finds nothing is accepted as evidence for
+  the verdict. It costs the naming (X turns Hostile) and its exposure risk,
+  and it is never cheaper than a Case File check; the pace target in Open
+  Question 5 keeps the rival from knowing every fragment before the player
+  has claimed half of them. If the seal lapses, a retest is
   scheduled (rule 11).
 - **If an exposure moves the verdict into NAMES(Y)** (WORLD naming): the
   naming-entered signal schedules a retest for Y if `known_open ≥ 1`. Each
@@ -634,7 +641,7 @@ proceed (the owner may revisit any of them at review):
 | 2 | **A find that does not expose**: nothing at MVP (recommended), or a public confirmation in the Vertical Slice? | game-designer | Vertical Slice |
 | 3 | **Stream registration** `base:exposure.target` and the uniform-int API name. | RNG owner | ADR on streams |
 | 4 | Rival name, fiction and notice wording ("the Inquest" is a placeholder). | narrative-director | Before Tier 0 content lock |
-| 5 | **Pace against fragment count**: 6 MVP slots are all known by about day 60 at Standard. Is that right for the campaign length? | systems-designer; economy pass | Balance pass |
+| 5 | **Pace against fragment count**: at Standard, the rival must not know every MVP fragment before the median tester has claimed at least half of them; if it does, raise `LEAD_BASE_S` or `LEADS_PER_FIND`. (6 MVP slots are all known by about day 60 at Standard with no player claims.) Otherwise a late naming becomes a cheap truth test. | systems-designer; economy pass | Before Tier 0 playtest |
 | 6 | **The true maker's agents** (Vertical Slice): presentation without attribution, and whether there is more than one rival at once. | game-designer; creative-director | Vertical Slice |
 | 9 | Should the ±1-day `RETEST_DELAY_S` be previewed as a day number? | ux-designer | UX spec for Case File |
 | 11 | A moving rival fleet on the map (interceptable?) instead of a site marker. | game-designer | Vertical Slice |
