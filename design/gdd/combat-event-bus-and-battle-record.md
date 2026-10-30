@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — the Debrief's causes come only from what the record shows happened); Pillar 4 (Plan in the Open — the battle is replayable and readable after the fact)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on coarsening blurring kill causes and undefined overflow, Vigor-as-disable, the unverified badge, the Dossier dependency, and the pillar header; all five revised
+> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — the Debrief's causes come only from what the record shows happened); Pillar 4 (Plan in the Open — the battle is replayable and readable after the fact); Pillar 3 (Hands on the Helm — pausing leaves no trace in the record)
 
 ## Summary
 
@@ -156,7 +157,11 @@ thing" or "I can't see what killed me".
     - per ship: damage dealt and taken by type, time alive, last Vigor band,
       killer;
     - per death, a **kill window**: per-attacker damage, hits and damage types
-      over the `KILL_WINDOW` ticks before `Destroyed`;
+      over the `KILL_WINDOW` ticks before `Destroyed`. It is built from a
+      per-target ring buffer the Record fills from bus-tier `Hit`s and written
+      as a record-tier `KillWindow` at the moment of `Destroyed`, so its
+      precision never depends on `DAMAGE_WINDOW` or coarsening (deterministic,
+      because the bus is);
     - per fleet: the Coherence timeline and every link cut, with actor and tick.
     Aggregates are computed by the Record from the log, never by the simulation.
 14. **The Debrief contract** (data only; classification is Defeat & Debrief's):
@@ -165,14 +170,21 @@ thing" or "I can't see what killed me".
       `(tick − battle_start_tick) ÷ TICK_RATE`; X's name from the roster.
     - *"Lost to focus fire"*: the kill window's attacker count and damage
       shares, with `TargetChosen(reason = focus_called)` or `FocusCalled`.
-    - *"Vigor ran dry"*: `VigorBand → EMPTY` before `Disabled` or `Destroyed`.
+    - *"Vigor ran dry"*: `VigorBand → EMPTY`, then `Destroyed` or `Retreated`
+      within `KILL_WINDOW`. Running dry changes behaviour and never disables a
+      ship (concept: no hard lockout), so `Disabled.cause_code` never means
+      Vigor exhaustion.
     - *The counter*: `dmg_type_mask` with the roster's slot → weapon content.
 15. **Replays.** A replay re-runs the battle from the header and command log. It
     is **verified** only when build, content hash, registry version, OS and CPU
     architecture all match; then it must rebuild a byte-identical event log. An
     unverified replay is never used: the Debrief shows the event log as
-    recorded, marked "recorded, not re-verified" (Simulation Tick & Pause rule
-    14). **Chart playback is drawn from `Track` samples and events, never from
+    recorded, **with no player-facing badge**, because the log is
+    authoritative either way; only re-simulation is unavailable. Where a
+    replay would be offered, the UI says "Re-simulation unavailable on this
+    build", never in the pencil-grey "uncertain" style that belongs to
+    historical evidence (concept). "Not re-verified" appears only in debug
+    views and the AI-vs-AI Runner (Simulation Tick & Pause rule 14). **Chart playback is drawn from `Track` samples and events, never from
     re-simulation**, so old and unverified battles always play back.
 16. **An event-log hash.** The Record keeps a rolling 64-bit hash of the encoded
     event stream, per tick and per battle (algorithm in the Tick/determinism
@@ -182,12 +194,20 @@ thing" or "I can't see what killed me".
 **D. Size and retention**
 
 17. **The live record has ceilings.** During a battle the event log is capped at
-    `EVENT_LOG_MAX` (2 MiB) and the command log at `CMD_LOG_MAX` (1 MiB); with
-    simulation state (1 MiB) they make Save/Load's 4 MiB "simulation + battle
-    part" ceiling. When the event log passes 50 %, 75 % and 90 % of its cap,
-    `DAMAGE_WINDOW` and `TRACK_PERIOD` double for the rest of the battle
-    (deterministic, logged in the header). Discrete record-tier events are never
-    coarsened or dropped. If the command log would pass its cap, it stops and
+    `EVENT_LOG_MAX` (2 MiB), plus an overflow allowance `EVENT_OVERFLOW_MAX`
+    (512 KiB) for discrete events only, and the command log at `CMD_LOG_MAX`
+    (1 MiB); with simulation state (0.5 MiB, placeholder) they make Save/Load's
+    4 MiB "simulation + battle part" ceiling. Coarsening, deterministic and
+    logged in the header:
+    - at 50 % and 75 % of `EVENT_LOG_MAX`, `DAMAGE_WINDOW` and `TRACK_PERIOD`
+      double, never beyond 240 ticks (their safe range);
+    - at 90 %, buckets and tracks stop and running per-pair damage totals and a
+      last-known position per ship take over;
+    - discrete record-tier events continue into the overflow allowance. If even
+      that fills, the lowest-value discrete events (`TargetChosen`) stop first;
+      `Destroyed`, `Retreated`, `LinkState`, `VigorBand`, `CoherenceBand`,
+      `KillWindow` and `BattleEnd` are never dropped (they are bounded by the
+      roster). If the command log would pass its cap, it stops and
     the record is flagged `replay_truncated`; the event log stays complete and
     authoritative.
 18. **Archived records** live in their own save section, `base:battle_archive`,
@@ -228,6 +248,7 @@ appending at the same `seq` (Save/Load Core Rule 22).
 | Gameplay Settings & Modifiers (#7) | #7 → #9 | Frozen `ModifierSet` in the header |
 | Vigor (#13), Coherence & Links, Weapons & Damage, Ship AI (#20), Fleet Orders (#19) | each → #9 | Emit their events (rule 9); own their bands and reason codes |
 | Defeat & Debrief | #9 → Debrief | The record and aggregates; classifier lives there |
+| Dossier (via Debrief) | #9 → Dossier | The Dossier copies its facts at Debrief time and never depends on an archived full record surviving demotion (rule 18) |
 | AI-vs-AI Runner | #9 → runner | Records and their hashes for diffing |
 | Presentation (HUD, VFX, audio) | #9 → presentation | Read-only batches after P9 |
 
@@ -254,10 +275,13 @@ The command log adds at most 3,600 × 8 B ≈ 29 KB/min.
 
 ### D2. How long the live caps last
 
-`minutes_to_cap = EVENT_LOG_MAX ÷ S_min` before coarsening.
-**Example:** 2 MiB ÷ 68 KB ≈ 30 minutes typical; ÷ 190 KB ≈ 11 minutes heavy,
-after which the windows double (rule 17) and the remaining rate halves for
-buckets and tracks.
+`minutes_to_first_coarsening = 0.5 × EVENT_LOG_MAX ÷ S_min`.
+**Example:** 1 MiB ÷ 68 KB ≈ 15 minutes typical; ÷ 190 KB ≈ 5.5 minutes heavy.
+After both doublings the heavy rate falls to about 40 KB/min of discrete
+events plus about 40 KB/min of buckets and tracks; buckets and tracks stop at
+90 % (about 18 minutes heavy). From then on only discrete events (≈ 40 KB/min)
+are written, into the remaining 10 % plus `EVENT_OVERFLOW_MAX`: about 18 more
+minutes before the lowest-value events stop.
 
 ### D3. Archive size
 
@@ -311,6 +335,7 @@ Adding `ARCHIVE_MAX` to Save/Load D1: 23,858,176 + 5,242,880 = 29,101,056 B
 | Gameplay Settings & Modifiers (#7) | Soft | `ModifierSet` in the header |
 | Event emitters (#13, #19, #20, Coherence, Weapons) | Hard (reverse) | Emit rule 9 events |
 | Defeat & Debrief, AI-vs-AI Runner, HUD/VFX/audio | Hard (reverse) | Consume batches and records |
+| Dossier | Soft (reverse) | Copies facts at Debrief time; never reads the archive later |
 
 Bidirectional check: Simulation Tick & Pause, RNG, Runtime ID Service, Save/Load
 and Settings already name this system.
@@ -323,6 +348,7 @@ and Settings already name this system.
 | `KILL_WINDOW` | 600 ticks | 300 – 1,800 | How far back "what killed me" looks | Misses build-up | Blames old damage |
 | `TRACK_PERIOD` | 60 ticks | 30 – 240 | Chart playback smoothness | Large logs | Jerky playback |
 | `EVENT_LOG_MAX` | 2 MiB | 1 – 3 MiB | Live battle record size | Early coarsening | Larger saves |
+| `EVENT_OVERFLOW_MAX` | 512 KiB | 256 KiB – 1 MiB | Room for discrete events after coarsening | Low-value events stop sooner | Larger saves |
 | `CMD_LOG_MAX` | 1 MiB | 0.5 – 1.5 MiB | Replay length | Truncated replays | Larger saves |
 | `K_FULL` | 8 | 3 – 20 | Full records kept | Little history | Bytes cap binds |
 | `ARCHIVE_FULL_MAX` | 4 MiB | 2 – 8 MiB | Full-record bytes | Few full records | Larger saves |
@@ -343,8 +369,9 @@ replay (ink-on-dark-paper chart language, concept) from `Track` and events.
 
 ## UI Requirements
 
-Owned by Defeat & Debrief and the Battle History view: an "unverified" badge,
-a "replay unavailable (truncated)" note, and battle-time stamps as mm:ss. No
+Owned by Defeat & Debrief and the Battle History view: "Re-simulation
+unavailable on this build" where a replay would be offered (never a badge on
+the account itself, rule 15), a "replay unavailable (truncated)" note, and battle-time stamps as mm:ss. No
 screen of its own.
 
 ## Cross-References
@@ -368,11 +395,11 @@ screen of its own.
 - **AC-07 (Logic; rule 8)**: two mods' event types get the same codes regardless of mod load order; a record with an unregistered mod type loads, skips it and reports the skipped count; a mod over its per-tick budget is refused with a warning.
 - **AC-08 (Logic; rules 10, 11)**: the header contains every listed field; the `ModifierSet` round-trips; every Runtime ID in the record resolves to a name and kind from the roster or a `Spawned` event without calling the Runtime ID Service.
 - **AC-09 (Logic; rule 12, 15)**: a same-platform replay from the header and command log rebuilds a byte-identical event log and an equal event-log hash (RNG AC-36).
-- **AC-10 (Logic; rule 15)**: a record replayed with a different OS or content hash is shown "recorded, not re-verified", and its event log is unchanged; chart playback still works from `Track`.
+- **AC-10 (Logic; rule 15)**: a record replayed with a different OS or content hash shows its event log unchanged with no player-facing badge; the replay option reads "Re-simulation unavailable on this build"; the debug view and the Runner mark it "not re-verified"; chart playback still works from `Track`.
 - **AC-11 (Logic; rule 14)**: in the fixture "relay killed at tick 11,520 with `battle_start_tick` 0", the record holds `LinkState(SNAPPED, relay_lost, actor)` at tick 11,520, shown as 3:12.
 - **AC-12 (Logic; rule 13)**: in a 3-attacker focus-fire fixture, the kill window lists all 3 attackers and their damage shares sum to 100 %.
-- **AC-13 (Logic; rule 13)**: a ship whose Vigor band goes to EMPTY before it is disabled has both events, in that order, in the record.
-- **AC-14 (Logic; rule 17, D2)**: a heavy fixture run for 15 minutes keeps the event log ≤ `EVENT_LOG_MAX`; windows double exactly at 50, 75 and 90 %; no discrete record-tier event is missing compared with an uncapped run.
+- **AC-13 (Logic; rule 14)**: a ship whose Vigor band goes to EMPTY and which is destroyed within `KILL_WINDOW` has both events in that order; no fixture produces `Disabled` with a Vigor cause.
+- **AC-14 (Logic; rule 17, D2)**: a heavy fixture run for 40 minutes keeps the log ≤ `EVENT_LOG_MAX` + `EVENT_OVERFLOW_MAX`; windows double exactly at 50 % and 75 % and never exceed 240 ticks; buckets and tracks stop at 90 %; no never-dropped event is missing compared with an uncapped run; kill windows equal the uncapped run's exactly.
 - **AC-15 (Logic; rule 17)**: a command log forced past `CMD_LOG_MAX` sets `replay_truncated`; the event log is complete.
 - **AC-16 (Logic; rule 18, D3)**: after 10 battles, at most `K_FULL` full records remain plus pinned defeats, their total ≤ `ARCHIVE_FULL_MAX`; the 9th-oldest is a summary; its enemy-only tombstones are compacted at the next campaign save; the summary still names those enemies correctly.
 - **AC-17 (Logic; Edge Cases)**: a suspend save mid-battle, resumed, continues the record with no gap or duplicate `seq`, and the final record equals an uninterrupted run's.

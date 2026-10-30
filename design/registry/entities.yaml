@@ -506,7 +506,7 @@ constants:
       - design/gdd/save-load-and-migration.md
     value: 2
     unit: MiB
-    notes: "Live battle event-log cap (Battle Record rule 17); with command log 1 MiB and sim state 1 MiB forms Save/Load's 4 MiB battle-part ceiling."
+    notes: "Live battle event-log cap (Battle Record rule 17); with overflow 0.5 MiB, command log 1 MiB and sim state 0.5 MiB forms Save/Load's 4 MiB battle-part ceiling."
     added: 2026-10-30
     revised: ""
 

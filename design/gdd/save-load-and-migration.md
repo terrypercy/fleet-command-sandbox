@@ -424,7 +424,7 @@ The save_max formula is defined as:
 |---|---|---|
 | Runtime ID identity table | 8,000,000 B (7.63 MiB) | Runtime ID Service D2 (provisional) |
 | RNG streams | 64,000 B (0.06 MiB) | Deterministic RNG & Seed Streams D7 |
-| Simulation + battle part | 4 MiB | Battle Record (#9) rule 17: simulation state 1 MiB (placeholder), live event log 2 MiB, command log 1 MiB |
+| Simulation + battle part | 4 MiB | Battle Record (#9) rule 17: simulation state 0.5 MiB (placeholder), live event log 2 MiB + overflow 0.5 MiB, command log 1 MiB |
 | Battle archive (`base:battle_archive`) | 5 MiB | Battle Record (#9) rule 18 |
 | Materialised truth case | 1 MiB | **placeholder** for Truth Seeding (Content Data, Core Rule 18) |
 | All other systems, combined | 8 MiB | **placeholder** until each owning GDD declares its ceiling |
