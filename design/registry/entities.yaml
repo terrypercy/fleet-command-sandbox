@@ -664,6 +664,19 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: defeat_base_s
+    status: active
+    source: design/gdd/after-action-debrief.md
+    referenced_by:
+      - design/gdd/after-action-debrief.md
+      - design/gdd/world-clock.md
+      - design/gdd/credits-upkeep-and-sinks.md
+    value: 86400
+    unit: game seconds
+    notes: "Debrief D5: day cost of any loss = DEFEAT_BASE_S (1 day) + DEFEAT_SPAN_S (518,400, 6 days) x share left behind, scaled by defeat_cost_permille, floored at 1 day, clamped to DEFEAT_MAX_S. 1-7 days at Standard; (BASE+SPAN) x 2 must not exceed DEFEAT_MAX_S."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:

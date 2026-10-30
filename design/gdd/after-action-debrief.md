@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (survival basis is a Lead; partial-lead threshold; 'Worked' line on unknown; outmatched pairs with a composition action; world-moves-on line; seed-independent inputs)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — every loss names a cause and a counter, with an honest "unknown"); Pillar 4 (Plan in the Open — the Debrief feeds the Dossier from recorded evidence)
 
 ## Summary
@@ -103,7 +103,10 @@ What the player must never feel: graded ("C rank"), blamed for pausing, told
 6. **Two scoring bases.** If `loss_DP > 0`, causes are scored against the
    losses (**loss basis**). If `loss_DP = 0` on a loss-class battle (a STANDOFF,
    or a retreat before any ship fell), causes are scored against the enemy DP
-   still present at the end (**survival basis**; D2b).
+   still present at the end (**survival basis**; D2b). On the survival basis a
+   named result is labelled **Lead**, never Cause, and reads "Untested: {n}‰
+   of the remaining enemy DP was {tag}. Counter: {action}." Nothing fell, so
+   the Debrief does not claim to know why the battle was lost.
 7. **Counter causes.** Each counter in the node's `dossier.counters[]` is a
    candidate (a roaming fleet uses its home node's list). It is **eligible**
    only if its `evidence` predicate (the cause-polarity predicate, Machine
@@ -122,7 +125,7 @@ What the player must never feel: graded ("C rank"), blamed for pausing, told
    predicate and score (D3):
    | ID | Cause shown | Predicate | Counter-action |
    |---|---|---|---|
-   | `outmatched` | "outmatched" | start strength ratio `R0 < OUTMATCHED_PM` | "return with more strength", plus the node's first `solo` counter if any |
+   | `outmatched` | "outmatched" | start strength ratio `R0 < OUTMATCHED_PM` | always a composition action, never "more strength": the node's first `solo` counter, or, if none, "bring {the counter to the top enemy damage type}" plus rule 14's carried-type line |
    | `flagship_uncovered` | "flagship struck from the uncovered {sector}" | flagship in `L` with loss context `covered = false` (Flagship Piloting rule 13) | "cover the flagship's {sector} with a group arc" |
    | `vigor_dry` | "Vigor ran dry" | a loss whose ship's `VigorBand → EMPTY` precedes its `Disabled` by at most `KILL_WINDOW` (Battle Record rule 14) | from the largest erosion source (rule 13) |
    | `retreat_late` | "retreat came too late" | outcome DEFEAT or PLAYER_RETREATED, and at least one loss after the retreat deadline (D4) | "order the retreat by {M:SS}" |
@@ -134,12 +137,19 @@ What the player must never feel: graded ("C rank"), blamed for pausing, told
     a fixed order: counter causes in `dossier.counters[]` order, then
     `flagship_uncovered`, `vigor_dry`, `retreat_late`, `outmatched`,
     `no_contact`. The first is the **primary** cause. The next, up to
-    `CAUSE_MAX_CONTRIB` (2), are **contributing** causes (D4b).
+    `CAUSE_MAX_CONTRIB` (2), are **contributing** causes (D4b). If the top
+    cause scores below `CAUSE_PRIMARY_PM` (400), it renders as **"Partial
+    lead"** at contributing-card size, never as the headline. Every cause card
+    states how much it explains: "explains 2 of 5 losses (DP 50 of 120)".
 11. **Unknown.** If no cause is eligible, the primary cause is `unknown`. The
     Debrief says "Cause unknown" and shows facts only: the three attackers with
     the most damage on player losses (by name from the roster), the damage-type
     mix they dealt, and the Coherence band the enemy anchor spent most time in.
-    It infers nothing from these. `unknown` is a valid result, never an error.
+    It infers nothing from these. If any listed counter's `worked` predicate
+    held, "Worked: {counter} at {M:SS}" comes before the facts, so a failed
+    return attempt still shows what landed. The facts block ends with the top
+    attacker's damage type and rule 14's carried-type line. `unknown` is a
+    valid result, never an error.
 12. **Every cause cites evidence.** Each named cause carries at most
     `EVIDENCE_LINES_MAX` (3) evidence lines: an event, its battle time
     `(tick − battle_start_tick) ÷ TICK_RATE` as M:SS, and the names involved,
@@ -244,7 +254,9 @@ What the player must never feel: graded ("C rank"), blamed for pausing, told
     Dossier facts are already handed on. A save made while the hold stands
     restores with the Debrief open.
 26. **Truth-neutrality guarantee (Pillar 2).** The Debrief reads no Truth
-    Seeding, fragment, Case File, exposure or blame data. It never mentions
+    Seeding, fragment, Case File, exposure or blame data, and no Debrief input
+    may be derived from Truth Seeding (Machine Nodes rule 1a makes node content
+    seed-independent). It never mentions
     fragments; Archive Fragments (#28) owns any grant notice. Its text uses only
     roster names and counter or engine keys. Two saves with different seeded
     makers, the same battle seed and the same command log give byte-identical
@@ -372,7 +384,8 @@ Example: `b` = 32,768 → **rear**.
 
 **D3d. `vigor_dry`.** `score = (Σ DP(s) for linked s) × 1,000 div loss_DP`,
 where `s` is linked if `VigorBand → EMPTY` at tick `t_e` and `Disabled` at
-`t_d` with `0 ≤ t_d − t_e ≤ KILL_WINDOW`.
+`t_d` with `0 ≤ t_d − t_e ≤ KILL_WINDOW`, and `s`'s `KillWindow` began at or
+after `t_e` (running dry came before the damage that disabled it).
 
 **D3e. `no_contact`.** Score **1,000** when its predicate holds.
 
@@ -509,6 +522,7 @@ stronghold they know they might lose).
 | Knob | Default | Safe range | Category | Affects |
 |---|---|---|---|---|
 | `CAUSE_MIN_PM` | 150 | 50 – 300 | Curve | How strong evidence must be to name a cause. Too low names noise; too high says "unknown" too often |
+| `CAUSE_PRIMARY_PM` | 400 | 250 – 600 | Curve | Score a top cause needs to be the headline; below it, "Partial lead" |
 | `CAUSE_MAX_CONTRIB` | 2 | 1 – 3 | Feel | Contributing causes shown. More than 3 buries the lead |
 | `LINK_SHARE_PM` | 500 | 300 – 700 | Curve | Damage share that links a loss to a counter |
 | `OUTMATCHED_PM` | 600 | 400 – 800 | Curve | Strength gap that counts; mirrors Machine Nodes `BAND_LOW` |
@@ -552,7 +566,9 @@ check). All knobs live in `assets/data/`. None is a difficulty modifier.
    evidence lines, the carried-weapon fact (rule 14), odds if any (rule 16).
 3. **Contributing**: up to `CAUSE_MAX_CONTRIB` compact cards.
 4. **Costs**: day cost in days and hours (World Clock), final bill and any
-   forgiven excess (Credits rule 7), Vigor erosion and its largest source.
+   forgiven excess (Credits rule 7), Vigor erosion and its largest source, and
+   the fixed, truth-neutral line "The world moves on: {d} days pass for every
+   investigation." (identical in every save, so rule 26 holds).
 5. **Dossier note**: "Dossier updated" when `DossierFacts` is non-empty; the
    Dossier owns the wording of what changed.
 6. **Timeline** toggle and **Continue**. Keyboard and pad both work; text
@@ -628,6 +644,11 @@ check). All knobs live in `assets/data/`. None is a difficulty modifier.
 - **AC-21 (Integration; Runner, Machine Nodes rule 21a)**: for every MVP node,
   each unprepared reference loss over `PROOF_SEEDS` names a counter cause as
   primary, never UNKNOWN.
+- **AC-21b (Integration; Runner, rule 11)**: for every MVP node, Runner reference losses with the node's first counter applied name a cause or Lead in ≥ 90% of `PROOF_SEEDS`.
+- **AC-21c (Integration; Runner)**: UNKNOWN is ≤ 10% of loss-class battles across the Runner corpus.
+- **AC-26 (Logic; rule 6)**: a loss-class battle with no losses labels its named result "Lead" with the "Untested" wording, never "Cause".
+- **AC-27 (Logic; rule 10)**: a top cause scoring 399 renders as "Partial lead"; at 400 it is the headline; each card shows "explains N of M losses".
+- **AC-28 (Logic; rule 26)**: node counter lists and `helper_faction_id` are identical across saves with different seeded makers (Machine Nodes AC-26).
 - **AC-22 (Integration; Runner)**: for each engine cause, a scripted fixture
   built to produce it names it primary in 10 of 10 seeds.
 - **AC-23 (UI)**: a loss, a win, a MUTUAL, a STANDOFF, an UNKNOWN and the
@@ -651,9 +672,8 @@ proceed (the owner may revisit any of them at review):
   `DEFEAT_SPAN_S` 518,400): 1 – 7 days at Standard, at most 14 at dcp 2,000.
 - **Replay**: the Timeline list is MVP; a static evidence chart is Vertical
   Slice (rule 24).
-- **"4–6 loss causes"** (concept) counts the cause types a player meets in the
-  MVP region: the region's counters as listed by its nodes, with the five
-  engine causes and "unknown" as the always-available frame.
+- **"4–6 loss causes"** (concept): see Open Question 5; the CD review
+  challenged the wider reading.
 - **Lent ships** count as player losses (rule 5).
 - **The opening's would-be bill**: Credits reports it (Credits rule 8 amended).
 
@@ -662,4 +682,6 @@ proceed (the owner may revisit any of them at review):
 | 1 | Battle Record rule 15 says an unverified replay shows the log "with no player-facing badge"; Simulation Tick & Pause says "recorded, not re-verified". The Debrief never replays, but the two GDDs must agree. | lead-programmer | Next review of #1 or #9 |
 | 2 | Player-facing wording of every cause, action and the membrane line. | narrative-director, ux-designer | Debrief UX spec |
 | 3 | Does any battle stream declare an `odds_surface`, and do record events carry the roll? If none, rule 16 is dormant at MVP. | lead-programmer | Before implementation |
-| 4 | Calibrate `CAUSE_MIN_PM`, `LINK_SHARE_PM` and `RETREAT_GRACE_S` against the Runner's fixtures (AC-21, AC-22). | systems-designer | Runner tuning |
+| 4 | Calibrate `CAUSE_MIN_PM`, `CAUSE_PRIMARY_PM`, `LINK_SHARE_PM` and `RETREAT_GRACE_S` against the Runner's fixtures (AC-21, AC-22). Also `outmatched`'s score compresses badly (a 2:1 gap scores only 166); recalibrate it so it can be primary when the gap is the biggest story. | systems-designer | Runner tuning |
+| 5 | **"4–6 loss causes"** (concept): a node's listed counters plus five engine causes can exceed 6 types per region, and more types mean more ways to be wrong. Either cap MVP at 6 named cause types per region (by limiting each region's distinct node counters), or have technical-director and the owner accept the wider scope explicitly. | owner, technical-director | Before #24 approval |
+| 6 | Confirm with World Clock that no campaign deadline can be broken by stacked defeat costs (rival investigators advance on the clock; Exposure #32). | game-designer | When #32 is designed |
