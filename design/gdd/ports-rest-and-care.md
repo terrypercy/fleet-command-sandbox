@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (defeat cost shown with the longest recovery rest; care once per ship per expedition; interrupt kinds and investigator steps named)
 > **Implements Pillar**: Pillar 5 (Living Against Made — organic Vigor is restored only by rest and care in port, never vented); Pillar 1 (Every Defeat Is a Lead — the port is where a loss turns into a plan); Pillar 4 (Plan in the Open — every service shows its days and price before you commit)
 
 ## Summary
@@ -164,7 +164,10 @@ SDT: **Autonomy** (three viable recoveries: rest, care, or press on wounded);
       (ships that would be mothballed are named, in lay-up order);
     - every queued World Clock event with `visible` true and `due_s` inside
       the rest, in queue order (World Clock rule 6);
-    - a fixed line: "Some events may interrupt the rest."
+    - what may interrupt it, by kind: "May be interrupted by: hostility,
+      exposure, case events", then "Investigator progress due inside this
+      rest:" with each known investigator step due inside `L` (the concept
+      says investigators work visibly on the clock).
     The panel is `PLANNING:port_rest`, so it costs no days.
 14. **Starting a rest** is an order `rest(L)`. It records `{start_s, L,
     per-ship deficits and need_s}`, registers `port.rest_done` at
@@ -207,6 +210,12 @@ SDT: **Autonomy** (three viable recoveries: rest, care, or press on wounded);
       (Faction Reputation rule 5). The quote says so before the player
       confirms.
     - Care is never raised above `C0` (Vigor rule 17).
+    - **Care may be bought for a ship at most once per expedition.** An
+      expedition ends when a rest brings that ship to full (`need_s` reached);
+      care is then available again. Care stays the living races' mid-voyage
+      gift and rest the true reset, so the ceiling never becomes a bar to fill
+      and vent (Pillar 5's flux test). A second care before a full rest is
+      unavailable, with the reason shown.
 20. **The care quote** shows the standing price, standing before and after,
     and the band change through `preview` (Faction Reputation rule 11). The
     Care screen is `PLANNING:port_care`.
@@ -232,7 +241,13 @@ SDT: **Autonomy** (three viable recoveries: rest, care, or press on wounded);
       `RECOVERED_HULL_PM` 100 ‰ of max hull until Hulls decides.
 22. **The hub.** Docking opens the Port screen, `PLANNING:port_hub`. Its
     header shows: wallet, hold, daily upkeep (`quote_upkeep()`), days of upkeep
-    covered, the defeat-cost cap (`quote_defeat_cap()`), suppression cover in
+    covered, the defeat cost in full: the billed cap (`quote_defeat_cap()`)
+    plus the upkeep of the longest recovery rest from the floor (`L_full` by
+    D3 at the current `rest_days_permille`), shown as "Defeat: at most {cap}
+    billed, then up to {d} days of rest ({upkeep})". If the recovery rest after
+    a defeat would cost more than that line says, it is a bug, not a tuning
+    issue. The header also reads "Docked time restores nothing. Rest to
+    restore." It shows suppression cover in
     days (Credits rule 9), and the owner's name and band (or "Free port"). Its
     body lists every service with one of three states: available, unavailable
     with a reason (band, free port, nothing to do), or not yet available (no
@@ -578,7 +593,9 @@ All values live in data files (`assets/data/ports/`), never in code.
 - **AC-12 (Logic; rule 9)**: when the owner turns Hostile mid-rest, the rest ends with pro-rata restoration, the fleet is IN_SYSTEM, and Resume is not offered.
 - **AC-13 (Logic; rule 17)**: no credit change during a rest has a cause other than upkeep or suppression.
 - **AC-14 (Logic; rule 18)**: care on a ship at m = 300 ‰, heavy, Allied spends exactly 21 standing and leaves `C = C0`; `clock_s` is unchanged.
-- **AC-15 (Logic; rule 19)**: care leaves hull and scars unchanged; care on a machine hull, a full ship, or at Wary is unavailable; a spend below `SPEND_FLOOR` is refused and nothing changes.
+- **AC-15 (Logic; rule 19)**: care leaves hull and scars unchanged; care on a machine hull, a full ship, or at Wary is unavailable; a spend below `SPEND_FLOOR` is refused and nothing changes; a second care for the same ship before a full rest is unavailable with the reason shown, and is available again after one.
+- **AC-26 (Logic; rule 22)**: at `rest_days_permille` 2,000, the header's defeat line equals the billed cap plus the upkeep of a 10-day floor-to-full rest, and a scripted defeat followed by that rest never costs more than the line shows.
+- **AC-27 (UI; rule 13)**: the rest preview lists the interrupt kinds and every investigator step due inside the chosen length.
 - **AC-16 (Logic; rule 21, D6)**: the D6 example ship reaches 700, then 750, and never exceeds 750 by travel; the defeat skip heals it as travel.
 - **AC-17 (Logic; rule 24)**: after a DEFEAT, the fleet is DOCKED at the fallback port when the skip ends, the Rest panel opens on Until full, and no rest has started.
 - **AC-18 (Logic; rules 23, 26, 29)**: a laid-up ship reactivates only at its port; it stays there through a defeat; when that port's owner turns Hostile it moves to the region's free port and a notice fires.
@@ -604,11 +621,13 @@ proceed (the owner may revisit any of them at review):
 - **Expulsion**: when rule 9 undocks the fleet in a newly Hostile system, any
   patrol contact is an ordinary offer (Fight, Evade, Turn back; Sector Map
   rules 17–20), never an auto-started battle.
+- **Defeat cost shown in full** (CD review): the header adds the longest
+  recovery rest to the billed cap (rule 22). Credits D5's "4 rest days" example
+  becomes 5 days at Standard (floor to full, Vigor D4); Credits rule 13 now takes N from `L_full`, and its worked figures are re-derived at the next Credits review.
+- **Interrupts are named** (rule 13), closing the earlier preview question.
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Recovered hull value** of a disabled ship (this GDD assumes `RECOVERED_HULL_PM` 100 ‰). | Hulls owner (Battle Resolution OQ 3) | #10 re-review |
 | 2 | **Partial care** (buy back part of the ceiling)? MVP: full only. | economy-designer | First campaign playtest |
-| 3 | **Credits D5 recovery basis**: "4 rest days to clear scars" must be re-checked against `PORT_HULL_PM_PER_DAY` 150, `TRAVEL_HEAL_PM_PER_DAY` 200 and the recovered hull value. | economy-designer | After OQ 1 |
 | 4 | **Machine repair**: days and price for a `repair_facility` port. | Refit & Loadout (#35) | Post-MVP |
-| 5 | **Rest preview of non-visible interrupts**: is the generic line enough, or should the panel name the kinds (exposure, hostility, case)? | ux-designer | Port UX spec |

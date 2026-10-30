@@ -156,7 +156,11 @@ where".
     4 rest days × 420), and on Chronicler **4.5 days and 3,790 credits** (bill
     3,160 + 1.5 rest days × 420), plus Vigor erosion in both. The pre-battle
     panel quotes both lines: "defeat bill ≤ cap" and "plus up to N rest days
-    (≈ X upkeep) to clear scars". The conditions: (a) `scar_line_permille` stays ≥
+    (≈ X upkeep) to clear scars". **N is the longest floor-to-full recovery
+    rest, `L_full` (Ports, Rest & Care D3 and rule 22): 5 days at Standard, 2.5
+    at Chronicler, 10 at `rest_days_permille` 2,000.** The worked figures above
+    predate that rule and the Debrief's day cost (D5 there); they are
+    re-derived at the next Credits review. The conditions: (a) `scar_line_permille` stays ≥
     200; (b) Ports, Rest & Care offers no instant scar clearing paid only in
     credits (care costs standing); (c) no rest fee is ever added.
 
