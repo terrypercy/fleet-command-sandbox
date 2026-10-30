@@ -8,9 +8,15 @@
 
 ## Summary
 
-[To be designed]
+Save/Load & Migration writes a whole campaign to one file per slot and reads it
+back exactly. Every stateful system writes its own versioned section, so an
+older save is carried forward into a newer build, and the player is told
+before anything is lost. Writing a save can never damage the previous one.
+Outside battle, saving is free. In battle there is only a suspend save, so
+leaving the game costs nothing and a bad roll can't be undone by reloading
+(Pillars 1 and 2).
 
-> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `Runtime ID Service`
+> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service, Content Data & Mod Loading`
 
 ## Overview
 

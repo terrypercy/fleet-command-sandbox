@@ -175,6 +175,22 @@ formulas:
     notes: "D5. Output is the picked entry's index. Integer weights 0 to 2^31, total 1 to 2^31, up to 2^16 entries, table sorted by stable_id at load; negative weights, zero totals and Dictionary tables are content errors."
     added: 2026-10-29
 
+  - name: save_max
+    status: active
+    source: design/gdd/save-load-and-migration.md
+    referenced_by:
+      - design/gdd/save-load-and-migration.md
+      - design/gdd/content-data-and-mod-loading.md
+    variables:
+      - SAVE_HEADROOM
+      - HEADER_MAX
+      - ceiling_bytes_s
+      - OPAQUE_MAX
+    output_range: [35, 64]
+    expression: "ceil_MiB(SAVE_HEADROOM x (HEADER_MAX + sum_s ceiling_bytes_s + OPAQUE_MAX))"
+    notes: "Save/Load D1. Computed at startup from the section registry; result in MiB. 35 MiB with the 2026-10-30 ceilings (sum 22.75 MiB). Upper bound of the range is a review threshold, not a cap."
+    added: 2026-10-30
+
 # Example:
 #
 # formulas:
@@ -213,11 +229,12 @@ constants:
     referenced_by:
       - design/gdd/simulation-tick-and-pause.md
       - design/gdd/deterministic-rng-and-seed-streams.md
+      - design/gdd/save-load-and-migration.md
     value: 60
     unit: Hz
     notes: "Target rate, gated by a headless spike (about 100 ships and 500 projectiles must fit the frame budget); fallback is 30 Hz. Versioned engineering constant: written into every save and replay header, and changing it breaks replays."
     added: 2026-10-28
-    revised: ""
+    revised: 2026-10-30
 
   - name: sim_budget_ms
     status: active
@@ -260,22 +277,24 @@ constants:
     referenced_by:
       - design/gdd/deterministic-rng-and-seed-streams.md
       - design/gdd/content-data-and-mod-loading.md
+      - design/gdd/save-load-and-migration.md
     value: 64
     unit: bytes
     notes: "Longest legal stream name including its key suffix (D1). Mod namespaces and keyed patterns must fit; checked when the registry loads."
     added: 2026-10-29
-    revised: ""
+    revised: 2026-10-30
 
   - name: rng_save_ceiling_kb
     status: active
     source: design/gdd/deterministic-rng-and-seed-streams.md
     referenced_by:
       - design/gdd/deterministic-rng-and-seed-streams.md
+      - design/gdd/save-load-and-migration.md
     value: 64
     unit: KB
     notes: "PROVISIONAL. Ceiling on the RNG section of a mid-battle save at the Tick D10 steady fixture (D7, AC-41). Save/Load must budget for it."
     added: 2026-10-29
-    revised: ""
+    revised: 2026-10-30
 
   - name: max_runtime_id
     status: active
@@ -305,11 +324,12 @@ constants:
     referenced_by:
       - design/gdd/runtime-id-service.md
       - design/gdd/content-data-and-mod-loading.md
+      - design/gdd/save-load-and-migration.md
     value: 8
     unit: MB
     notes: "PROVISIONAL. Ceiling on the uncompressed identity section of a save (D2). Unreferenced tombstones are compacted at campaign saves to stay under it. Save/Load must budget for it."
     added: 2026-10-29
-    revised: ""
+    revised: 2026-10-30
 
   - name: resolve_share
     status: active
@@ -335,14 +355,15 @@ constants:
 
   - name: save_max_mib
     status: active
-    source: design/gdd/content-data-and-mod-loading.md
+    source: design/gdd/save-load-and-migration.md
     referenced_by:
       - design/gdd/content-data-and-mod-loading.md
-    value: 32
+      - design/gdd/save-load-and-migration.md
+    value: 35  # was: 32 (provisional, Content Data D1) before 2026-10-30
     unit: MiB
-    notes: "PROVISIONAL. Largest save file accepted; refused before parsing above it (D1). Final value set once Save/Load (#5) sums its section ceilings; should be at least 1.5x that sum. Must exceed identity_table_save_ceiling_mb plus other sections."
+    notes: "Largest save accepted, by file size and by decoded size; refused before parsing above it. Computed at startup by Save/Load D1 as ceil_MiB(1.5 x (HEADER_MAX + sum of section ceilings + OPAQUE_MAX)); 35 MiB with the ceilings of 2026-10-30. Moves when a section ceiling changes."
     added: 2026-10-30
-    revised: ""
+    revised: 2026-10-30
 
   - name: content_hash_fmt
     status: active
@@ -363,6 +384,39 @@ constants:
     value: 2147483648
     unit: weight
     notes: "2^31. Largest legal total of a weighted table, checked by the content validator before any RNG call (D4). Matches weighted_pick's W range."
+    added: 2026-10-30
+    revised: ""
+
+  - name: suspend_refresh_s
+    status: active
+    source: design/gdd/save-load-and-migration.md
+    referenced_by:
+      - design/gdd/save-load-and-migration.md
+    value: 120
+    unit: s
+    notes: "Real seconds of unpaused battle between suspend refreshes (Save/Load D4). Bounds battle lost to a crash; Tick and Battle Record must tolerate a capture this often."
+    added: 2026-10-30
+    revised: ""
+
+  - name: opaque_max_mib
+    status: active
+    source: design/gdd/save-load-and-migration.md
+    referenced_by:
+      - design/gdd/save-load-and-migration.md
+    value: 2
+    unit: MiB
+    notes: "Total budget for sections carried untouched from missing mods (Save/Load Core Rule 17, D1). Content Data warn-then-load relies on it."
+    added: 2026-10-30
+    revised: ""
+
+  - name: header_max_kib
+    status: active
+    source: design/gdd/save-load-and-migration.md
+    referenced_by:
+      - design/gdd/save-load-and-migration.md
+    value: 64
+    unit: KiB
+    notes: "Largest save header (Save/Load Core Rule 3). Must hold the package list and hashes from Content Data Core Rule 13."
     added: 2026-10-30
     revised: ""
 

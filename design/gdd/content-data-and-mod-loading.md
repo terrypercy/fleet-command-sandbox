@@ -566,14 +566,15 @@ need at its growth scale (about 400 records) divided by the limit:
 | `MODS_MAX` | 64 | — | — | Enabled at once |
 | `REF_DEPTH` | 8 | ≈ 3 | 0.38 | mission → loot table → item |
 | `DEP_DEPTH` | 16 | 0 | — | The longest `depends_on` chain |
-| `SAVE_MAX` | 32 MiB (**provisional**) | — | — | See below |
+| `SAVE_MAX` | 35 MiB (set by Save/Load & Migration D1) | — | — | See below |
 
 **Output Range:** 0 – 64 MiB; base alone is about 2 MiB.
 - **Save cap:** Runtime ID Service D2's identity ceiling is 8 MB (7.63 MiB). A
   16 MiB cap would leave only 8.37 MiB for every other section, none of which has
-  a ceiling yet. `SAVE_MAX` is therefore 32 MiB, provisionally, until Save/Load &
-  Migration (#5) sums its section ceilings; it should then be at least 1.5 times
-  that sum. `FILE_MAX` does not apply to saves.
+  a ceiling yet. `SAVE_MAX` was 32 MiB provisionally; Save/Load & Migration D1
+  now computes it as 1.5 times the sum of its section ceilings, which gives
+  **35 MiB** (2026-10-30), and it follows the registry as ceilings change.
+  `FILE_MAX` does not apply to saves.
 - **Crossing a limit** refuses the package that crosses it, in load order, so the
   outcome is deterministic. A limit is never trimmed to fit.
 
@@ -932,7 +933,7 @@ versioned.
 | Constant | Value | Why it is fixed |
 |---|---|---|
 | Load limits (`FILE_MAX`, `PKG_DATA_MAX`, `TOTAL_DATA_MAX`, `FILES_PER_PKG`, `JSON_DEPTH`, `ARRAY_LEN`, `OBJECT_KEYS`, `ID_MAX_BYTES`, `NAMESPACE_BYTES`, `LOC_KEY_MAX_BYTES`, `STRING_FIELD_MAX`, `DESC_MAX`, `DEFS_PER_PKG`, `DEFS_TOTAL`, `MODS_MAX`, `REF_DEPTH`, `DEP_DEPTH`) | See D1 | Security and determinism. The same for `base` and mods |
-| `SAVE_MAX` | 32 MiB (**provisional**) | Until Save/Load (#5) sums its section ceilings (D1) |
+| `SAVE_MAX` | 35 MiB | Owned by Save/Load & Migration D1 (computed from section ceilings) |
 | `BASE_COLD_BUDGET_MS` | 250 | Start-up budget for `base` (D2) |
 | `PKG_PARSE_ABORT_S` | 5 | Watchdog; off in the validator and CI (D2) |
 | Hash `FMT` | 1 | Version of the canonical serialization; bumping it changes every hash (D3) |
@@ -1307,7 +1308,7 @@ written, all resolved in the Core Rules, Edge Cases and Formulas:*
 | 2 | **Images and audio in mods.** Which formats, decoded how, and with what limits, each behind its own security review. | security-engineer, technical-artist | Before modding is scheduled |
 | 3 | **Who owns the mod screen and the pre-load summary**: Menus, Settings & Save UI (#51), or a separate screen? | ux-designer | When #51 is designed |
 | 4 | **Which locales does the base game ship**, and is the base locale English? | producer, localization-lead | Before string tables are authored |
-| 5 | **The final `SAVE_MAX`.** 32 MiB is provisional until Save/Load & Migration (#5) sums its section ceilings (D1). | Save/Load (#5) | When #5 is designed |
+| 5 | ~~**The final `SAVE_MAX`.**~~ **Resolved 2026-10-30:** 35 MiB, computed by Save/Load & Migration D1 from its section ceilings. | Save/Load (#5) | Resolved |
 | 6 | **May a retired content ID be re-added later?** Proposed: yes, by removing it from `retired_ids`; instances already retired stay retired (Runtime ID Service never revives an ID). | systems-designer | Content/mod data format ADR |
 | 7 | **The content/mod data format ADR:** schema language and parser; `.fctable` and the export filters; the canonical hash's exact bytes (D3); typed-class generation; read-only probes; symlink detection per platform; the lexical integer check; the translation server or a custom table. Every engine fact here is NOT SOURCEABLE. | technical-director | Before any content is authored in quantity |
 | 8 | **A distribution channel for mods** (a workshop or a plain folder), and whether it changes the trust model. | producer, security-engineer | Post-MVP, with platform integration (#57) |
