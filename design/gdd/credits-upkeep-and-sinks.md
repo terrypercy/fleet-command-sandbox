@@ -336,5 +336,5 @@ None of its own; a soft cue on mothballing and on the upkeep warning.
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Late-game money pile-up**: once the refit catalogue runs out (estimated near hour 60), the wallet grows ~1,200/hour. Lasting sinks: fleet growth, suppression, colonies (post-MVP). | economy-designer | When Refit & Loadout and Loot & Crafting have price lists |
-| 2 | **Counter affordability**: every Dossier counter must have a version costing ≤ the **net** surplus of a defeated Standard expedition plus one following clean expedition (≈ 4,800 on the D5 fleet), or upkeep and yield are retuned until that holds. | Machine Nodes & Strongholds, Refit & Loadout, economy-designer | When designed |
+| 2 | **Counter affordability** (enforced as `COUNTER_COST_CAP` 4,800 by Machine Nodes & Strongholds rule 20 and D6): every Dossier counter must have a version costing ≤ the **net** surplus of a defeated Standard expedition plus one following clean expedition (≈ 4,800 on the D5 fleet), or upkeep and yield are retuned until that holds. | Machine Nodes & Strongholds, Refit & Loadout, economy-designer | When designed |
 | 3 | **All figures** are starting values; no balance data yet. | economy-designer, `/balance-check` | When `assets/data/economy/` exists |

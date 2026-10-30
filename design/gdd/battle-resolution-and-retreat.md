@@ -154,7 +154,7 @@ or "I was punished for pausing".
     every ship of a BROKEN fleet, receive no goal and cannot withdraw. They
     fight on until they are destroyed or the time limit is reached. A departed
     enemy ship returns to its fleet on the campaign map. Machine Nodes &
-    Strongholds (#23) decides where the fleet goes. Withdrawn ships give no
+    Strongholds (#23) rule 15 decides where the fleet goes; a withdrawal never breaks a node (#23 rule 16). Withdrawn ships give no
     salvage. Strongholds never withdraw (`withdraw_sr` 0).
 11. **Left behind.** In a loss-class outcome, every DISABLED player ship is
     **left behind**: the report lists it for recovery (rule 15). In a win-class
@@ -215,8 +215,9 @@ or "I was punished for pausing".
     `DEFEAT_MAX_S`).
 19. **The opening loss.** `opening_loss` is true only when the battle setup
     carries `exempt_lasting_cost = true` (Vigor rule 18's flag) and the outcome is in the loss class.
-    Onboarding & Opening Sequence (#53) sets the setup flag on exactly one battle
-    per save. This system never sets it from any other source. Every cost
+    The flag comes from the node's `exempt_lasting_cost` field (Machine Nodes &
+    Strongholds rule 1); Onboarding & Opening Sequence (#53) sequences it onto
+    exactly one battle per save. This system never sets it from any other source. Every cost
     consumer reads the flag and applies nothing (Credits rule 8; concept: no
     lost salvage, no days). Vigor keys on the setup flag itself and restores
     `C` whatever the outcome (Vigor rule 18). If the player wins the
@@ -544,7 +545,7 @@ proceed (the owner may revisit any of them at review):
 | 1 | **Hull 0 handling**: confirm that Weapons & Damage only sets hull 0 in P5, and that this system's P7 hook settles it (rule 7). | Weapons & Damage owner | #12 re-review |
 | 2 | **RNG battle-end order**: confirm that the RNG battle-end step (stream discard, deferred campaign draws) fits rule 16's ascending delivery. | RNG owner | #2 re-review |
 | 3 | **Recovered hull value** of a disabled ship after a win or a paid recovery. | Hulls owner | #10 re-review |
-| 4 | **Where a withdrawn machine fleet goes**, and whether its node counts as broken. | Machine Nodes & Strongholds (#23) | When #23 is designed |
+| 4 | ~~**Where a withdrawn machine fleet goes**~~ **Resolved 2026-10-30:** it returns home and refits (#23 rule 15); a node breaks only when its keystone dies (#23 rule 16). | Machine Nodes & Strongholds (#23) | Closed |
 | 5 | **`BATTLE_LIMIT_S`** of 30 unpaused minutes is a starting point; tune it with the AI-vs-AI Runner's battle-length data. The Runner also tests whether kiting to STANDOFF costs less than an ordered retreat; if it does, STANDOFF is cut. | systems-designer | Runner tuning |
 | 6 | **How a defeat's day cost is computed** from the report, under `DEFEAT_MAX_S` (World Clock Open Question 6). | Defeat & Debrief (#24) | When #24 is designed |
 | 7 | **Left-behind lent ships**: the standing cost with the lending faction, previewed before battle. | Faction Reputation & Standing, Allied Lending (#33) | When #33 is designed |

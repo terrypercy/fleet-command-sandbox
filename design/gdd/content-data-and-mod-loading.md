@@ -419,7 +419,9 @@ secondary line because the concept makes modding "a secondary channel later".*
       cannot change base counters.
     - **Every counter, base or mod, must carry:** a name key, a Debrief cause key,
       a counter-action key, and at least one inbound and one outbound reference
-      (something it affects, and something that exploits it). A counter missing
+      (something it affects, and something that exploits it), plus an
+      `evidence` predicate from the engine's fixed list, a `requires_allies`
+      flag and at least one kit (Machine Nodes & Strongholds rules 9–11). A counter missing
       any of them is a validation **error**, so the Debrief can always name a
       specific cause and counter (Pillar 1's design test).
 
@@ -890,7 +892,7 @@ another system's logic:
 | Hulls & Ship Definition (#10) | Hard | Owns the hull kind's schema; reads frozen hull definitions |
 | Truth Seeding & Candidates (#16) | Hard | Candidate races and the per-race attribute table as content. **Must materialise the seeded case into the save at seeding; declares its truth kinds** (Core Rule 18) |
 | Faction Reputation & Standing (#17) | Hard | Faction definitions |
-| Machine Nodes & Strongholds (#23) | Hard | Owns the `counter` kind and node definitions. Every counter must carry a name, a Debrief cause, a counter-action, and inbound and outbound references (Core Rule 17) |
+| Machine Nodes & Strongholds (#23) | Hard | Owns the `counter` and `machine_node` base kinds. Every counter must carry a name, a Debrief cause, a counter-action, inbound and outbound references, an evidence predicate, `requires_allies` and a kit (Core Rule 17). Node errors: `NODE_TREE`, `NODE_NO_SOLO_COUNTER`, `NODE_COUNTER_NO_TARGET`, `COUNTER_UNAFFORDABLE` (post-load cross-kind) |
 | Sector Map & Travel (#26) | Hard | Systems, lanes and hand-placed anchors as content |
 | Archive Fragments & Evidence (#28) | Hard | Claim templates and fragment definitions. **Seeded fragments are stored with their claims filled; truth kinds are never substituted** (Core Rule 18) |
 | Loot & Crafting (#39) | Hard | Loot tables, validated by D4 and Core Rule 8 |

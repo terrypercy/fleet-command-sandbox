@@ -307,7 +307,8 @@ C‰ = 30 × 1,000 ÷ 30 = **1,000, WHOLE**; five SOLID lines.
 - **If a ship hovers at the edge of range**: hysteresis and `LINK_DWELL` allow
   at most one change per dwell.
 - **If a keystone is destroyed**: it is an ordinary relay loss; the stronghold's
-  own consequences belong to Machine Nodes & Strongholds.
+  own consequences belong to Machine Nodes & Strongholds (the node breaks,
+  rules 16–17).
 
 ## Dependencies
 

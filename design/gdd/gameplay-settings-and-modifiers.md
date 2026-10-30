@@ -144,7 +144,8 @@ the terms of my war", which put the settings screen at the centre).*
      upkeep scale with `yield_permille`, so a lie costs the same share of income
      on every preset (Pillar 2).
 10. **Strongholds scale by numbers, never by composition.** `stronghold_strength`
-    scales stats and ship count within the same doctrine, so the Dossier's
+    scales defensive stats and ship count within the same doctrine (Machine
+    Nodes & Strongholds D1, D2), never the keystone, relay tree or weapons, so the Dossier's
     counter-fleet stays correct on every preset. **`enemy_ai_level` scales
     execution only** (reaction delay, focus-fire accuracy, retreat discipline),
     never doctrine or which tactics are available: a Debrief counter valid at
@@ -179,7 +180,7 @@ the terms of my war", which put the settings screen at the centre).*
 
     | Key (Tier C) | Chronicler | Standard | Admiral | Range |
     |---|---|---|---|---|
-    | `stronghold_strength_permille` † | 750 | 1000 | 1200 | 500 – 1500 |
+    | `stronghold_strength_permille` (accepted by Machine Nodes & Strongholds rule 4) | 750 | 1000 | 1200 | 500 – 1500 |
     | `defeat_cost_permille` † | 500 | 1000 | 1500 | 250 – 2000 (floor above 0) |
     | `vigor_erosion_permille` † | 600 | 1000 | 1250 | 250 – 2000 |
     | `rest_days_permille` † | 500 | 1000 | 1250 | 250 – 2000 |
