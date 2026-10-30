@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (search completes before a tied contact; POI_NO_YIELD is an error; preview adds visible rival progress; next-event status line)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — derelicts, archives and witnesses hold evidence beyond the strongholds); Pillar 4 (Plan in the Open — what a site costs to search is shown before you commit)
 
 ## Summary
@@ -76,7 +76,10 @@ site's name told me who did it" or "that trip was wasted".
      while `POI_WITNESS_ENABLED` is false (rule 25);
    - `POI_REVEAL_UNKNOWN`, `POI_REVEAL_SELF`: a `reveals[]` entry names no site,
      or the POI itself;
-   - `POI_NO_YIELD` (warning): a POI with no slot and no `reveals[]`;
+   - `POI_NO_YIELD` (error): a POI must have at least one `reveals[]` entry
+     or, once Salvage & Recovery (#36) exists, authored salvage; a fragment
+     slot alone does not count, because it may be empty, and "that trip was
+     wasted" must never happen;
    - `SITE_OUTSIDE_SYSTEM` stays Sector Map's (rule 2).
 4. **Truth-neutral surface.** Name and log text follow lore bible §1.1. They name
    no race, and use no attribute vocabulary (scripts, era names, numbering
@@ -141,8 +144,11 @@ site's name told me who did it" or "that trip was wasted".
     for every slot state.
 14. **The preview (Pillar 4).** Hovering or pressing Search shows, before
     commit: time left (days, two decimals, D1); daily upkeep charges that fall
-    in the window (D2); and known risks, which are the sighted roaming fleets
-    whose predicted contact (Sector Map rules 19, 24) falls before `due_s`. The
+    in the window (D2); and known risks, labelled "Known risks (sighted fleets
+    and visible investigations only)": the sighted roaming fleets whose
+    predicted contact (Sector Map rules 19, 24) falls before `due_s`, and any
+    visible rival investigation whose shown progress completes before `due_s`,
+    as already displayed on the exposure readout (#32). The
     preview never mentions what the site holds, beyond the authored "evidence
     here" marker.
 15. **Risk is the map's, not the site's.** A POI owns no encounter at MVP.
@@ -174,8 +180,10 @@ site's name told me who did it" or "that trip was wasted".
 
     The flag stays at its default (a grant changes the case). It cannot fire
     during a skip: rest needs a docked fleet and a defeat suspends the search
-    (rule 12). At an equal `due_s`, `map.contact` (200) fires first, suspends
-    the search and cancels this event.
+    (rule 12). At an equal `due_s`, `poi.search_done` (150) fires before
+    `map.contact` (200), since order is ascending (World Clock rule 6): the
+    search completes and grants, then the offer opens; a raider cannot snatch
+    a finished search on a tie.
 21. **Own section `base:points_of_interest`**, version 1, loads after
     `base:sector_map` and `base:archive_fragments`. Per POI that is not
     UNSEARCHED: `{poi content ID, state, done_s, searched_day}`. Plus the active
@@ -292,10 +300,9 @@ counted.
   kept.
 - **Route planner opened during a search**: the planner holds the clock; the
   search is not suspended unless a route is committed.
-- **Contact and completion at the same `due_s`**: the contact fires first
-  (priority 200 > 150), suspends the search, and cancels completion. After the
-  offer, `done_s` = `SEARCH_S` and `remain_s` = 0, so pressing Search
-  completes the search in that same tick.
+- **Contact and completion at the same `due_s`**: `poi.search_done` (150)
+  fires first (ascending order, World Clock rule 6): the search completes and
+  grants, then the contact offer opens.
 - **Loss-class battle during a search**: SUSPENDED before the defeat skip; the
   fleet docks at the fallback port; progress kept.
 - **Two POIs in one system**: one search at a time; starting the second
@@ -363,9 +370,11 @@ In `assets/data/map/poi/`. `SEARCH_S` must never be split by slot class.
 
 ## Game Feel
 
-- **A held breath, not a wait**: half a day is 60 real seconds at 1×; the map
-  stays live, so watching a raider's line creep toward the system is tension,
-  not idling.
+- **Tension when a threat is in the window; otherwise a short wait**: half a
+  day is 60 real seconds at 1×, and 2× and 4× apply. The fleet-status line
+  shows the next visible world event inside the window ("Rival dossier +1 at
+  0.31"), so watching a raider's line creep toward the system is tension, not
+  idling.
 - **Every site pays**: completion always opens a card and a log, and often a
   new lead.
 - **No tell-by-timing**: every search of a kind takes the same time.
@@ -406,7 +415,7 @@ In `assets/data/map/poi/`. `SEARCH_S` must never be split by slot class.
 - **AC-06 (Logic; rule 11)**: for a relic, a record, a forgery and an empty slot in one POI, the preview, `due_s`, notices, marker and upkeep charged are byte-identical.
 - **AC-07 (Logic; rule 12, D1)**: contact, route commit, dock and loss fallback each suspend the search with `done_s` = elapsed search time; battle and Evade time are not counted.
 - **AC-08 (Logic; rule 13)**: completion sets SEARCHED, logs one `PoiSearched` with no content field, calls `grant` once with `source = poi_kind`, then reveals `reveals[]` in list order.
-- **AC-09 (Logic; rule 20)**: a contact and completion at the same `due_s` give a suspended search and no grant; resuming completes it.
+- **AC-09 (Logic; rule 20)**: a contact and completion at the same `due_s` give a SEARCHED POI with one grant, then the contact offer.
 - **AC-10 (Logic; D2)**: the preview's upkeep equals the upkeep actually charged between `t_start` and `due_s` with no intervening order, for starts on either side of a day roll.
 - **AC-11 (Logic; rule 16)**: a SEARCHED POI never calls `grant` again across 100 revisits and a reload.
 - **AC-12 (Logic; rules 19, 21)**: the same seed and orders give a byte-identical `base:points_of_interest` section; a save mid-search, loaded, completes at the same tick as an uninterrupted run.
@@ -414,7 +423,7 @@ In `assets/data/map/poi/`. `SEARCH_S` must never be split by slot class.
 - **AC-14 (Logic; rule 4, G6)**: over 30,000 seeds per maker, every POI field, `due_s`, card art key and audio cue is identical across makers; only the fragment card differs.
 - **AC-15 (Logic; D3)**: 24 POIs, all SUSPENDED with longest IDs, fit in 4 KiB.
 - **AC-16 (Review; rule 4)**: a writing review confirms every POI name and log passes the lore bible §1.1 checklist and uses no race name or attribute vocabulary.
-- **AC-17 (Playtest; rules 5, 14)**: in a 5-player playtest, every tester searches at least one POI before the first stronghold return, at least 4 of 5 say the preview told them what the search would cost, and none reports that a site's name, place or search time "gave away" the maker.
+- **AC-17 (Playtest; rules 5, 14)**: in a 5-player playtest, every tester searches at least one POI before the first stronghold return, at least 4 of 5 say the preview told them what the search would cost, none reports that a site's name, place or search time "gave away" the maker, and none describes the search as idle time.
 - **AC-18 (Playtest; rule 13)**: at least 4 of 5 testers rate a site visit as worth the trip, including any whose search yielded nothing legible (fixture build with one empty slot).
 
 ## Open Questions
