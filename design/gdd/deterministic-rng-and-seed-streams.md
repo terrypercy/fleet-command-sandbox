@@ -766,8 +766,10 @@ Every worked example was re-checked arithmetically.*
   changes nothing, because rolls are tick-indexed (Core Rules 3 and 11). Waiting
   a tick and firing again is a different action, and it gets a different roll.
   A moment cannot be retried by reloading: during a battle the game saves only
-  as a suspend save, which is consumed once the resumed battle has run its first
-  tick (Save/Load & Migration). Restarting from the battle-start autosave replays
+  as a suspend save (on quit, and refreshed every 120 s for crash safety), which
+  is consumed once the resumed battle has run its first tick (Save/Load &
+  Migration, Core Rules 22–23). A force-kill can return to the last refresh, and
+  the same orders then give the same rolls. Restarting from the battle-start autosave replays
   the whole battle, so defeat keeps its cost.
 
 ### Mods
@@ -1312,4 +1314,4 @@ of its conflicts are resolved.*
 | 6 | **Where and when does the reload statement appear?** For example the load screen, on the first load. And who confirms its wording? | UX spec (`/ux-design`), `narrative-director` | Phase 4, before epics |
 | 7 | **A player-chosen seed after MVP?** A custom-game seed that excludes the truth streams (so the maker stays unknowable) could support shared challenge runs without breaking Pillar 2. | creative-director | Post-MVP |
 | 8 | **Cross-platform golden tables.** MVP verifies on one platform. Add CI runs of AC-38 on every shipped platform post-MVP (ties to Simulation Tick & Pause Open Question 7). | technical-director | Post-MVP |
-| 9 | ~~Mid-battle save policy.~~ **Resolved 2026-10-30 (owner decision, Save/Load & Migration #5):** during a battle the game saves only by quitting, as a **suspend** save that resumes exactly and is consumed once the resumed battle has run its first tick, so a moment cannot be retried by reloading. An autosave at battle start stays loadable, so restarting a battle is allowed but costs the time. Saves are free outside battle. | — | — |
+| 9 | ~~Mid-battle save policy.~~ **Resolved 2026-10-30 (owner decision, Save/Load & Migration #5):** during a battle the game saves only as a **suspend** save (written on quit and refreshed every 120 s for crash safety) that resumes exactly and is consumed once the resumed battle has run its first tick, so a moment cannot be retried by reloading. An autosave at battle start stays loadable, so restarting a battle is allowed but costs the time. Saves are free outside battle. | — | — |

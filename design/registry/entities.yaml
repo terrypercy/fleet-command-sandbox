@@ -392,6 +392,7 @@ constants:
     source: design/gdd/save-load-and-migration.md
     referenced_by:
       - design/gdd/save-load-and-migration.md
+      - design/gdd/deterministic-rng-and-seed-streams.md
     value: 120
     unit: s
     notes: "Real seconds of unpaused battle between suspend refreshes (Save/Load D4). Bounds battle lost to a crash; Tick and Battle Record must tolerate a capture this often."
