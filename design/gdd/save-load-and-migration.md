@@ -372,40 +372,320 @@ resumed tick) → ABSENT; a refresh during the resumed battle writes it again.
 | Content Data & Mod Loading (#4) | both | Supplies the package list and hashes for the header, the content comparison and pre-load summary (Core Rule 13), alias mapping, the shared limit-checked parser (D1), and the plain-text escaping (Core Rule 14). The materialised case (Core Rule 18) is saved as its own section. Missing-mod sections are carried untouched (rule 17). |
 | Every stateful system | system → save | Registers one section (rule 7), writes it purely (rule 9), validates its own payload, owns its migrations and fixtures. |
 | Menus, Settings & Save UI (#51) | save → UI | Slot list built from headers only; the confirm summary; named refusal and failure messages; "save now" outside battle; manual saving greyed in battle with the reason. |
-| Platform (#57) | save → platform | One self-contained file per slot with `save_counter` and `saved_at_utc`, so cloud sync can resolve conflicts; `.tmp` and `.bak` are never synced. Cloud transport and conflict rules belong to #57. |
+| Platform Integration (#57) | save → platform | One self-contained file per slot with `save_counter` and `saved_at_utc`, so cloud sync can resolve conflicts; `.tmp` and `.bak` are never synced. Cloud transport and conflict rules belong to #57. |
 | Battle Record (#9) | record → save | The replay log lives in the sim section's battle part; empty in a battle-start autosave. |
 
 ## Formulas
 
-[To be designed]
+### D1. Largest save (`SAVE_MAX`)
+
+The save_max formula is defined as:
+
+`SAVE_MAX = ceil_MiB( SAVE_HEADROOM × ( HEADER_MAX + Σ_s ceiling_bytes_s + OPAQUE_MAX ) )`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| SAVE_HEADROOM | float | 1.25 – 2.0; **1.5** | constant (engineering) | Margin for encoding overhead and ceilings not yet confirmed |
+| HEADER_MAX | int | **64 KiB** | constant (this GDD) | Largest header (Core Rule 3) |
+| ceiling_bytes_s | int | per section | each owning GDD | Largest payload of registered section `s` (Core Rule 7) |
+| OPAQUE_MAX | int | **2 MiB** | constant (this GDD) | Total budget for sections carried untouched (Core Rule 17) |
+| ceil_MiB | function | — | — | Round up to a whole MiB |
+
+**Section ceilings at the time of writing:**
+| Section | Ceiling | Status |
+|---|---|---|
+| Runtime ID identity table | 8,000,000 B (7.63 MiB) | Runtime ID Service D2 (provisional) |
+| RNG streams | 64,000 B (0.06 MiB) | Deterministic RNG & Seed Streams D7 |
+| Simulation + battle part (replay log) | 4 MiB | **placeholder** for Simulation Tick & Pause and Battle Record (#9) |
+| Materialised truth case | 1 MiB | **placeholder** for Truth Seeding (Content Data, Core Rule 18) |
+| All other systems, combined | 8 MiB | **placeholder** until each owning GDD declares its ceiling |
+| Header | 64 KiB | this GDD |
+| Carried sections (`OPAQUE_MAX`) | 2 MiB | this GDD |
+
+**Output Range:** the sum is 23,858,176 bytes (22.75 MiB). × 1.5 = 34.13 MiB,
+rounded up to **`SAVE_MAX` = 35 MiB**. This replaces Content Data D1's
+provisional 32 MiB. `SAVE_MAX` is **computed at startup from the registry**, not
+typed in: when a GDD declares or changes a ceiling, `SAVE_MAX` follows, and a
+test asserts the computed value equals the registered one. `SAVE_MAX` bounds
+the file size before any read **and** the decoded size: decoding stops and
+refuses the save the moment it would pass `SAVE_MAX` (a decompression-bomb
+guard, whatever compression the save schema ADR picks).
+
+**Example:** a mod registers a 1 MiB section. The sum becomes 23.75 MiB, × 1.5 =
+35.63, so `SAVE_MAX` rises to 36 MiB.
+
+### D2. Section ceiling check
+
+At write: `bytes_s ≤ ceiling_bytes_s` for every section, or the save fails
+(Core Rule 21). At load: every declared `bytes_s ≤ ceiling_bytes_s` and
+`Σ carried_bytes ≤ OPAQUE_MAX`, checked before the section is parsed (Core
+Rule 25). `SECTIONS_MAX` = 256 bounds the section count (registered plus
+carried).
+
+### D3. Autosave due
+
+At each tick boundary outside BATTLE, an autosave is **due** when any is true:
+
+- an event trigger fired since the last autosave (port docking resolved; battle
+  outcome committed);
+- `day_now − day_at_last_autosave ≥ AUTOSAVE_DAYS`;
+- `real_s_since_last_autosave ≥ AUTOSAVE_REAL_MIN × 60`.
+
+A due autosave **runs** only when `real_s_since_last_autosave ≥
+AUTOSAVE_MIN_GAP_S`; until then it stays due (deferred, never dropped), and any
+number of due triggers coalesce into one autosave. The battle-start autosave is
+not subject to the gap.
+
+| Variable | Type | Range | Source | Description |
+|---|---|---|---|---|
+| day_now, day_at_last_autosave | int | ≥ 0 | World Clock (#8) | In-game day index |
+| real_s_since_last_autosave | int | ≥ 0 | this system (wall clock, outside the sim) | Real seconds, counted while the game is open |
+| AUTOSAVE_DAYS | int | 1 – 10; **3** | tuning | |
+| AUTOSAVE_REAL_MIN | int | 5 – 30; **10** | tuning | |
+| AUTOSAVE_MIN_GAP_S | int | 30 – 300; **60** | tuning | |
+
+**Output Range:** at most one autosave per 60 real seconds outside battle; at
+least one every 10 real minutes of play outside battle. **Example:** the player
+docks 40 s after a battle outcome autosave. The docking trigger is due but
+deferred; it runs 20 s later, at the first boundary after the gap.
+
+*The real-time counter is wall-clock and never enters the simulation or
+`state_hash` (Simulation Tick & Pause, rule 14).*
+
+### D4. Suspend refresh and the most battle a crash can cost
+
+`refresh due ⇔ unpaused_real_s_since_last_suspend ≥ SUSPEND_REFRESH_S`
+
+`max_battle_lost = SUSPEND_REFRESH_S + t_write`
+
+| Variable | Type | Range | Source | Description |
+|---|---|---|---|---|
+| unpaused_real_s_since_last_suspend | float | ≥ 0 | this system | Real seconds in BATTLE with the hold set empty (time paused costs the player nothing, so it does not count) |
+| SUSPEND_REFRESH_S | int | 60 – 300; **120** | tuning | |
+| t_write | float | ≤ 3 s target (D6) | measured | Time from capture to a committed file |
+
+**Output Range:** a forced kill or crash mid-battle costs at most about 123
+real seconds of battle; a normal quit costs none. **Example:** a 9-minute
+battle at 1× speed writes 4 refreshes (at 2, 4, 6, 8 min); a crash at 7:50
+resumes from 6:00. At 4× speed the same 120 real seconds hold 480 simulated
+seconds, so the loss in battle time is larger but the loss in the player's
+time is the same.
+
+### D5. Which save is newest
+
+`newest(campaign) = the valid slot with the largest save_counter`
+
+`save_counter` starts at 1 and rises by 1 with every committed save in the
+campaign, of any kind. It is stored in the header and never derived from a
+clock, so a changed system clock never reorders saves. `saved_at_utc` is for
+display only. Autosave rotation overwrites the autosave slot with the smallest
+`save_counter`.
+
+### D6. Time budgets (provisional, to be measured)
+
+| Measure | Target | Notes |
+|---|---|---|
+| Capture (`SYSTEM:save` held) | ≤ `SAVE_CAPTURE_MS` = **50 ms** | The only hitch the player can feel. Measured at max fleet and projectile counts |
+| Save, capture to committed file | ≤ 1 s typical; ≤ 3 s at `SAVE_MAX` | Off the simulation; the game keeps running |
+| Load, header to ARMED | ≤ 2 s typical; ≤ 5 s at `SAVE_MAX` | Behind a loading screen |
+| Slot list (headers only) | ≤ 100 ms for all slots of one campaign | Header reads only |
+
+These are engineering estimates (typical campaign 10–25 MB of uncompressed
+data). They are recorded as baselines by the performance probe (AC) before the
+save schema ADR is accepted.
 
 ## Edge Cases
 
-[To be designed]
+**Writing**
+- **If the game crashes, is killed or loses power during a save**: the `.tmp` is
+  left behind and the slot and `.bak` are untouched. On next launch the `.tmp`
+  is deleted and the slot loads as before.
+- **If the disk is full, or the folder is not writable**: the save goes to
+  FAILED. The `.tmp` is deleted, the old save stays, and the player sees "Save
+  failed: not enough disk space" (or "…cannot write to the save folder") with a
+  Retry. The game keeps running.
+- **If autosaves keep failing**: the failure message is shown the first time,
+  then once per 10 minutes at most, so the player is told but not spammed. A
+  manual save attempt always shows its result.
+- **If a section is over its ceiling at write**: the save fails, naming the
+  section ("Save failed: fleet data too large"), and a bug is logged. It is a
+  programmer error, never trimmed (Core Rule 21).
+- **If a save is requested while one is in flight**: it waits; a second autosave
+  request while one waits is merged into it.
+- **If a save is requested during a load**: it is refused silently for
+  autosaves, and with "Can't save while loading" for a manual request.
+- **If the slot file is replaced but `.bak` cleanup fails**: the slot is valid;
+  the stale `.bak` is replaced on the next save.
+- **If all 20 manual slots are full**: the player must overwrite or delete one.
+  The game never deletes a manual save by itself.
+- **If the first overwrite of a slot holds an older format** (a migrated load
+  saved back): before replacing it, the old file is kept as
+  `<slot>.v<N>.bak`, one per slot, never synced. The player can still go back
+  to the build that made it.
+
+**Reading**
+- **If the slot file and its `.bak` both fail**: the slot is DAMAGED. It stays
+  listed with "This save is damaged and can't be loaded", is never auto-deleted,
+  and the load screen offers the newest valid slot.
+- **If only the slot file fails and `.bak` is valid**: `.bak` loads, and the
+  player is told "The latest save was damaged; loaded the one before it
+  (<time>)".
+- **If the save is from a newer build**: refused before any section is read:
+  "This save was made by a newer version (<build>). Update the game to load it."
+- **If a section's migration step is missing**: refused before the confirm
+  summary, naming the section and versions (a programmer error in this build).
+- **If a save holds battle state at a different `TICK_RATE`** (a suspend or
+  battle-start autosave from a 60 Hz machine on the 30 Hz fallback, or the
+  reverse): refused, "This battle can't resume on this machine's simulation
+  rate"; the load screen offers the newest campaign save of that campaign.
+  Campaign saves load normally at any `TICK_RATE`.
+- **If the build, OS or CPU architecture differs**: loads; the information line
+  says replays recorded before this load may not verify.
+- **If a mod is missing**: the pre-load summary names it (Content Data, Core
+  Rule 13), its sections are carried untouched (Core Rule 17), and the campaign
+  loads.
+- **If carried sections exceed `OPAQUE_MAX`**: the ones that do not fit, largest
+  first, are listed in the confirm summary as "will be lost"; Cancel changes
+  nothing.
+- **If a mod is reinstalled at a version whose section is older than the one
+  carried**: the save is refused, naming the package and both versions (a newer
+  section, Core Rule 16). The player can install the newer mod or remove it
+  again, which carries the section untouched once more.
+- **If a migration chain would run many steps**: it runs them all; the chain
+  length is bounded by the version difference, which is at most the number of
+  released versions, so it cannot loop.
+- **If a "save" is a hostile file** (oversized, deeply nested, forged version,
+  dangling IDs, path tricks, control characters in names): it is refused by the
+  first limit or validation that catches it, naming file and field. Nothing
+  under `user://` changes and the game does not crash (Core Rules 25–28).
+- **If the player loads a save while a game is running and cancels the confirm
+  summary**: the running game continues, unchanged.
+
+**Battle and suspend**
+- **If the player quits during a suspend refresh**: the quit waits for the
+  refresh, then writes the suspend at the current tick.
+- **If a suspend write fails on quit**: the player is offered "Retry" or "Quit
+  anyway (you'll resume from <time> ago)", naming the last good suspend or the
+  battle start.
+- **If the game is force-killed mid-battle**: it resumes from the last
+  refresh, at most `SUSPEND_REFRESH_S` + `t_write` earlier (D4). *This lets a
+  player who force-kills after a bad moment replay up to two minutes of battle.
+  Rolls are tied to the tick (Deterministic RNG & Seed Streams, rule 11), so the
+  same orders give the same result; different orders may not. A normal quit can
+  never do this, because it overwrites the suspend at the current tick.
+  Accepted by the owner (2026-10-30) as the price of crash safety; see Open
+  Questions.*
+- **If the resumed battle is quit again before its first tick**: the quit
+  writes a new suspend at the same tick, replacing the old one; nothing is lost.
+- **If the suspend cannot be deleted after the first resumed tick**: it is
+  retried each tick and removed at battle end at the latest. Until then the
+  load screen does not offer it, because the session already holds a newer
+  state.
+- **If a campaign has a suspend and the player loads a different save of the
+  same campaign**: the suspend stays and is still offered as "Resume battle"; it
+  is replaced when the next battle in that campaign writes its own suspend.
+- **If the battle ends between refreshes**: the outcome autosave (Core Rule 19)
+  is written and the suspend is deleted.
+- **If the window is closed outside battle**: an autosave runs first (if one is
+  not already under way), then the game exits.
+
+**Determinism**
+- **If a save is taken at tick T and loaded**: running M more ticks gives the
+  same `state_hash` and replay as an uninterrupted run of T + M ticks. The
+  accumulator remainder is not saved (Simulation Tick & Pause, rule 17); it is
+  not an input to the simulation.
+- **If the system clock changes between saves**: ordering is by `save_counter`
+  (D5); only the displayed time looks odd.
 
 ## Dependencies
 
-[To be designed]
+| System | Type | Interface |
+|---|---|---|
+| Simulation Tick & Pause (#1) | Hard | Tick boundary; hold set (`SYSTEM:save`, `SYSTEM:load`); `tick_index`, `TICK_RATE`; its section and battle part; header fields (rule 14); first-whole-tick-after-resume signal |
+| Deterministic RNG & Seed Streams (#2) | Hard | RNG section (≤ 64,000 B, D7) with battle streams as a battle part; stream-rename migrations |
+| Runtime ID Service (#3) | Hard | Identity section loads first and is validated (Core Rule 11); compaction at campaign saves (Core Rule 6); held-ID union; ID requests from migrations |
+| Content Data & Mod Loading (#4) | Hard | Package list and hashes; content comparison and pre-load summary (Core Rule 13); aliases; shared limit-checked parser (D1); plain-text escaping (Core Rule 14); materialised case (Core Rule 18) |
+| World Clock (#8) | Soft (provisional) | In-game day for D3 and the header's display meta. Until designed, the day trigger is inert |
+| Combat Event Bus & Battle Record (#9) | Soft | Replay log in the simulation section's battle part; its ceiling feeds D1 |
+| Menus, Settings & Save UI (#51) | Soft (reverse) | Consumes slot list, confirm summary, refusal and failure messages; offers "save now" and import |
+| Platform Integration (#57) | Soft (reverse) | Cloud sync of one self-contained file per slot, using `save_counter` |
+| Every stateful system | Hard (reverse) | Registers one section (Core Rule 7) and declares its ceiling for D1 |
+
+Bidirectional check: Simulation Tick & Pause, Deterministic RNG & Seed Streams,
+Runtime ID Service and Content Data & Mod Loading already name Save/Load as a
+dependency. World Clock, Battle Record, Save UI and Platform are not yet
+designed; their GDDs must list this contract.
 
 ## Tuning Knobs
 
-[To be designed]
+| Knob | Default | Safe range | Affects | If too low | If too high |
+|---|---|---|---|---|---|
+| `MANUAL_SLOTS` | 20 | 5 – 50 | Load-screen length; player freedom | Players overwrite saves they wanted | Long, slow slot list |
+| `AUTOSAVE_SLOTS` | 3 | 2 – 10 | How far back an autosave reaches | One bad autosave leaves no fallback | Clutter; disk use |
+| `AUTOSAVE_DAYS` | 3 | 1 – 10 | Campaign-time cadence | Frequent hitches | More campaign lost to a crash |
+| `AUTOSAVE_REAL_MIN` | 10 | 5 – 30 | Real-time cadence | Frequent hitches | Up to that many minutes lost to a crash |
+| `AUTOSAVE_MIN_GAP_S` | 60 | 30 – 300 | Spacing between autosaves | Hitch clusters around events | Event autosaves arrive late |
+| `SUSPEND_REFRESH_S` | 120 | 60 – 300 | Battle lost to a crash (D4); force-kill replay window | More capture hitches in battle | More battle lost to a crash |
+| `SAVE_HEADROOM` | 1.5 | 1.25 – 2.0 | `SAVE_MAX` margin (D1) | Real saves refused | Weaker size guard |
+| `HEADER_MAX` | 64 KiB | 16 – 256 KiB | Header size cap | Large package lists refused | Weaker guard |
+| `OPAQUE_MAX` | 2 MiB | 0.5 – 8 MiB | Missing-mod data carried | Mod state lost on load | Larger saves |
+| `SECTIONS_MAX` | 256 | 64 – 1,024 | Section count cap | Heavily modded saves refused | Weaker guard |
+| `SAVE_CAPTURE_MS` | 50 (provisional) | 16 – 100 | Hitch budget (D6) | Unmeetable | Visible stalls |
+| `MIN_SAVE_FORMAT` | first public format | fixed | Oldest loadable save (Core Rule 12) | — | — (raising it needs an ADR) |
+
+All live in a data file (coding standards: gameplay values data-driven), except
+`MIN_SAVE_FORMAT`, which changes only by ADR.
 
 ## Visual/Audio Requirements
 
-[To be designed]
+- **Save indicator**: a small, unobtrusive icon in a screen corner while a save
+  is WRITING or VERIFYING, never a modal. It must not overlap the battle HUD's
+  critical readouts (Save UI #51 places it).
+- **No audio** on autosave or suspend refresh. A manual save may use the
+  standard UI confirm sound.
+- **Failure** uses the standard warning style (Save UI #51), never a sound
+  alone.
 
 ## Game Feel
 
-[To be designed]
+- **Saving is invisible.** The only hitch is the capture (D6, ≤ 50 ms); the
+  write happens while the game runs. A refresh mid-battle must not drop the
+  player's input: inputs during the capture are queued for the next tick, as
+  for any hold (Simulation Tick & Pause).
+- **Resuming lands paused.** A suspend or battle-start autosave arms under
+  `PLAYER_PAUSE`, so the player gets their bearings before anything moves.
+- **Bad news is specific.** Every refusal or failure names what happened and
+  what the player can do; never "an error occurred".
 
 ## UI Requirements
 
-[To be designed]
+Owned by Menus, Settings & Save UI (#51); this system supplies the data.
+- **Slot list** from headers only: captain name, in-game day, location,
+  played time, saved time, slot kind, and a "Resume battle" entry when a
+  suspend exists. Damaged slots are shown as damaged, not hidden.
+- **Confirm summary**: content changes (Content Data, Core Rule 13), declared
+  migration losses and carried-section losses, in one list, with Load and
+  Cancel. Information lines (build/OS/architecture) appear separately and never
+  block.
+- **Refusal and failure messages**: one named reason each (Edge Cases), with
+  the action the player can take.
+- **In battle**: manual Save is greyed out with "Saving is only possible outside
+  battle. Quitting keeps your place."
+- **Import**: a file picker that copies into the campaign folder (Core Rule 27).
+- 📌 **UX Flag — Save/Load & Migration**: this system has UI requirements. In
+  Phase 4 (Pre-Production), run `/ux-design` to create a UX spec for the save,
+  load and confirm screens **before** writing epics. Stories that reference UI
+  should cite `design/ux/[screen].md`, not the GDD directly.
 
 ## Cross-References
 
-[To be designed]
+| This document references | Target GDD | Specific element | Nature |
+|---|---|---|---|
+| Hold reasons, tick boundary, header fields, determinism | `design/gdd/simulation-tick-and-pause.md` | Rules 10, 14, 17 | Rule dependency |
+| Battle streams, tick-indexed rolls | `design/gdd/deterministic-rng-and-seed-streams.md` | Rule 11; D7 ceiling | Data dependency |
+| Identity load order and validation; compaction | `design/gdd/runtime-id-service.md` | Core Rules 6, 7, 11; D2 | Rule dependency |
+| Content comparison, parser limits, escaping, case | `design/gdd/content-data-and-mod-loading.md` | Core Rules 13, 14, 18; D1, D3 | Rule dependency; this GDD sets the final `SAVE_MAX` |
 
 ## Acceptance Criteria
 
@@ -413,4 +693,13 @@ resumed tick) → ABSENT; a refresh during the resumed battle writes it again.
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Resolve by |
+|---|---|---|---|
+| 1 | **File format, compression and checksum algorithm** (canonical JSON vs binary; ZSTD/GZIP; SHA-256 reused from Content Data D3 or a cheaper hash). Engine JSON, compression and hashing behaviour on 4.7.2 is NOT SOURCEABLE (no `modules/core.md`) and needs a spike. | technical-director | Save schema ADR |
+| 2 | **Platform write semantics**: whether `DirAccess.rename` replaces atomically (especially on Windows), whether `flush` reaches disk. The GDD's guarantee is behavioural (Core Rule 21); the ADR picks the sequence. NOT SOURCEABLE. | technical-director, godot-specialist | Save schema ADR + on-device probe |
+| 3 | **Close and suspend notifications**: window close-request handling and platform sleep/suspend signals on Windows, Linux and Steam Deck. NOT SOURCEABLE. | godot-specialist | Save schema ADR |
+| 4 | **Force-kill replay window** (Edge Cases): the 120 s suspend refresh lets a force-kill replay up to two minutes of battle. Accepted 2026-10-30; confirm it does not undercut Pillar 1 in playtest. | creative-director | First battle playtest |
+| 5 | **Section ceilings** for the simulation/replay log, the truth case and all other systems are placeholders (D1). Each owning GDD must declare its own. | each owning GDD | As each is designed |
+| 6 | **Cloud conflict resolution** (two devices, same campaign). `save_counter` is provided; the rule belongs to Platform. | Platform Integration (#57) | When #57 is designed |
+| 7 | **Time budgets** (D6) are estimates and must be measured. | performance-analyst | Before the save schema ADR is accepted |
+| 8 | **Thumbnails** are omitted at MVP (a sidecar breaks single-file saves; image decoding adds attack surface). Post-MVP, an optional, ignorable section with decode caps. | game-designer | Post-MVP |
