@@ -223,8 +223,10 @@ What the player must never feel: graded ("C rank"), blamed for pausing, told
 
 22. **To the Dossier.** The result carries a `DossierFacts` block, handed to the
     Dossier (#47) when the Debrief closes:
-    - `counters_evidenced[]`: every node counter whose predicate held, with
-      the tick it first held and whether it was named as a cause;
+    - `counters_evidenced[]`: every node counter whose `evidence` or `worked`
+      predicate held, each entry with `polarity: cause | worked`, the tick it
+      first held and whether it was named as a cause (the Dossier reveals by
+      these, Dossier rules 9–11);
     - `doctrine_observations[]`: each `DoctrinePhase` transition and
       `FocusAssigned` seen, as `{anchor, doctrine_id, event, tick}` (Fleet
       Coordination rule 3: every field has a reveal event);
