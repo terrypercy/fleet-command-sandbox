@@ -167,7 +167,8 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
     Rule 2). It saves: `content_id`; name or designation (rule 14); owning
     fleet; `hull_current`; `armour_current` (shape per Weapons & Damage);
     `scar_points` (organic); `loadout` (`slot_id` → weapon or module content
-    ID); `vigor_ceiling_current` (owned by Vigor #13); and its modifier list.
+    ID); `vigor_core_mV[]`, the per-core ceilings whose sum is the current
+    Vigor ceiling (owned by Vigor #13, rule 2); and its modifier list.
     A ship whose definition is missing follows Content Data Core Rule 13
     (substituted, removed or kept inert).
 

@@ -97,9 +97,11 @@ lost to a dice roll", or "I can't tell what that weapon is doing".
    300 – 480 ticks (a broadside worth timing during a pause).
 3. **Fire conditions** (P4, ships in ascending Runtime ID, slots in ascending
    `slot_id`): cooldown is 0, the target is within range and the mount's arc,
-   and the cost hook passes (Vigor grants the draw, or the fed mount is linked).
-   If the cost hook fails, the weapon does not fire, makes no draw, and retries
-   next tick. A link cut mid-burst cancels the rest of the burst.
+   and the cost hook passes (the fed mount is linked, or Vigor answers). Vigor
+   (#13, rule 5) answers **full** (normal shot), **ember** (the pool is empty:
+   an ember shot at Vigor's ember damage and refire, burning the ceiling) or
+   **refused** (only the per-second flow cap: no fire, no draw, retry next
+   tick). A membrane request carries the hit's contact point. A link cut mid-burst cancels the rest of the burst.
 4. **Phase stagger.** A weapon's first shot in a battle waits
    `(ship_id × 7 + slot_index) mod refire_ticks` ticks, so a fleet never fires
    every gun on the same tick. This costs no draw.
