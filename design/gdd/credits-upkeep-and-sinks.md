@@ -4,6 +4,7 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on unannounced suppression lapses, a gameable defeat cap, the real defeat cost outside the quote, and gross-vs-net counter affordability; all four revised, plus lay-up order and naming
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — defeat costs resources, bounded, never the run); Pillar 2 (a lie costs money to keep up)
 
 ## Summary
@@ -29,7 +30,9 @@ with its cause.
 Its design guarantees come from Pillar 1: **defeat costs time and resources,
 bounded, never the run.** A defeat's bill has a cap the player can see before
 they fight; an empty wallet mothballs ships but never ends the campaign; and a
-free core of two ships can always attempt a retry. The design review found no
+free core of two ships can always attempt a retry. Daily upkeep is the price of
+time passing, not a rest fee: port rest still costs "time only" (concept), and
+time costs upkeep. The design review found no
 money sink, so this system also provides them: upkeep that runs every day,
 including rest days; refits; and the upkeep of every lie.
 
@@ -43,7 +46,7 @@ long as they stand.
 
 *Anchor moment:* after a defeat, the Debrief shows the bill: 2,400 salvage lost,
 800 to recover a disabled frigate, six days of upkeep; 5,720 in all, under the
-6,300 cap shown before the battle. In the ledger below it, a quieter line: "60,
+10,800 cap shown before the battle. In the ledger below it, a quieter line: "60,
 suppression upkeep, day 40". The lie is still costing.
 
 **Pillars served:**
@@ -85,10 +88,11 @@ where".
    it; the charge is all or nothing per ship. It fires inside rests and skips;
    during a **defeat skip** it is held, and those days are billed in the defeat
    bill instead (rule 7).
-5. **The free core.** The flagship and the cheapest escort (`FREE_CORE_SHIPS` =
+5. **The free core.** The flagship and the cheapest escort (`FREE_CORE_ESCORTS` =
    1) cost no upkeep and are never mothballed.
 6. **Mothball at zero.** If the wallet cannot cover a day's charge, ships are
-   mothballed one at a time, highest upkeep first, until the rest is paid. A
+   mothballed one at a time, in the player's **lay-up order** (set in the
+   Ledger; default highest upkeep first), until the rest is paid. A
    mothballed ship stays in the roster, cannot deploy, and costs nothing. It is
    reactivated free at any non-hostile port; upkeep simply resumes. There is no
    debt and no interest. A warning shows when the wallet falls below 3 days of
@@ -99,7 +103,9 @@ where".
 7. **A defeat bills, at most, its cap.** `defeat_bill` = lost salvage + recovery
    of disabled ships + upkeep for the defeat's days (Formulas D2), scaled by
    `defeat_cost_permille`, with `DEFEAT_COST_FLOOR` = 1 credit whenever the base
-   is above 0. It is capped at `defeat_cap`; any excess is forgiven and logged
+   is above 0. It is capped at `defeat_cap`, computed from the **whole roster's
+   nominal upkeep** (core and mothballed ships included), so mothballing ships
+   before a risky fight never lowers it; any excess is forgiven and logged
    (`DEFEAT_FORGIVEN`). The wallet part is a forced charge clamped at the
    wallet; any shortfall is forgiven, never turned into debt. The cap is quoted
    before a battle (Dossier, pre-battle panel) and in the Debrief.
@@ -115,8 +121,13 @@ where".
    fragment, both atomic spends. Because both scale with `yield_permille`, a
    lie costs the same share of income on every preset (Gameplay Settings &
    Modifiers rule 9). **Suppression upkeep is charged before fleet upkeep** each
-   day; if it cannot be paid, the suppression lapses and Faction Belief & Blame
-   handles what follows. It never ends the run.
+   day. An unpaid day starts a **grace period**: a suppression lapses only after
+   `SUPPRESS_GRACE_DAYS` (3) unpaid days in a row, with its own warning and
+   signal (`suppression_at_risk`) from the first unpaid day. On lapse, Faction
+   Belief & Blame handles what follows; it never ends the run. Whenever a lie
+   is held, the pre-battle panel and Dossier show "suppression covered for N
+   days after a worst-case bill", so a quoted fight never silently collapses a
+   lie.
 
 **E. Log, save and API**
 
@@ -137,9 +148,12 @@ where".
 
 13. **Signed off, with three conditions.** Travel heals an organic ship only to
     its scar line; the rest needs port rest, which costs days of upkeep.
-    Numerically (D5), a Standard defeat costs about 10 days and 6,600 credits for
-    a 6-ship fleet, and even on Chronicler at least 2.5 days and about 1,050
-    credits plus Vigor erosion. The conditions: (a) `scar_line_permille` stays ≥
+    Numerically (D5), on one basis (bill plus the recovery rest), a Standard
+    defeat with the D5 fleet costs **10 days and 7,400 credits** (bill 5,720 +
+    4 rest days × 420), and on Chronicler **4.5 days and 3,790 credits** (bill
+    3,160 + 1.5 rest days × 420), plus Vigor erosion in both. The pre-battle
+    panel quotes both lines: "defeat bill ≤ cap" and "plus up to N rest days
+    (≈ X upkeep) to clear scars". The conditions: (a) `scar_line_permille` stays ≥
     200; (b) Ports, Rest & Care offers no instant scar clearing paid only in
     credits (care costs standing); (c) no rest fee is ever added.
 
@@ -177,7 +191,7 @@ where".
 `bill_base = D2(hold × LOST_SALVAGE_PM ÷ 1,000 + Σ hull_value × RECOVER_PM ÷ 1,000, dcp)`
 `eff = max(DEFEAT_COST_FLOOR, bill_base)` when `bill_base` > 0
 `bill = eff + days_defeat × U_day` (days already scaled by the World Clock skip)
-`defeat_cap = D2(DEFEAT_CAP_DAYS × U_day, dcp)`; `final = min(bill, defeat_cap)`
+`defeat_cap = D2(DEFEAT_CAP_DAYS × U_nominal, dcp)`, with `U_nominal` the whole roster's upkeep at nominal rates (core and mothballed ships included); `final = min(bill, defeat_cap)`
 
 | Variable | Default | Range |
 |---|---|---|
@@ -203,23 +217,29 @@ Fleet: heavy flagship and one light (free core), one light (60) and three line
 one bounty 4,000; loot 3,000.
 - **The defeat** (6 days): hold 4,800 → 2,400 lost; one disabled line ship (hull
   value 8,000) → 800 recovery; 6 × 420 = 2,520 upkeep. **Bill 5,720**, under the
-  **cap 15 × 420 = 6,300**.
+  **cap 15 × 720 = 10,800** (`U_nominal` 720: flagship 240 + two lights 120 +
+  three lines 360).
 - **Totals:** income 16,600 − 2,400 lost = 14,200; sinks 24 × 420 = 10,080 +
   3,320 = 13,400; **net +800**. Without the defeat: 16,600 − 12,600 = **+4,000**.
 - **On Admiral** (yield 850, dcp 1,500): salvage 2,040 per battle; lost 3,060;
-  recovery 1,200; 9 × 420 = 3,780; bill **8,040** under a cap of **9,450**; net
+  recovery 1,200; 9 × 420 = 3,780; bill **8,040** under a cap of **16,200**; net
   −2,750, recovered by about two winning expeditions.
 - **The healing gate** (rule 13): a line organic at 600 / 2,400 after the defeat
   travel-heals to 1,680 (scar line 300 leaves 720 hp); resting about 4 days
-  costs 1,680 more in upkeep. On Chronicler: the defeat skip is still ≥ 1 day,
-  rest `D2(259,200 s, 500)` = 1.5 days.
+  costs 1,680 more in upkeep: 7,400 and 10 days in all. On Chronicler (yield
+  1,250, dcp 500): hold 6,000 → 3,000 lost; base D2(3,800, 500) = 1,900; a
+  3-day defeat skip × 420 = 1,260; bill 3,160; rest `D2(259,200 s, 500)` = 1.5
+  days = 630: 3,790 and 4.5 days.
 
 ## Edge Cases
 
 - **If a contract payout and upkeep fall at the same instant**: the payout
   (priority 90) lands first.
 - **If the wallet cannot cover suppression upkeep**: suppression is charged
-  before fleet upkeep (rule 9); if still unpaid it lapses.
+  before fleet upkeep (rule 9); unpaid, it enters the 3-day grace period with a
+  warning, and lapses only if still unpaid after it.
+- **If the player mothballs ships before a risky battle**: the quoted cap is
+  unchanged (rule 7).
 - **If a defeat happens with an empty wallet**: the hold loss is capped, the
   wallet charge is forgiven, nothing goes negative.
 - **If only the flagship is left**: it is never mothballed.
@@ -250,7 +270,8 @@ Bidirectional check: Settings, Standing, Hulls and Vigor name this system.
 | `LOST_SALVAGE_PM` | 500 | 250 – 750 |
 | `RECOVER_PM` | 100 | 50 – 200 |
 | `DEFEAT_CAP_DAYS` | 15 | 15 – 30 |
-| `FREE_CORE_SHIPS` | 1 | 0 – 2 |
+| `FREE_CORE_ESCORTS` | 1 | 0 – 2 |
+| `SUPPRESS_GRACE_DAYS` | 3 | 1 – 7 |
 | `SUPPRESS_BUY_BASE` | 5,000 | 2,500 – 10,000 |
 | `SUPPRESS_UPKEEP_BASE` | 60 | 30 – 120 |
 | Warning threshold | 3 days | 1 – 7 |
@@ -269,7 +290,10 @@ None of its own; a soft cue on mothballing and on the upkeep warning.
 ## UI Requirements
 
 - Wallet and hold always visible on campaign screens; daily upkeep shown.
-- Pre-battle panel and Dossier: the defeat cap.
+- Pre-battle panel and Dossier: the defeat cap; "plus up to N rest days (≈ X
+  upkeep)"; and, when a lie is held, suppression coverage after a worst-case
+  bill.
+- Ledger: lay-up order (rule 6).
 - Debrief: the itemised bill, the cap and any forgiven excess.
 - Ledger: transaction log by cause.
 - 📌 **UX Flag — Credits, Upkeep & Sinks**: include wallet, upkeep, cap and log in
@@ -291,7 +315,8 @@ None of its own; a soft cue on mothballing and on the upkeep warning.
 - **AC-02 (Logic; D1)**: the D5 fleet gives `U_day` = 420.
 - **AC-03 (Logic; rule 6)**: with wallet 300 and a bill of 420, the highest-upkeep line ship is mothballed and 300 is charged.
 - **AC-04 (Logic; rule 5)**: the flagship and the core escort are never charged or mothballed.
-- **AC-05 (Logic; D2)**: the D5 defeat gives bill 5,720 and cap 6,300 on Standard; 8,040 and 9,450 on Admiral.
+- **AC-05 (Logic; D2)**: the D5 defeat gives bill 5,720 and cap 10,800 on Standard; 8,040 and 16,200 on Admiral.
+- **AC-05b (Logic; rule 7)**: mothballing ships before a battle does not change the quoted cap.
 - **AC-06 (Logic; rule 7)**: a bill above the cap is charged at the cap and the excess logged as `DEFEAT_FORGIVEN`.
 - **AC-07 (Logic; rule 7)**: a defeat with base 1 at dcp 250 costs at least 1 credit.
 - **AC-08 (Logic; rule 8)**: an opening loss bills 0 and leaves the hold unchanged.
@@ -300,7 +325,9 @@ None of its own; a soft cue on mothballing and on the upkeep warning.
 - **AC-11 (Logic; rule 12)**: a `spend` that cannot be covered changes nothing and returns REFUSED.
 - **AC-12 (Logic; rule 10)**: the log keeps 512 entries, and lifetime totals per cause equal the sum of all deltas.
 - **AC-13 (Logic; rule 11)**: a save round trip reproduces wallet, hold, log and mothball flags exactly.
-- **AC-14 (Logic; rule 13)**: on Chronicler a defeat costs at least 1 day plus a rest of at least 1 day, and leaves 30 % of a line ship's hull scarred until that rest.
+- **AC-14 (Logic; rule 13)**: the D5 defeat costs 7,400 and 10 days on Standard and 3,790 and 4.5 days on Chronicler (bill plus recovery rest), and leaves 30 % of a line ship's hull scarred until the rest.
+- **AC-16 (Logic; rule 9)**: one unpaid suppression day raises `suppression_at_risk` and does not lapse it; three unpaid days in a row lapse it; the pre-battle panel shows coverage after a worst-case bill.
+- **AC-17 (Integration; Open Question 2)**: after a capped Standard defeat, one Dossier counter can be bought within one following expedition.
 - **AC-15 (Integration; rule 5)**: from wallet 0, the free core wins a skirmish and reactivates a ship within one battle.
 
 ## Open Questions
@@ -308,5 +335,5 @@ None of its own; a soft cue on mothballing and on the upkeep warning.
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Late-game money pile-up**: once the refit catalogue runs out (estimated near hour 60), the wallet grows ~1,200/hour. Lasting sinks: fleet growth, suppression, colonies (post-MVP). | economy-designer | When Refit & Loadout and Loot & Crafting have price lists |
-| 2 | **Counter affordability**: every Dossier counter must have a version costing ≤ one expedition's Standard income (~16,000). | Machine Nodes & Strongholds, Refit & Loadout | When designed |
+| 2 | **Counter affordability**: every Dossier counter must have a version costing ≤ the **net** surplus of a defeated Standard expedition plus one following clean expedition (≈ 4,800 on the D5 fleet), or upkeep and yield are retuned until that holds. | Machine Nodes & Strongholds, Refit & Loadout, economy-designer | When designed |
 | 3 | **All figures** are starting values; no balance data yet. | economy-designer, `/balance-check` | When `assets/data/economy/` exists |
