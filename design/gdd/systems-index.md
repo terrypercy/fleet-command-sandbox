@@ -200,7 +200,7 @@ Later tiers:
 | 3 | Runtime ID Service (inferred) | Core | MVP | Designed | design/gdd/runtime-id-service.md | — |
 | 4 | Content Data & Mod Loading | Core | MVP | Designed | design/gdd/content-data-and-mod-loading.md | — |
 | 5 | Save/Load & Migration | Persistence | MVP | Designed | design/gdd/save-load-and-migration.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service, Content Data & Mod Loading |
-| 6 | Input & Controls (inferred) | Core | MVP | Not Started | — | — |
+| 6 | Input & Controls (inferred) | Core | MVP | Designed | design/gdd/input-and-controls.md | Simulation Tick & Pause |
 | 7 | Gameplay Settings & Modifiers (inferred) | Core | MVP | Not Started | — | Content Data & Mod Loading, Input & Controls |
 | 8 | World Clock | Core | MVP | Not Started | — | Simulation Tick & Pause |
 | 9 | Combat Event Bus & Battle Record | Core | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service |
@@ -477,10 +477,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 5 |
+| Design docs started | 6 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 5/43 (#1 In Review; #2, #3, #4 and #5 pending review) |
+| MVP systems designed | 6/43 (#1 In Review; #2–#6 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---

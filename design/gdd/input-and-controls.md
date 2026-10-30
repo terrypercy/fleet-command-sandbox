@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 3 (Hands on the Helm — the flagship is flown directly, the fleet is commanded, and pause is always one key away); Pillar 4 (Plan in the Open — every planning screen is reachable and usable from the keyboard)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on Esc double-booking (pause path), P4 framing, and the ship-relative facing contract; all three revised
+> **Implements Pillar**: Pillar 3 (Hands on the Helm — the flagship is flown directly, the fleet is commanded, and pause is always one key away); Pillar 4 (Plan in the Open — the controls are never wiki knowledge: every prompt and the controls reference show the live bindings)
 
 ## Summary
 
@@ -63,8 +64,12 @@ frozen they drag a box around the frigates and queue a flanking run.
 - **Pillar 3, *Hands on the Helm*:** the flagship is never abstracted (its
   command is live, not queued); the fleet is commanded, not puppeted (orders are
   gestures to ships, never direct piloting of them); pause is always available.
-- **Pillar 4, *Plan in the Open*:** every planning screen and order is reachable
-  from the keyboard and while paused, so planning is never a dexterity test.
+- **Pillar 4, *Plan in the Open*:** the controls are never wiki knowledge. Every
+  prompt, the context strip and the searchable controls reference show the live
+  bindings (rule 21, UI Requirements).
+- **Accessibility commitment** (not a pillar): every action, order and planning
+  screen is reachable from the keyboard and while paused, so planning is never a
+  dexterity test (rules 6–9, 17).
 
 **Feel target:** *the wheel answers.* Piloting must feel immediate.
 
@@ -120,7 +125,7 @@ target and "Yours to arrange" became Core Rules 6–9.*
    | Fleet | select all | press | Ctrl+A (secondary: Home) |
    | Fleet | cycle selection next / previous | press | Tab / Shift+Tab |
    | Fleet | open order menu | press | R |
-   | Fleet | cancel queued orders of selection / deselect | press | X / Esc |
+   | Fleet | cancel queued orders of selection / deselect | press | X / Shift+X (also: click empty space in Command) |
    | Command (held, or command cursor) | select / box-select | press / drag | LMB |
    | Command | add/remove from selection | press | Shift+LMB |
    | Command | issue order (context-sensitive) | press | RMB |
@@ -169,7 +174,10 @@ target and "Yours to arrange" became Core Rules 6–9.*
    Resume, Settings and Controls), and **Esc** always cancels a capture. Every
    other action, pause included, can be rebound (Simulation Tick & Pause, UI
    Requirements). Removing the last binding of *pause*, *system menu* or
-   *confirm* warns first.
+   *confirm* warns first. **In BATTLE, Esc in Combat-live or Command always
+   opens the system menu, which adds `PLAYER_PAUSE`** (Simulation Tick & Pause
+   rule 16); no gameplay action in those contexts is bound to Esc. So whatever
+   the player rebinds, Esc pauses a live battle.
 9. **No action requires a chord, a double-tap, rapid tapping or a held input.**
    - Every held action (fire, thrust, turn, camera drag, box-select, command
      cursor) has a per-action **hold or toggle** setting, plus a global default
@@ -237,7 +245,8 @@ target and "Yours to arrange" became Core Rules 6–9.*
     In the Command context: LMB selects a ship; LMB-drag (or click-click) box-
     selects; Shift+LMB adds or removes; RMB issues the context-sensitive order
     (empty space, enemy, ally — semantics in #19); Shift+RMB appends to the
-    queue; X cancels the selection's queued orders; Esc deselects. A queued
+    queue; X cancels the selection's queued orders; Shift+X, or a click on empty
+    space, deselects. A queued
     order's marker can be dragged or clicked to edit it until the tick that
     applies it (Simulation Tick & Pause rule 5). The keyboard path: Tab cycles
     selection, R opens the order menu, arrow keys move its cursor, Enter
@@ -257,7 +266,10 @@ target and "Yours to arrange" became Core Rules 6–9.*
     along the flagship's facing) or *screen-relative* (W moves up the screen,
     the flagship turns toward the aim). The flag travels in the command, and
     Flagship Piloting (#15) does the conversion inside the simulation from the
-    settled facing, so a replay never depends on the camera. *Screen-relative
+    settled facing, so a replay never depends on the camera. **Facing source:** in
+    ship-relative mode, Flagship Piloting (#15) decides whether the mouse aim,
+    Q/E, or both turn the flagship; Q/E are always the keyboard-only turn path.
+    In screen-relative mode the flagship turns toward the aim. *Screen-relative
     assumes the combat camera never rotates (Camera & Combat View #45).*
 17. **Keyboard-only aim.** Every flight action has a keyboard path. Aim, the one
     pointer action, has two: **target next/previous** locks an enemy, and **aim
@@ -395,8 +407,9 @@ cost ≤ `SAMPLER_BUDGET_MS` = 0.1 ms. Input adds no buffering beyond one frame.
 - **If the flagship is destroyed**: the command is ignored and latched presses
   are cleared (Simulation Tick & Pause rule 6). Fleet and Camera actions keep
   working, and a prompt shows the fleet can still be ordered.
-- **If the player unbinds every action**: Esc still opens the system menu, and
-  from there Settings → Controls → Reset (rule 8).
+- **If the player unbinds every action**: Esc still opens the system menu (and
+  pauses a live battle, even with ships selected), and from there Settings →
+  Controls → Reset (rule 8).
 - **If a rebind would leave pause, system menu or confirm unbound**: a warning
   asks first; Esc keeps menu access in any case.
 - **If the same key is bound in two contexts that are never active together**:
@@ -504,7 +517,7 @@ Owned by Menus, Settings & Save UI (#51); Input supplies the table and logic.
 |---|---|---|---|
 | Sampling, latching, recording, aim quantization | `design/gdd/simulation-tick-and-pause.md` | Rules 5, 6, 7, 9, 16; latency target; UI item 6 | Rule dependency |
 | Binding file vs saves | `design/gdd/save-load-and-migration.md` | Core Rules 1, 4 (saves are simulation state only) | Boundary |
-| Command bits meaning; frame conversion | Flagship Piloting (#15) — not yet designed | — | Contract to be accepted |
+| Command bits meaning; frame conversion; **facing source in each move frame** | Flagship Piloting (#15) — not yet designed | — | Contract to be accepted |
 | Order semantics and names | Fleet Orders (#19) — not yet designed | — | Contract to be accepted |
 | North-up camera, transform | Camera & Combat View (#45) — not yet designed | — | Contract to be accepted |
 
@@ -515,7 +528,7 @@ Owned by Menus, Settings & Save UI (#51); Input supplies the table and logic.
 - **AC-03 (Logic; rule 1, 6)**: a script over the full action list binds each action to an unused key, then to an unused mouse button (left, right, middle, side 1/2, wheel up/down), then to a modifier+key; each capture succeeds and the action fires from it.
 - **AC-04 (Logic; rule 4)**: bindings survive a restart; a missing file, a corrupt file and a file of `schema_version` N−1 each load (defaults, defaults, migrated) without a crash, and the player is told once.
 - **AC-05 (Logic; rule 7)**: binding an input already used in the same context offers Swap, Replace and Cancel, and each does exactly that; binding Flight fire and Menu confirm to the same input is accepted with no prompt.
-- **AC-06 (Logic; rule 8)**: after unbinding every rebindable action, Esc opens the system menu and Reset restores defaults; Esc cancels a capture; removing the last binding of pause, system menu or confirm shows a warning first.
+- **AC-06 (Logic; rule 8)**: in a live battle with ships selected and Space unbound, Esc opens the system menu and adds `PLAYER_PAUSE`. After unbinding every rebindable action, Esc opens the system menu and Reset restores defaults; Esc cancels a capture; removing the last binding of pause, system menu or confirm shows a warning first.
 - **AC-07 (Logic; rule 9)**: an audit over the action list finds no action whose only path is a chord, double-tap, hold timer or drag; with every hold/toggle set to toggle, no action needs a continuously held input; with sticky modifiers on, Shift+RMB queues via Shift-tap then RMB.
 - **AC-08 (Logic; rule 10)**: with a text field focused, pressing every bound key fires no game action; with a modal open, only its actions and Esc fire; pause fires in the Campaign, Combat-live, Command and Planning contexts.
 - **AC-09 (Logic; rule 11)**: with the simulation held, flight presses produce a neutral, unrecorded command; a press latched before the hold stays latched and cancellable; a key pressed and released during the hold has no effect after resume; a key still down at resume acts from the first resumed sample.
@@ -530,6 +543,7 @@ Owned by Menus, Settings & Save UI (#51); Input supplies the table and logic.
 - **AC-18 (Integration; rule 20)**: opening Controls in battle holds the simulation; closing it applies new bindings and clears latched presses; the next tick reads only the new bindings.
 - **AC-19 (Integration; rule 2)**: with the default scheme on QWERTY and AZERTY layouts, the movement keys are the same physical keys, and prompts show each layout's labels (manual test, both layouts).
 - **AC-20 (Integration; playtest; rules 9, 17)**: a full battle (fly, target, fire, select, order, queue, pause, step, change speed) is completed with the keyboard only, and again with the Left-hand-only preset, by a tester following only on-screen prompts.
+- **AC-20b (Playtest; rule 16, feel target)**: in a first-session playtest, a tester flies the default scheme for 5 minutes; none of their "wrong direction" comments concern the move frame.
 - **AC-21 (Performance; D5)**: `begin_frame()` sampling takes ≤ `SAMPLER_BUDGET_MS` (0.1 ms) at the 95th percentile over 10,000 frames on the minimum-spec machine; input-to-sample delay is ≤ 1 frame (measured with an injected timestamped event).
 - **AC-22 (UI; UI Requirements)**: the controls screen, conflict prompt, preset prompt, controls reference and held-battle context strip each have a retained screenshot in `production/qa/evidence/` when their #51 story closes, and each is operated with the keyboard alone.
 

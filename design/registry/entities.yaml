@@ -230,6 +230,7 @@ constants:
       - design/gdd/simulation-tick-and-pause.md
       - design/gdd/deterministic-rng-and-seed-streams.md
       - design/gdd/save-load-and-migration.md
+      - design/gdd/input-and-controls.md
     value: 60
     unit: Hz
     notes: "Target rate, gated by a headless spike (about 100 ships and 500 projectiles must fit the frame budget); fallback is 30 Hz. Versioned engineering constant: written into every save and replay header, and changing it breaks replays."
@@ -254,6 +255,7 @@ constants:
     referenced_by:
       - design/gdd/deterministic-rng-and-seed-streams.md
       - design/gdd/content-data-and-mod-loading.md
+      - design/gdd/input-and-controls.md
     value: 1000
     unit: permille
     notes: "The unit of every outcome-deciding probability (D4). Consumers (Weapons & Damage, Loot, Contracts) store odds as integer permille 0-1000."
