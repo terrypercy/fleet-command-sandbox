@@ -424,23 +424,24 @@ The save_max formula is defined as:
 |---|---|---|
 | Runtime ID identity table | 8,000,000 B (7.63 MiB) | Runtime ID Service D2 (provisional) |
 | RNG streams | 64,000 B (0.06 MiB) | Deterministic RNG & Seed Streams D7 |
-| Simulation + battle part (replay log) | 4 MiB | **placeholder** for Simulation Tick & Pause and Battle Record (#9) |
+| Simulation + battle part | 4 MiB | Battle Record (#9) rule 17: simulation state 1 MiB (placeholder), live event log 2 MiB, command log 1 MiB |
+| Battle archive (`base:battle_archive`) | 5 MiB | Battle Record (#9) rule 18 |
 | Materialised truth case | 1 MiB | **placeholder** for Truth Seeding (Content Data, Core Rule 18) |
 | All other systems, combined | 8 MiB | **placeholder** until each owning GDD declares its ceiling |
 | Header | 64 KiB | this GDD |
 | Carried sections (`OPAQUE_MAX`) | 2 MiB | this GDD |
 
-**Output Range:** the sum is 23,858,176 bytes (22.75 MiB). × 1.5 = 34.13 MiB,
-rounded up to **`SAVE_MAX` = 35 MiB**. This replaces Content Data D1's
-provisional 32 MiB. `SAVE_MAX` is **computed at startup from the registry**, not
+**Output Range:** the sum is 29,101,056 bytes (27.75 MiB). × 1.5 = 41.63 MiB,
+rounded up to **`SAVE_MAX` = 42 MiB** (35 MiB before the battle archive was
+added, 2026-10-30). This replaces Content Data D1's provisional 32 MiB. `SAVE_MAX` is **computed at startup from the registry**, not
 typed in: when a GDD declares or changes a ceiling, `SAVE_MAX` follows, and a
 test asserts the computed value equals the registered one. `SAVE_MAX` bounds
 the file size before any read **and** the decoded size: decoding stops and
 refuses the save the moment it would pass `SAVE_MAX` (a decompression-bomb
 guard, whatever compression the save schema ADR picks).
 
-**Example:** a mod registers a 1 MiB section. The sum becomes 23.75 MiB, × 1.5 =
-35.63, so `SAVE_MAX` rises to 36 MiB.
+**Example:** a mod registers a 1 MiB section. The sum becomes 28.75 MiB, × 1.5 =
+43.13, so `SAVE_MAX` rises to 44 MiB.
 
 ### D2. Section ceiling check
 
@@ -810,7 +811,7 @@ real process kill or a real device is tagged **Integration** and says so.
 
 **Formulas and knobs**
 
-- **AC-42 (Logic; D1)**: with the current ceilings (8,000,000 B; 64,000 B; 4 MiB; 1 MiB; 8 MiB), `HEADER_MAX` 64 KiB and `OPAQUE_MAX` 2 MiB, the startup computation gives Σ = 23,858,176 B and **`SAVE_MAX` = 35 MiB (36,700,160 B)**, equal to the registered value. One more 1 MiB section gives 36 MiB. A file of exactly `SAVE_MAX` passes the size probe; `SAVE_MAX` + 1 fails it.
+- **AC-42 (Logic; D1)**: with the current ceilings (8,000,000 B; 64,000 B; 4 MiB; 5 MiB archive; 1 MiB; 8 MiB), `HEADER_MAX` 64 KiB and `OPAQUE_MAX` 2 MiB, the startup computation gives Σ = 29,101,056 B and **`SAVE_MAX` = 42 MiB (44,040,192 B)**, equal to the registered value. One more 1 MiB section gives 44 MiB. A file of exactly `SAVE_MAX` passes the size probe; `SAVE_MAX` + 1 fails it.
 - **AC-43 (Logic; D2 read side)**: a section declaring exactly `ceiling_bytes` passes; `ceiling_bytes` + 1 is refused before its parse (parser spy: zero calls). 256 sections (registered plus carried) pass; 257 are refused.
 - **AC-44 (Logic; Tuning Knobs)**: every knob except `MIN_SAVE_FORMAT` is read from the data file; setting `AUTOSAVE_MIN_GAP_S` to 30 changes AC-26's deferral to 30 s with no code change; a knob outside its safe range stops startup with a named programmer error; no knob default appears as a literal in save code (static check).
 

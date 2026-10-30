@@ -186,9 +186,9 @@ formulas:
       - HEADER_MAX
       - ceiling_bytes_s
       - OPAQUE_MAX
-    output_range: [35, 64]
+    output_range: [42, 64]
     expression: "ceil_MiB(SAVE_HEADROOM x (HEADER_MAX + sum_s ceiling_bytes_s + OPAQUE_MAX))"
-    notes: "Save/Load D1. Computed at startup from the section registry; result in MiB. 35 MiB with the 2026-10-30 ceilings (sum 22.75 MiB). Upper bound of the range is a review threshold, not a cap."
+    notes: "Save/Load D1. Computed at startup from the section registry; result in MiB. 42 MiB with the 2026-10-30 ceilings (sum 27.75 MiB). Upper bound of the range is a review threshold, not a cap."
     added: 2026-10-30
 
   - name: modifier_compose
@@ -390,9 +390,10 @@ constants:
     referenced_by:
       - design/gdd/content-data-and-mod-loading.md
       - design/gdd/save-load-and-migration.md
-    value: 35  # was: 32 (provisional, Content Data D1) before 2026-10-30
+      - design/gdd/combat-event-bus-and-battle-record.md
+    value: 42  # was: 35 before the battle archive (2026-10-30); was: 32 (provisional, Content Data D1)
     unit: MiB
-    notes: "Largest save accepted, by file size and by decoded size; refused before parsing above it. Computed at startup by Save/Load D1 as ceil_MiB(1.5 x (HEADER_MAX + sum of section ceilings + OPAQUE_MAX)); 35 MiB with the ceilings of 2026-10-30. Moves when a section ceiling changes."
+    notes: "Largest save accepted, by file size and by decoded size; refused before parsing above it. Computed at startup by Save/Load D1 as ceil_MiB(1.5 x (HEADER_MAX + sum of section ceilings + OPAQUE_MAX)); 42 MiB with the ceilings of 2026-10-30 (incl. 5 MiB battle archive). Moves when a section ceiling changes."
     added: 2026-10-30
     revised: 2026-10-30
 
@@ -494,6 +495,42 @@ constants:
     value: 1209600
     unit: game_s
     notes: "PROVISIONAL. Hard ceiling on one defeat's day cost, as a single skip (World Clock rule 13). Defeat & Debrief must honour it."
+    added: 2026-10-30
+    revised: ""
+
+  - name: event_log_max_mib
+    status: active
+    source: design/gdd/combat-event-bus-and-battle-record.md
+    referenced_by:
+      - design/gdd/combat-event-bus-and-battle-record.md
+      - design/gdd/save-load-and-migration.md
+    value: 2
+    unit: MiB
+    notes: "Live battle event-log cap (Battle Record rule 17); with command log 1 MiB and sim state 1 MiB forms Save/Load's 4 MiB battle-part ceiling."
+    added: 2026-10-30
+    revised: ""
+
+  - name: archive_max_mib
+    status: active
+    source: design/gdd/combat-event-bus-and-battle-record.md
+    referenced_by:
+      - design/gdd/combat-event-bus-and-battle-record.md
+      - design/gdd/save-load-and-migration.md
+    value: 5
+    unit: MiB
+    notes: "Ceiling of base:battle_archive (Battle Record rule 18); feeds save_max (Save/Load D1)."
+    added: 2026-10-30
+    revised: ""
+
+  - name: event_schema_version
+    status: active
+    source: design/gdd/combat-event-bus-and-battle-record.md
+    referenced_by:
+      - design/gdd/combat-event-bus-and-battle-record.md
+      - design/gdd/save-load-and-migration.md
+    value: 1
+    unit: version
+    notes: "Battle Record event schema (rule 9). Raised when an owning GDD adds a field; written in every record header."
     added: 2026-10-30
     revised: ""
 

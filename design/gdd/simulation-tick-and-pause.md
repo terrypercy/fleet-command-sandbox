@@ -441,7 +441,7 @@ This is the order `holds()` returns (rule 10).
 | Input & Controls (#6) | The flagship command each frame; pause, resume, step and speed inputs | — | Input owns bindings; this system owns latching and when the command is read |
 | Gameplay Settings & Modifiers (#7) | Speed steps, the single-step option, auto-pause toggles and cooldowns, focus-loss option | — | Settings owns values; this system reads them **between ticks only** |
 | World Clock (#8) | — | P8 call; `is_held()` | **This system owns the hold-reason set**; World Clock owns day maths and reads `is_held()` |
-| Combat Event Bus & Battle Record (#9) | Events emitted during P1-P7 | P9 flush with `tick_index` | The bus owns the record; this system owns when the flush happens and the tick stamp |
+| Combat Event Bus & Battle Record (#9) | Events emitted during P1-P8 (amended 2026-10-30: P8 covers World Clock and the end-of-tick spawn/retire step) | P9 flush with `tick_index` | The bus owns the record; this system owns when the flush happens and the tick stamp |
 | Combat Space (#11), Weapons & Damage (#12), Vigor (#13), Coherence & Links (#14) | Phase handlers for P3-P6; trigger thresholds | Their phases are called in fixed order | Each owns its rules and thresholds; this system owns the phase order and the pause side of triggers |
 | Flagship Piloting (#15) | The P1 handler that applies the flagship command | The sampled, latched command once per tick (rule 6) | Piloting owns what the command does; this system owns sampling, latching, recording and the precedence over queued orders |
 | Fleet Orders (#19) | Player orders into the queue | Drained orders in P1; the replay log; `OrderRejected` | Fleet Orders owns what an order means; this system owns when it applies |
