@@ -101,6 +101,13 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
 5. **The table rule** (checked at content load): for every pair of candidates,
    at least 2 axes exist on which that pair shares a value and every other
    candidate differs; and at least 2 axes exist on which all candidates differ.
+   **Strength symmetry:** in every drawable candidate set, each candidate has
+   the same count of axes at each contradiction strength (how many false
+   candidates a true claim on that axis contradicts when that candidate is the
+   maker). The base table has it (lore bible §5: at C = 3, four axes of
+   strength 1 and four of strength 2 for every maker; at C = 4, six of strength
+   2 and two of strength 3). Without it, G2's rejection rate and the strength
+   mix of accepted cases would point to the maker.
    A base table that breaks it is a content error; a mod race that breaks it is
    left out of the pool with a warning.
 6. **A claim** is "the maker's ⟨axis⟩ is ⟨value⟩". It **contradicts** every
@@ -156,8 +163,10 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
     uniformly over every axis of the table**, whatever the maker: every axis
     yields a true claim that contradicts at least one false candidate, so axis
     frequency carries nothing about the maker (G6). If none passes, a **fixed fallback build** is
-    used: axes in `stable_id` order, the first claims that satisfy G1–G5, with no
-    draws; the table rule guarantees it exists. A fallback is logged, never shown.
+    used: one fixed template case, mapped onto the actual maker through the
+    table's symmetry (rule 5, strength symmetry), so its axes and strengths are
+    the same for every maker; no draws. A fallback is logged, never shown, and
+    its rate is asserted near zero (AC-04).
 11. **Seeding** happens once, at new game, in the campaign step, on three
     separate streams so a template change never changes the maker:
     `base:truth.candidates`, `base:truth.maker` and `base:truth.fragments`
@@ -220,11 +229,14 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
 
 ### D2. Fragment count
 
-`R_min = ceil(2 × (C − 1) ÷ (C − 2))` reliable fragments (4 at C = 3; 3 at C = 4);
+`R_min` = **3** reliable fragments at both C = 3 and C = 4: G2 forbids any two
+from solving the case, and three can (worked example).
 `R = R_min + R_SLACK`; `N = R + T + H`, capped at `FRAGMENT_CAP`.
-**MVP:** R = 4 + 1 = 5; N = 5 + 1 + 1 = **7**. A slack fragment goes to the false
-candidate with the fewest contradictions (ties to the lower `stable_id`) and may
-repeat an axis only from a new group.
+**MVP:** R = 3 + 1 = 4; N = 4 + 1 + 1 = **6** (the worked example). A slack
+fragment's axis is drawn **uniformly**, like every reliable fragment (rule 10),
+never aimed at the false candidate with the fewest contradictions (that would
+make its axis depend on the maker); it may repeat an axis only from a new group,
+and G3 retries handle coverage.
 
 ### D3. Solvability check
 
@@ -339,6 +351,7 @@ rule 14).
 - **AC-04 (Logic; rule 10)**: on the same run the fallback rate is ≤ 0.1 %, and every fallback case passes D3.
 - **AC-05 (Logic; G2)**: in every case no single reliable fragment rules a candidate out, every reliable fragment contradicts at least one false candidate and never the truth, and no two reliable fragments from different groups together rule out every false candidate.
 - **AC-05b (Logic; rule 10, G6)**: over 30,000 seeds at C = 3 and C = 4, the axis distribution of reliable fragments is the same for every maker (each axis within 1 ÷ 8 ± 1 %).
+- **AC-05c (Logic; rule 5 strength symmetry, G6)**: over 10,000 seeds per maker, the distribution of contradiction strengths among accepted reliable fragments, and the G2 rejection rate, match across makers within ± 1 %; a fixture mod race that breaks strength symmetry is excluded at load.
 - **AC-09b (Logic; rule 3)**: with four base races and one fixture mod race, every drawable candidate set passes the table rule; a mod race that fails for some drawable set is excluded with a warning.
 - **AC-06 (Logic; G3)**: every false candidate has `contra ≥ 2` from different groups; the truth has `contra` = 0.
 - **AC-07 (Logic; rule 7)**: over 30,000 seeds, the candidate a FORGERY's value points to is the maker in 1 ÷ C ± 1.5 % of cases, and testimony matches the truth in 700 ‰ ± 15 ‰, with its false values spread uniformly over the non-maker candidates (neither can be read backwards).
