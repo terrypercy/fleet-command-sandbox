@@ -225,7 +225,7 @@ Later tiers:
 | 26 | Sector Map & Travel | Gameplay | MVP | Designed | design/gdd/sector-map-and-travel.md | Deterministic RNG & Seed Streams, Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Designed | design/gdd/ports-rest-and-care.md | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
 | 28 | Archive Fragments & Evidence | Narrative | MVP | Designed | design/gdd/archive-fragments-and-evidence.md | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
-| 29 | Points of Interest (inferred) | Gameplay | MVP | Not Started | — | Sector Map & Travel, Archive Fragments & Evidence |
+| 29 | Points of Interest | Gameplay | MVP | In Design | design/gdd/points-of-interest.md | Sector Map & Travel, Archive Fragments & Evidence |
 | 30 | Faction Belief & Blame | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Faction Reputation & Standing, Credits, Upkeep & Sinks, Archive Fragments & Evidence, Runtime ID Service |
 | 31 | Case File & Deduction | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Archive Fragments & Evidence |
 | 32 | Exposure & Rival Investigation | Narrative | MVP | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Archive Fragments & Evidence, Faction Belief & Blame, Runtime ID Service |
