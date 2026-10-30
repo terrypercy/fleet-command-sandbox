@@ -640,6 +640,18 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: battle_limit_s
+    status: active
+    source: design/gdd/battle-resolution-and-retreat.md
+    referenced_by:
+      - design/gdd/battle-resolution-and-retreat.md
+      - design/gdd/world-clock.md
+    value: 1800
+    unit: simulated seconds (unpaused)
+    notes: "Battle Resolution rule 5: STANDOFF when (tick - battle_start_tick) div TICK_RATE reaches it; warning 120 s before. Distinct from World Clock's BATTLE_MAX_S (43,200 game s, about 6 unpaused minutes), which caps a battle's time cost and never ends a battle."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:

@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (salvage loss scaled by share left behind, STANDOFF costed as retreat, fantasy banner fix, Pyrrhic banner, Vigor-floor retreat, lent-ship OQ)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — a defeat ends with a bounded cost and a named cause, never the run); Pillar 3 (Hands on the Helm — retreat is the player's call and always available); Pillar 4 (Plan in the Open — end conditions are stated before battle)
 
 ## Summary
@@ -41,8 +41,9 @@ panel already quoted. The Debrief opens on the frame the last ship leaves, and
 it names the cause.
 
 *Anchor moment:* the authored opening stronghold. The player's fleet is
-outmatched. They retreat, or are disabled to the last ship. The banner reads
-"Withdrawn", not "Game Over". The Debrief opens, and nothing is lost: no days,
+outmatched. They retreat, and the banner reads "Withdrawn", or they are
+disabled to the last ship, and it reads "Fleet disabled". Neither says "Game
+Over". The Debrief opens, and nothing is lost: no days,
 no salvage, no Vigor ceiling (`opening_loss`).
 
 **Pillars served:**
@@ -83,7 +84,8 @@ or "I was punished for pausing".
    and its Combat Space state is Active or Retreating, and it is not disabled.
    Disabled, destroyed, departed and `INERT` ships are absent. `P` and `E`
    count present player-side and enemy-side ships (Formulas D1). Lent ships
-   count on the player side; at MVP there are none.
+   (Allied Lending #33) count on the player side; what a lent ship left behind
+   costs is Open Question 7.
 3. **The end check** runs once per tick in P7, after destruction and retreat
    processing and before auto-pause trigger evaluation (Simulation Tick & Pause
    rule 3; its Auto-pause edge case). The battle ends on this tick when
@@ -106,8 +108,11 @@ or "I was punished for pausing".
    6 unpaused minutes) and never ends a battle. At STANDOFF, player ships still present count as retreated in good
    order; enemy ships still present stay where their fleet is. The limit exists
    so that a stronghold that never withdraws and a player who never closes
-   cannot run a battle forever. It gives the player nothing that a Retreat
-   order would not.
+   cannot run a battle forever. STANDOFF is costed as a PLAYER_RETREATED, with
+   `retreated_pm` from D4, and the Debrief names the stalemate's cause (the
+   enemy's `withdraw_sr` 0 and the damage-share gap). Whether kiting to the
+   limit costs less than an ordered retreat is tested by the AI-vs-AI Runner
+   (Open Question 5); if it does, STANDOFF is cut.
 6. **Flagship loss does not end the battle.** When the flagship is disabled
    or departs, the fleet fights on under Fleet Orders. The player keeps pause,
    step, the order menu and Retreat. Flagship Piloting enters No flagship. The
@@ -140,7 +145,9 @@ or "I was punished for pausing".
 9. **No pursuit at MVP.** A departed ship is safe. There is no pursuit roll
    and no post-battle chase. The risk of retreating is the `RETREAT_HOLD`
    ticks spent in the zone: a Retreating ship is still on the grid, so it can
-   still be shot and disabled.
+   still be shot and disabled. A ship at its Vigor floor can always reach its
+   retreat zone and complete `RETREAT_HOLD` (Vigor's no-lockout rule: at FLOOR
+   a ship still moves at 850 ‰).
 10. **Enemy withdrawal.** A roaming machine fleet in WITHDRAW (Fleet
     Coordination rule 5, `withdraw_sr` 250) carries retreat intent through its
     Goal slots. Its linked ships depart by rule 8 like any ship. Cut ships, and
@@ -198,9 +205,11 @@ or "I was punished for pausing".
     disabling or departure made `P` 0. Each consumer looks up hull values and
     prices in its own data.
 18. **It never charges.** This system calls no spend, charge, erosion or skip.
-    Credits' `apply_defeat(report)` runs only for the loss class, and lost
-    salvage applies on DEFEAT only (Credits rule 7), so a timely retreat is
-    always cheaper than fighting to the last ship. The defeat
+    Credits' `apply_defeat(report)` runs only for the loss class. Lost salvage
+    scales with the share of the fleet left behind (Credits rule 7 and D2,
+    using `retreated_pm` from D4): a full retreat loses none and a DEFEAT loses
+    all, so bringing more of the fleet home always costs less, and retreating
+    one cheap ship early saves almost nothing. The defeat
     cap, the days and the Vigor erosion are each their owner's, so the one-defeat
     bound is enforced where it is defined (Credits rule 7, World Clock's
     `DEFEAT_MAX_S`).
@@ -344,7 +353,9 @@ The enemy is a stronghold (`withdraw_sr` 0).
   `last_player_loss` = 102.
 - Report: `retreated_DP` = 60 + 20 = **80**; `retreated_pm` = 80,000 div 166 =
   **481**; `left_behind_DP` = 43 + 43 = **86**; `player_disabled_left` = [102,
-  103]; `flagship_end` = RETREATED. Credits bills the recovery of 102 and 103,
+  103]; `flagship_end` = RETREATED. With a hold of 4,800 and `LOST_SALVAGE_PM`
+  500, Credits' lost salvage is 4,800 × 500 × (1,000 − 481) div 1,000,000 =
+  **1,245** (a DEFEAT would lose 2,400). Credits bills that and the recovery of 102 and 103,
   within its cap. This system charged nothing.
 
 If this had been the authored opening, `opening_loss` would be true and every
@@ -451,7 +462,11 @@ Coordination), the defeat cap (Credits). All in `assets/data/battle/`.
 ## UI Requirements
 
 - Pre-battle panel: "The battle ends when either side has no ship on the field,
-  or at the time limit"; the retreat zone; the defeat-cap lines from Credits.
+  or at the time limit"; the retreat zone; the defeat-cap lines from Credits;
+  "STANDOFF counts as a retreat; salvage lost scales with the share of the
+  fleet left behind".
+- End banner on `end_cause = MUTUAL`: "Pyrrhic victory", and the Debrief
+  explains the same-tick rule.
 - HUD: present counts per side (D1); disabled ships marked on the field; the
   standoff countdown after the warning.
 - Paused, after the flagship is gone: the order menu's Retreat stays reachable
@@ -498,6 +513,9 @@ Coordination), the defeat cap (Credits). All in `assets/data/battle/`.
 - **AC-17 (Logic; worked example)**: the fixture gives PLAYER_RETREATED, `retreated_pm` 481, `left_behind_DP` 86 and `last_player_loss` 102.
 - **AC-18 (Logic; D3)**: destroying enemies of DP 43, 20 and 57 gives `destroyed_DP` 120.
 - **AC-19 (Logic; rule 5)**: `StandoffWarning` is emitted once at `sim_s` 1,680, and STANDOFF at 1,800 lists the present player ships as retreated; a battle paused for an hour of wall time at `sim_s` 100 is still running at `sim_s` 1,000.
+- **AC-22 (Logic; rule 18, Credits D2)**: with hold 4,800 and `LOST_SALVAGE_PM` 500, a 1-of-4 retreat (DP 20 of 166, `retreated_pm` 120) loses 2,112, a full DEFEAT loses 2,400 and a full retreat loses 0.
+- **AC-23 (Logic; rule 9)**: a ship at its Vigor floor with retreat intent reaches its zone and completes `RETREAT_HOLD` in a no-enemy fixture.
+- **AC-24 (Logic; UI)**: a MUTUAL end shows the "Pyrrhic victory" banner.
 - **AC-20 (Playtest)**: 4 of 5 testers, after the opening loss, say they lost nothing lasting and can name why they lost.
 - **AC-21 (Playtest)**: 4 of 5 testers who retreat at least once say they chose the moment themselves.
 
@@ -509,10 +527,11 @@ proceed (the owner may revisit any of them at review):
   (rule 7). DESTROYED applies to player ships only in the optional permadeath
   mode.
 - **Mutual same-tick end**: goes to the player (rule 4, `MUTUAL_TO_PLAYER`).
-- **STANDOFF**: kept as a fifth, loss-class outcome, costed like a retreat
-  (rule 5).
-- **Retreat costs less than defeat**: lost salvage applies on DEFEAT only
-  (rule 18; Credits rule 7 amended).
+- **STANDOFF**: kept as a fifth, loss-class outcome, costed as a
+  PLAYER_RETREATED (rule 5), pending Open Question 5.
+- **Retreat costs less than defeat**: lost salvage scales with the share left
+  behind (rule 18; Credits D2 amended). The CD review rejected "DEFEAT only",
+  because one cheap early retreat would erase the cost.
 - **Gameplay Settings † keys**: this system reads no Tier C key.
   `stronghold_strength_permille` belongs to Machine Nodes & Strongholds (#23),
   and `defeat_cost_permille` to Credits and the Debrief.
@@ -526,5 +545,6 @@ proceed (the owner may revisit any of them at review):
 | 2 | **RNG battle-end order**: confirm that the RNG battle-end step (stream discard, deferred campaign draws) fits rule 16's ascending delivery. | RNG owner | #2 re-review |
 | 3 | **Recovered hull value** of a disabled ship after a win or a paid recovery. | Hulls owner | #10 re-review |
 | 4 | **Where a withdrawn machine fleet goes**, and whether its node counts as broken. | Machine Nodes & Strongholds (#23) | When #23 is designed |
-| 5 | **`BATTLE_LIMIT_S`** of 30 unpaused minutes is a starting point; tune it with the AI-vs-AI Runner's battle-length data. | systems-designer | Runner tuning |
+| 5 | **`BATTLE_LIMIT_S`** of 30 unpaused minutes is a starting point; tune it with the AI-vs-AI Runner's battle-length data. The Runner also tests whether kiting to STANDOFF costs less than an ordered retreat; if it does, STANDOFF is cut. | systems-designer | Runner tuning |
 | 6 | **How a defeat's day cost is computed** from the report, under `DEFEAT_MAX_S` (World Clock Open Question 6). | Defeat & Debrief (#24) | When #24 is designed |
+| 7 | **Left-behind lent ships**: the standing cost with the lending faction, previewed before battle. | Faction Reputation & Standing, Allied Lending (#33) | When #33 is designed |
