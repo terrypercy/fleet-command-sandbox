@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 3 (Hands on the Helm — the fleet is commanded, not puppeted); Pillar 4 (Plan in the Open — orders are visible, editable and queued in the open)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on missing Pillar 1 and Debrief reads, invisible leashes, flagship Retreat, Shift+RMB overload near the retreat zone, and the opening-skirmish AC; all revised
+> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — orders are recorded so the Debrief can name them); Pillar 4 (Plan in the Open — orders are visible, editable and queued in the open); Pillar 3 (Hands on the Helm — the fleet is commanded, not puppeted)
 
 ## Summary
 
@@ -50,6 +51,9 @@ and every gun in the fleet turns on the relay.
 - **Pillar 3:** the fleet is commanded through goals; the AI never overrides
   what was ordered (rule 6).
 - **Pillar 4:** every order is visible and editable before it applies.
+- **Pillar 1, *Every Defeat Is a Lead*:** orders are recorded (`OrderApplied`,
+  `OrderEnded`), so the After-Action Debrief can name an order as the cause of a
+  loss and suggest a counter.
 
 **This system must never make the player feel:** "my ships did their own
 thing" or "I had to micromanage every shot".
@@ -79,12 +83,17 @@ thing" or "I had to micromanage every shot".
 2. **The flagship** takes only Focus Fire, Attack (which sets only its AUTO
    group's focus) and Retreat (Flagship Piloting rule 12). Move, Hold, Escort
    and Regroup addressed to it are rejected `flagship_not_covered`; in a mixed
-   selection, the rest of the selection still receives the order.
+   selection, the rest of the selection still receives the order. **For the
+   flagship, Retreat sets retreat intent only**: the player pilots it out
+   through the retreat zone, and no order ever changes the flagship's movement,
+   aim or player-group fire (Flagship Piloting AC-10).
 3. **Live hotkeys F1 – F5** (Input & Controls rule 3): F1 Attack (the locked
    target, else the enemy nearest the cursor); F2 Move (to the cursor); F3 Hold;
    F4 Regroup; F5 Focus Fire (the locked target). **Retreat is never on a single
    key**: it is reached through the order menu (R), or Shift+RMB on the player's
-   own retreat zone.
+   own retreat zone, which **appends Retreat as the final goal** of the queue
+   (standing, so nothing can follow it), with its own marker; the command
+   cursor changes shape over the zone before the click.
 4. **Right-click in the Command context**: empty space → Move; enemy → Attack;
    ally → Escort; own flagship → Regroup; the subject itself → Hold here.
    Alt+RMB on an enemy → Focus Fire (single-input alternative: the order menu,
@@ -157,7 +166,8 @@ thing" or "I had to micromanage every shot".
 | Ship AI (#20), Fleet Coordination (#21) | #19 → them | Goal and Focus slots read in P2; the may / may-not list (rule 6) |
 | Combat Event Bus & Battle Record (#9) | #19 → #9 | `OrderApplied`, `OrderRejected`, `OrderEnded` |
 | Combat HUD (#46) | #19 → #46 | Order lines, slot ghosts, end-of-order flashes |
-| Opening skirmish | — | Teaches Focus Fire (concept: "one fleet order") |
+| Opening skirmish | — | Teaches Focus Fire, used on a relay (concept: "one fleet order" and "cutting a relay") |
+| After-Action Debrief | #9 → Debrief | Reads order history to name an order as a cause |
 
 ## Formulas
 
@@ -185,6 +195,11 @@ k is odd else −1; local offset `(−rank × ROW_SP, side × rank × COL_SP)`.
 
 The ship engages only within `HOLD_LEASH` (400 u) of its anchor and returns when
 beyond it.
+
+### D5. Escort leash
+
+An escort engages only within `ESCORT_LEASH` (600 u) of its ward and returns to
+its D2 slot when beyond it.
 
 ## Edge Cases
 
@@ -244,7 +259,8 @@ All in `assets/data/orders/`.
 ## UI Requirements
 
 - Command context: order lines, queue numbers, escort and regroup slot ghosts,
-  focus marker.
+  focus marker; a selected Hold or Escort ship shows its **leash ring** (D4, D5)
+  in the Command context and while paused.
 - Order menu (R): every order, keyboard-navigable.
 - Rejection messages name the reason.
 - 📌 **UX Flag — Fleet Orders**: include order visuals and the order menu in the
@@ -268,7 +284,7 @@ All in `assets/data/orders/`.
 - **AC-03 (Logic; D1)**: Move ends `done` exactly when D1 is met (radius 30, 60 u), and the ship then anchors as Hold.
 - **AC-04 (Logic; D2, D3)**: three escorts take the D2 slots; Regroup slots match D3 for k = 1 … 5 regardless of insertion order.
 - **AC-05 (Logic; rule 10)**: Attack on a destroyed target ends `target_destroyed`, and the next waypoint is active the same tick.
-- **AC-06 (Logic; rule 2)**: Move to the flagship is rejected `flagship_not_covered`; Attack and Focus to the flagship set its AUTO focus; in a mixed selection the other ships receive the order.
+- **AC-06 (Logic; rule 2)**: Move to the flagship is rejected `flagship_not_covered`; Attack and Focus to the flagship set its AUTO focus; Retreat to the flagship sets only retreat intent and never changes its movement, aim or player-group fire; in a mixed selection the other ships receive the order.
 - **AC-07 (Logic; rules 6–7)**: a ship at EMPTY Vigor under Attack never changes its goal and never retreats without a Retreat order.
 - **AC-08 (Logic; rule 10)**: a cut enemy goal is SUSPENDED and resumes on relink if still valid; with its band BROKEN, no machine goal executes.
 - **AC-09 (Logic; rule 10)**: at context end, pending commands are logged `cancelled_by_context_end` and every slot is empty.
@@ -276,7 +292,9 @@ All in `assets/data/orders/`.
 - **AC-11 (Logic; rule 3)**: F1 – F5 issue Attack, Move, Hold, Regroup and Focus Fire in Combat-live without the command cursor; no single key issues Retreat.
 - **AC-12 (Logic; Input rule 9)**: with the keyboard only (Tab, R, arrows, Enter), every order can be issued.
 - **AC-13 (Logic; rule 12)**: every ended order emits exactly one `OrderEnded` with the right outcome.
-- **AC-14 (Playtest)**: in the opening skirmish, at least 4 of 5 first-time testers use Focus Fire a second time unprompted and in the right context, and can say afterwards what it made the fleet do.
+- **AC-14 (Playtest)**: in the opening skirmish, at least 4 of 5 first-time testers use Focus Fire on a relay ship a second time unprompted, and can say afterwards that it cut the enemy's Coherence.
+- **AC-15 (Logic; rule 3)**: Shift+RMB on the own retreat zone appends Retreat as the final goal with its marker; Shift+RMB near but outside the zone appends a Move.
+- **AC-16 (Integration; Pillar 1)**: after a scripted loss, the Debrief can name the order active on each lost ship.
 
 ## Open Questions
 
@@ -285,3 +303,4 @@ All in `assets/data/orders/`.
 | 1 | **Ship AI and Fleet Coordination must accept** the may / may-not list (rule 6). | #20, #21 | When designed |
 | 2 | **Formations beyond Regroup's chevron** (line abreast, wedge) — post-MVP. | game-designer | Post-MVP |
 | 3 | **Auto-retreat thresholds for player ships** — not at MVP (rule 7). | game-designer | Playtest |
+| 4 | **Player-owned machine ships** (post-MVP): do cut and BROKEN suspend player goals? Resolve inside the asymmetry. | game-designer | Before machine-ship content |
