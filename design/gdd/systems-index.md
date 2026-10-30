@@ -224,7 +224,7 @@ Later tiers:
 | 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Designed | design/gdd/ai-vs-ai-runner-and-ai-debug-tools.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds, Runtime ID Service |
 | 26 | Sector Map & Travel | Gameplay | MVP | Designed | design/gdd/sector-map-and-travel.md | Deterministic RNG & Seed Streams, Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Designed | design/gdd/ports-rest-and-care.md | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
-| 28 | Archive Fragments & Evidence | Narrative | MVP | Not Started | — | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
+| 28 | Archive Fragments & Evidence | Narrative | MVP | In Design | design/gdd/archive-fragments-and-evidence.md | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
 | 29 | Points of Interest (inferred) | Gameplay | MVP | Not Started | — | Sector Map & Travel, Archive Fragments & Evidence |
 | 30 | Faction Belief & Blame | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Faction Reputation & Standing, Credits, Upkeep & Sinks, Archive Fragments & Evidence, Runtime ID Service |
 | 31 | Case File & Deduction | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Archive Fragments & Evidence |
