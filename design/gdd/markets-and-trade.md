@@ -294,7 +294,7 @@ par) still holds for a player who sells at a free port.
   all", an amount field (1 – hold).
 - At a sub-par rate: the cut in credits, the nearest full-rate port, its travel
   time, and D2's break-even as an observation ("A free port pays 480 more.
-  Break-even: 1.1 days of upkeep. Travel also advances the world clock.").
+  Break-even: 1 d 3 h of upkeep. Travel also advances the world clock.").
 - Refused states name their reason ("Hold empty", "Too little to sell here").
 
 ## Cross-References

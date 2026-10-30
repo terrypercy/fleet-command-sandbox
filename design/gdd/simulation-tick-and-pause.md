@@ -258,7 +258,9 @@ carried into Game Feel and Acceptance Criteria instead.*
         service screen — market, refit, care, contract board — the sector
         map's route planner, and an open encounter offer,
         `PLANNING:encounter_offer`; `PLANNING:dossier` (Dossier #47); `PLANNING:public_history` (Public History Screen #49, Vertical Slice; at Tier 0 its tab sits inside `PLANNING:case_file`); `PLANNING:prebattle` (the pre-battle panel, added before tick 0 of every battle, Combat HUD #46); the port screens are `PLANNING:port_hub`,
-        `port_rest`, `port_care` and `port_fleet` (Ports, Rest & Care); World Clock rule 3, Sector Map & Travel)
+        `port_rest`, `port_care`, `port_fleet`, `port_refit`, `port_market`
+        and `port_roster` (Ports, Rest & Care; Port & Fleet Management
+        Screens #50); World Clock rule 3, Sector Map & Travel)
       - `SYSTEM:<cause>` (menu, loading, save in progress, window focus lost)
     - **In `BATTLE`, opening any planning screen also adds `PLAYER_PAUSE`**, as
       opening the menu or losing focus does (rule 16). Closing the screen

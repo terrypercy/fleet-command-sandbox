@@ -42,8 +42,8 @@ next. Nothing on the board lies, and nothing is missing that the fight depends o
 ENGAGE", a strength ratio of 5:4 on a chart-ink line, with two tick marks
 labelled "falls back at 1:1" and "breaks at 3:5".
 A dashed link line carries "2 hits to snap". The player sets Focus on the
-relay's link partner, resumes, and watches the bar slide past the first notch as
-the tell pulse fires. The ratio drops past the first tick.
+relay's link partner, resumes, and watches the ratio fall past the first tick as
+the tell pulse fires.
 
 **Pillars served:**
 - **Pillar 4 (Plan in the Open):** every rule the fight depends on has a readout,
@@ -204,7 +204,9 @@ can't tell those two states apart without colour".
        standing with ⟨f⟩", and the band reached if all are lost (Allied Lending
        rule 19);
     6. each enemy fleet: its doctrine name and the Dossier sentences already
-       revealed for it, and nothing more (rule 5).
+       revealed for it, and nothing more (rule 5);
+    7. on a return attempt: the cause and counter the last Debrief named for
+       this encounter.
 17. **Leaving the panel.** "Begin" (Enter) closes it. If Battle-start auto-pause
     is on, the battle then sits held at tick 0; if off, it runs. The panel can be
     reopened while held with a bound key (default `Tab`-free: `B`, an Input
@@ -220,8 +222,11 @@ can't tell those two states apart without colour".
       marker in LOW (Vigor rule 13);
     - on the hull: core brightness `C_k ÷ C_k0` and pulse rate (pool
       emptiness), drawn by art (Vigor Interactions);
-    - while ember fire is active, the bar's ceiling end visibly burns back;
-      a flow-cap refusal flashes a short cue on the weapon (Vigor UI).
+    - while ember fire is active, the burn-back is drawn on the ship's core
+      (scarring, dimming), never as a second segment or colour band on the bar.
+      The bar has one fill layer only. This keeps Vigor from reading as a flux
+      bar (Pillar 5);
+    - a flow-cap refusal flashes a short cue on the weapon (Vigor UI).
     Vigor's bar is shown live for the flagship and selected ships; for other
     organic ships only a band glyph appears in LOW, EMPTY or FLOOR.
 19. **Coherence is between ships, discrete and mechanical.** Per machine fleet:
@@ -249,6 +254,7 @@ can't tell those two states apart without colour".
     rejected with its reason) stack in one column, at most `NOTICE_MAX` (3). A
     notice holds `NOTICE_HOLD_MS` (4,000) of real time and never takes keyboard
     focus. A fourth replaces the oldest; the battle log keeps all of them.
+    Notices do not age while the simulation is held.
 24. **One banner.** At most one banner at a time. The auto-pause banner lists
     every trigger that fired on that tick, each entry linked to its toggle
     (Simulation Tick UI 5). The end banner replaces any other banner.
@@ -430,8 +436,8 @@ Viewport 1,920 × 1,080, `H` = 1,080, `c` = (0, 0), `M` = 48.
   the banner keeps its place.
 - **If a tell is cancelled by BROKEN** (Fleet Coordination Edge Cases): the
   pulse and countdown stop at once and the BROKEN notice shows.
-- **If `consolidate_sr` and `withdraw_sr` notches coincide**: both labels show,
-  stacked; a stronghold shows one notch and "never withdraws".
+- **If `consolidate_sr` and `withdraw_sr` ticks coincide**: both notch words
+  show, stacked; a stronghold shows one tick and "never withdraws".
 - **If the strength ratio exceeds the bar**: the bar clamps at 2,000 ‰ and the
   ratio text still states the true value.
 - **If `ui_scale` makes the flagship panel wider than a third of the screen**:
@@ -498,7 +504,7 @@ Dossier and the Event Bus.
 | `ICON_PX` | 24 | 16 – 40 | Feel | Icon size at max zoom |
 | `TEXT_BASE_PX` | 16 | 14 – 20 | Feel | D5 base |
 | `TEXT_MIN_PX` | 12 | 10 – 14 | Gate | D5 floor |
-| `SR_BAR_MAX_PM` | 2,000 | 1,500 – 4,000 | Feel | SR bar clamp |
+| `SR_BAR_MAX_PM` | 2,000 | 1,500 – 4,000 | Feel | SR line clamp (right end of the tick line) |
 
 All in `assets/data/ui/hud/`. Palettes in `assets/data/ui/palettes/`. Values
 owned elsewhere (`TELL_TICKS`, `END_BEAT_MS`, `STANDOFF_WARN_S`, `ui_scale`) are
@@ -581,9 +587,9 @@ read, never copied.
 - **AC-10 (Logic; rule 7)**: a release build contains no reason-code string in any HUD-visible text.
 - **AC-11 (Logic; rules 21–25)**: a 40-ship fixture never exceeds `RING_MAX`, `LABEL_MAX_*`, `NOTICE_MAX`, `OFFSCREEN_MAX` or one banner.
 - **AC-12 (UI; rule 11)**: live tier at 1×: flagship panel, battle bar, lock markers, band words, off-screen marker; retained screenshot.
-- **AC-13 (UI; rule 12)**: held tier: phase names, SR bar with both notches, order lines, a leash ring, link ETAs; retained screenshot.
+- **AC-13 (UI; rule 12)**: held tier: phase names, SR as a ratio with both tick marks and notch words and no fill, order lines, a leash ring, link ETAs; retained screenshot.
 - **AC-14 (UI; rule 13)**: ship inspector and target preview labelled "if nothing changes"; retained screenshot.
-- **AC-15 (UI; rules 15–16)**: the pre-battle panel before tick 0 shows all six line groups, including the lent-loss line with `k_present` 2 and the defeat cap; the tick counter reads 0; retained screenshot.
+- **AC-15 (UI; rules 15–16)**: the pre-battle panel before tick 0 shows all six line groups (seven on a return attempt, with the last Debrief's cause and counter), including the lent-loss line with `k_present` 2 and the defeat cap; the tick counter reads 0; retained screenshot.
 - **AC-16 (UI; rule 26)**: each of the six end banners, in words; retained screenshots.
 - **AC-17 (UI; rule 24)**: an auto-pause banner with two triggers from one tick, each linked to its toggle; retained screenshot.
 - **AC-18 (UI; rules 18–20)**: one screen showing an organic ship's Vigor bar in LOW with "dry in N s" beside a machine fleet with a DASHED and a SNAPPED link and the band word; no Coherence bar exists; retained screenshot.
@@ -594,7 +600,7 @@ read, never copied.
 - **AC-23 (Playtest; Pillar 5)**: at least 4 of 5 Starsector-literate testers, shown the HUD only, say Vigor and Coherence are different kinds of resource and do not call the Vigor bar "flux" (shared with Vigor AC-16).
 - **AC-24 (Playtest; rules 11–12)**: 4 of 5 testers, after one paused look, can say which enemy fleet is nearest to falling back and why.
 - **AC-25 (Playtest; rule 15)**: 4 of 5 testers can state the defeat cost of a battle they are about to fight; none says a bill surprised them.
-- **AC-26 (Playtest; rule 11)**: no tester reports losing track of the flagship, and 4 of 5 call the live tier "readable at 2×".
+- **AC-26 (Playtest; rule 11)**: no tester reports losing track of the flagship, and 4 of 5 call the live tier "readable at 2×", and 4 of 5 can name the flagship's Vigor band within 2 s at 2×.
 
 ## Open Questions
 
@@ -612,10 +618,11 @@ amendments made in the same change:
 - **Fleet Coordination publishes `sr_pm` per fleet and each tell's declared
   and effective ticks** for the HUD (Fleet Coordination rule 12 amended).
 - **Camera frame sets use `hud_visible`** (Camera rule 12 amended).
+- **No fog in combat at any tier** (was Q5). Fog would break "combat
+  information is always clear" (Game Concept, Pillars).
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 5 | Is "no fog of war" the right MVP choice, or does the fantasy want sensor range later? | creative-director | Vertical Slice |
 | 7 | Default key to reopen the pre-battle panel (`B` proposed). | game-designer (Input) | UX spec |
 | 8 | Hold-indicator, notice and banner wording. | narrative-director | UX spec |
 | 9 | Icon threshold and chart-margin look (Camera OQ 7); `ICON_ZOOM_PM` 600 is a placeholder. | art-director, ux-designer | UX spec |
