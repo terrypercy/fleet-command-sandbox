@@ -1,9 +1,10 @@
 # Save/Load & Migration
 
-> **Status**: In Design
+> **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on Summary wording, the unstated battle-start retry risk, and the mid-battle crash promise; all three revised
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — defeat costs time or resources, never the run, and the save policy keeps that true); Pillar 2 (The Truth Is Yours to Tell — one fixed truth per save, kept intact across every save, load and update)
 
 ## Summary
@@ -13,7 +14,8 @@ back exactly. Every stateful system writes its own versioned section, so an
 older save is carried forward into a newer build, and the player is told
 before anything is lost. Writing a save can never damage the previous one.
 Outside battle, saving is free. In battle there is only a suspend save, so
-leaving the game costs nothing and a bad roll can't be undone by reloading
+leaving costs nothing. Rolls are tied to the tick, so replaying a battle, from
+its start or after a crash, gives the same result unless the plan changes
 (Pillars 1 and 2).
 
 > **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service, Content Data & Mod Loading`
@@ -76,7 +78,8 @@ sitting, and never takes a campaign away from them.
 The player can walk away at any moment, even mid-volley, and come back to find
 the campaign just as they left it: the half-turned flank, the queued orders, the
 rival two systems out. An update, a crash or a power cut never takes the campaign
-from them. When a new build changes something their save depended on, the game
+from them; a crash mid-battle costs at most a couple of minutes, never the
+campaign. When a new build changes something their save depended on, the game
 names the one thing that changed, before anything is carried over, and then the
 campaign opens.
 
@@ -89,7 +92,10 @@ changed.
 - **Pillar 1, *Every Defeat Is a Lead*:** "defeat costs time or resources, never
   the run." Leaving costs nothing, and a crash or an update never costs the run.
   A defeat is answered by the Debrief and a return attempt, not by reloading the
-  same moment (the battle save policy, Detailed Design).
+  same moment (the battle save policy, Detailed Design). A battle can be retried
+  from its start, but rolls repeat, so only a changed plan changes the outcome:
+  retrying is how the lead gets used. The cost of a defeat that is kept belongs
+  to the Debrief and campaign systems, not to save policy.
 - **Pillar 2, *The Truth Is Yours to Tell*:** one fixed truth per save, carried
   intact through every save, load and update.
 - **The pillar-tension resolution:** "challenge should feel relaxing." Pause stops
@@ -849,7 +855,7 @@ result goes to `production/qa/evidence/` with device, OS build and engine build
 | 1 | **File format, compression and checksum algorithm** (canonical JSON vs binary; ZSTD/GZIP; SHA-256 reused from Content Data D3 or a cheaper hash). Engine JSON, compression and hashing behaviour on 4.7.2 is NOT SOURCEABLE (no `modules/core.md`) and needs a spike. | technical-director | Save schema ADR |
 | 2 | **Platform write semantics**: whether `DirAccess.rename` replaces atomically (especially on Windows), whether `flush` reaches disk. The GDD's guarantee is behavioural (Core Rule 21); the ADR picks the sequence. NOT SOURCEABLE. | technical-director, godot-specialist | Save schema ADR + on-device probe |
 | 3 | **Close and suspend notifications**: window close-request handling and platform sleep/suspend signals on Windows, Linux and Steam Deck. NOT SOURCEABLE. | godot-specialist | Save schema ADR |
-| 4 | **Force-kill replay window** (Edge Cases): the 120 s suspend refresh lets a force-kill replay up to two minutes of battle. Accepted 2026-10-30; confirm it does not undercut Pillar 1 in playtest. | creative-director | First battle playtest |
+| 4 | **Force-kill replay window** (Edge Cases): the 120 s suspend refresh lets a force-kill replay up to two minutes of battle. Accepted 2026-10-30. In playtest, confirm that neither force-kill replays nor battle-start retries undercut Pillar 1 (a defeat must still cost time or resources). | creative-director | First battle playtest |
 | 5 | **Section ceilings** for the simulation/replay log, the truth case and all other systems are placeholders (D1). Each owning GDD must declare its own. | each owning GDD | As each is designed |
 | 6 | **Cloud conflict resolution** (two devices, same campaign). `save_counter` is provided; the rule belongs to Platform. | Platform Integration (#57) | When #57 is designed |
 | 7 | **Time budgets** (D6) are estimates and must be measured. | performance-analyst | Before the save schema ADR is accepted |
