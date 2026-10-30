@@ -220,7 +220,7 @@ battle; each has a preview, a confirm step and no undo)
     - for a suppression, the coverage line from Credits and the keeper's band
       after the purchase.
 
-    It never shows compounding trust, exposure outcomes, or any number about
+    It never shows compounding-trust amounts (only the fixed line above), exposure outcomes, or any number about
     beliefs. The commit applies exactly what the preview showed.
 
 **F. Record, save and determinism**
@@ -354,7 +354,7 @@ for each `c ≠ X`. Then `b_f'[c] = b_f[c] − a_c`, and `b_f'[X] = b_f[X] + Σ 
 
 | Variable | Type | Range | Description |
 |---|---|---|---|
-| ACCUSE_BASE | int ‰ | 150 – 350; **250** | A bare accusation's strength |
+| ACCUSE_BASE | int ‰ | 150 – 270; **250** | A bare accusation's strength. Invariant: a bare accusation from the start stays below `NAME_PM` (at C = 3 the last such value is 273, giving 599) |
 | ACCUSE_PER_SUPPORT | int ‰ | 100 – 250; **150** | Added per publicly shared supporting group |
 | ACCUSE_MAX | int ‰ | 500 – 800; **700** | Cap |
 | s_pub | int | 0 – groups shared | Distinct reliable groups consistent with X, shared PUBLIC |
@@ -532,7 +532,7 @@ numbers are shown.
 - **If the player accuses while the verdict already NAMES(X)**: refused with
   `ALREADY_NAMED`. Accusing Y instead is allowed. If Y is named, Y turns
   Hostile and X stays locked.
-- **If the accused race has no faction** (for example a text-only race): the
+- **If the accused race has no faction** (a modded or future candidate without a faction): the
   beliefs move and the verdict can name it. No `set_hostile` is called, because
   there is no ledger row. The preview says "No faction to turn hostile".
 - **If a share pushes the verdict into NAMES(X)** without an accusation: it is
@@ -595,7 +595,7 @@ needs a wording amendment (Open Question 6).
 | `SELF_START` | 100 | 0 – 200 (must make `1,000 − SELF_START` divisible by 6) | Starting self-blame |
 | `SHIFT_PM` DIRECT / RECORD / TESTIMONY / FORGERY | 250 / 250 / 120 / 40 | 150 – 400 / 150 – 400 / 50 – 200 / 0 – 80 | How far a share persuades. Above about 330, one public reliable share can name a race |
 | `CHAIN_ECHO_PM` | 500 | 0 – 1,000 | Repeat-chain weight |
-| `ACCUSE_BASE` / `ACCUSE_PER_SUPPORT` / `ACCUSE_MAX` | 250 / 150 / 700 | 150–350 / 100–250 / 500–800 | Accusation strength from a bare charge, per shown support, and its cap |
+| `ACCUSE_BASE` / `ACCUSE_PER_SUPPORT` / `ACCUSE_MAX` | 250 / 150 / 700 | 150–270 / 100–250 / 500–800 | Accusation strength from a bare charge, per shown support, and its cap |
 | `NAME_PM` / `LEAD_PM` / `NAME_H` | 600 / 200 / 50 | 550 – 750 / 100 – 300 / 0 – 100 | When the public history names a race |
 | `REACT_T1/T2/T3` | 20 / 80 / 200 | ±50 % | Reaction bands, also preview bands |
 | `TARGET_PM` / `TARGET_CAP` | 1,000 / 300 | 500 – 1,500 / 150 – 500 | Long-run goodwill |
@@ -660,12 +660,13 @@ the faith judgement, so sound reveals nothing.
 - **AC-02 (Logic; D1)**: the D1 worked example gives 338 / 156 / 506, 338 / 506 / 156 and 76 / 462 / 462, with P = 338 / 484 / 484. Every share conserves `Σ b + doubt = 1,000`, which a property test checks over 10,000 random claims and states.
 - **AC-03 (Logic; D2, D3)**: a bare accusation of Halsk from the start gives P = 587 / 394 / 394 and UNRESOLVED; with `s_pub` 1 from the start it gives P[H] 670 and NAMES(Halsk); at C = 4, `s_pub` 1 gives 580 (UNRESOLVED) and `s_pub` 2 gives 685 (NAMES).
 - **AC-03b (Logic; rule 18)**: every preview lists drift-target directions, seals whose keeper would turn Hostile with their lapse day, a suppression's effect on faith, and the fixed confirmation line on any action that names.
+- **AC-03d (Logic; D2 invariant)**: at `ACCUSE_BASE` 270, a bare accusation from the symmetric start at C = 3 and C = 4 leaves `P[X]` below `NAME_PM`; a content check refuses an `ACCUSE_BASE` that breaks this.
 - **AC-03c (Content; Open Questions, scapegoat)**: the text-only candidate's faction owns at least one port with care and trade on the MVP map; naming it loses that port in the preview.
 - **AC-04 (Logic; D3)**: the hysteresis example holds at 560 / lead 180 and drops to UNRESOLVED at 540. A top tie is UNRESOLVED.
 - **AC-05 (Logic; rules 10, D5)**: the D1 public share writes +120 to Halsk and −40 to Orrowen and Ithren, one entry each with a cause.
 - **AC-06 (Logic; rule 11)**: entering NAMES(X) calls `set_hostile(X)` once, after the reactions, whether the cause is an accusation, a share or an exposure. A race named earlier stays locked when the verdict moves on.
 - **AC-07 (Logic; rule 16)**: a fixture with the same claims and actions under each of the C makers gives identical beliefs, verdicts, standing writes, faith, targets and previews, and identical per-class fragment totals. The #30 module has no reference to the maker field (static check).
-- **AC-08 (Logic; rule 18)**: `preview` then commit gives exactly the previewed belief bands, verdict and `Standing.preview` result. The preview has no numeric belief values, no confirmation line and no exposure outcome.
+- **AC-08 (Logic; rule 18)**: `preview` then commit gives exactly the previewed belief bands, verdict and `Standing.preview` result. The preview has no numeric belief values, no confirmation amount (only the fixed rule-18 line) and no exposure outcome.
 - **AC-09 (Logic; rule 18)**: the preview includes #33's escort line and #32's readout before and after for the verdict after the action.
 - **AC-10 (Logic; D7)**: the D7 worked example gives BAD / GOOD / GOOD. Suppressing a held reliable contradiction of the named race turns GOOD_FAITH into BAD_FAITH.
 - **AC-11 (Logic; rule 7)**: a suppression with a keeper below the price is refused. Neither money nor standing is charged.
