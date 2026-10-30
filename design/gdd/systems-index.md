@@ -233,7 +233,7 @@ Later tiers:
 | 34 | Reckoning & Endings | Narrative | Vertical Slice | Not Started | — | Truth Seeding & Candidates, Credits, Upkeep & Sinks, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 35 | Refit & Loadout | Progression | MVP | Designed | design/gdd/refit-and-loadout.md | Hulls & Ship Definition, Weapons & Damage, Credits, Upkeep & Sinks |
 | 36 | Salvage & Recovery | Economy | Vertical Slice | Not Started | — | Credits, Upkeep & Sinks, Battle Resolution & Retreat, Runtime ID Service |
-| 37 | Markets & Trade | Economy | MVP | Not Started | — | Credits, Upkeep & Sinks, Sector Map & Travel |
+| 37 | Markets & Trade | Economy | MVP | In Design | design/gdd/markets-and-trade.md | Credits, Upkeep & Sinks, Sector Map & Travel |
 | 38 | Contracts & Missions | Economy | Alpha | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Faction Reputation & Standing, Credits, Upkeep & Sinks, Sector Map & Travel |
 | 39 | Loot & Crafting | Progression | Alpha | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Refit & Loadout, Salvage & Recovery |
 | 40 | Captain Skills | Progression | Alpha | Not Started | — | Save/Load & Migration, Flagship Piloting |
