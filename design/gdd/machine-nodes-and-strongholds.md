@@ -190,8 +190,10 @@ combat-facing system. SDT:
     remaining members are removed; nothing respawns; roaming spawns stop. If the
     outcome is win-class, the fragment slot is granted to Archive Fragments (#28)
     at once and the node goes INERT. Otherwise it stays BROKEN_UNCLAIMED and the
-    fragment is granted, with no battle, the next time a player fleet arrives in the node's system (reaches the
-    node. A fragment at a BROKEN_UNCLAIMED node is reserved for the player and
+    fragment is granted, with no battle, the next time a player fleet arrives in
+    the node's system (Sector Map rule 29), through Archive Fragments'
+    `grant(slot, node_claim)` (a win grants through `grant(slot, node_win)`).
+    A fragment at a BROKEN_UNCLAIMED node is reserved for the player and
     counts as unfound for exposure until claimed (Exposure & Rival
     Investigation #32). The map marker changes to the broken state. A node with no
     `fragment_slot` goes straight to INERT.

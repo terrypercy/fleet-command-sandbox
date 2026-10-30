@@ -427,7 +427,7 @@ The save_max formula is defined as:
 | Simulation + battle part | 4 MiB | Battle Record (#9) rule 17: simulation state 0.5 MiB (placeholder), live event log 2 MiB + overflow 0.5 MiB, command log 1 MiB |
 | Battle archive (`base:battle_archive`) | 5 MiB | Battle Record (#9) rule 18 |
 | Materialised truth case | 1 MiB | **placeholder** for Truth Seeding (Content Data, Core Rule 18) |
-| All other systems, combined | 8 MiB | **placeholder** until each owning GDD declares its ceiling |
+| All other systems, combined | 8 MiB | **placeholder** until each owning GDD declares its ceiling (declared so far: `base:archive_fragments` 64 KiB, `base:sector_map` 16 KiB) |
 | Header | 64 KiB | this GDD |
 | Carried sections (`OPAQUE_MAX`) | 2 MiB | this GDD |
 

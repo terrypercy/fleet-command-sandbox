@@ -428,7 +428,9 @@ secondary line because the concept makes modding "a secondary channel later".*
 18. **The seeded case is written into the save when it is seeded.**
     - **Truth kinds** are the candidate races, the per-race attribute table,
       claim templates and fragment definitions, and any kind Truth Seeding (#16)
-      or Archive Fragments & Evidence (#28) declares as one.
+      or Archive Fragments & Evidence (#28) declares as one (#28 declares
+      `provenance_stamp`; its `fragment_slot` kind is authored, seed-independent
+      and not a truth kind).
     - When a campaign's case is seeded, the save stores the case **materialised**:
       - the true maker and the candidate set;
       - every seeded fragment with its claims filled in;

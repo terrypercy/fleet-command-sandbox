@@ -287,7 +287,9 @@ SDT: **Autonomy** (three viable recoveries: rest, care, or press on wounded);
 27. **Rumours.** On the first docking at a port, this system calls
     `reveal(site_id, source = port_rumour)` (Sector Map rule 23) for each entry
     in `rumours[]`, in list order. It is logged once per port and never
-    repeats. Rumours name authored sites only, never fragment content.
+    repeats. Rumours name authored sites only, never fragment content. If the
+    port hosts a `witness` fragment slot (optional, authored), it then calls
+    Archive Fragments' `grant(slot, witness)`, once, after the rumours.
 28. **Truth-neutral.** Port definitions, services, care availability and
     rumours are authored and seed-independent. Care follows ownership and the
     `organic` flag only (rule 3), so content cannot mark the maker's ports
