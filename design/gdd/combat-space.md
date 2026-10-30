@@ -94,12 +94,15 @@ couldn't predict" or "two ships merged into one blob".
    each ship in ascending Runtime ID order:
    1. turn `h` toward the desired heading by at most `t_step` (an exact 180°
       tie turns counter-clockwise);
-   2. move the velocity vector toward `dir(h) × throttle × v_cap` by at most
-      `a_step` (vector move-toward);
+   2. move the velocity vector toward the **target velocity** by at most
+      `a_step` (vector move-toward). The target is the intent's local thrust
+      vector `(fwd, lat)` in permille, rotated by `h` and scaled by `v_cap`
+      (Flagship Piloting D2); Ship AI usually sets `lat` = 0 and `fwd` =
+      throttle;
    3. `pos += vel`;
    4. apply the edge rule (rule 10), then the hard limit (rule 11).
-   The desired heading and throttle come from Flagship Piloting (#15) for the
-   flagship and from Ship AI (#20) for every other ship. Because velocity lags
+   The desired heading and thrust vector come from Flagship Piloting (#15) for
+   the flagship and from Ship AI (#20) for every other ship. Because velocity lags
    heading, ships carry momentum and overshoot turns; because the lag is
    bounded by `a_step`, the motion is fully predictable.
 6. **Mass** decides only the share of separation push (rule 9) and any future

@@ -101,10 +101,14 @@ lost to a dice roll", or "I can't tell what that weapon is doing".
    (#13, rule 5) answers **full** (normal shot), **ember** (the pool is empty:
    an ember shot at Vigor's ember damage and refire, burning the ceiling) or
    **refused** (only the per-second flow cap: no fire, no draw, retry next
-   tick). A membrane request carries the hit's contact point. A link cut mid-burst cancels the rest of the burst.
+   tick). A membrane request carries the hit's contact point. **Flagship
+   branch:** the flagship's PRIMARY and SECONDARY groups fire on their held
+   bit instead, with no target or range check, only when the aim bearing is
+   inside the mount's arc (Flagship Piloting rule 7). A link cut mid-burst cancels the rest of the burst.
 4. **Phase stagger.** A weapon's first shot in a battle waits
    `(ship_id × 7 + slot_index) mod refire_ticks` ticks, so a fleet never fires
-   every gun on the same tick. This costs no draw.
+   every gun on the same tick. This costs no draw. The flagship's player
+   groups are exempt (Flagship Piloting rule 7).
 5. **Projectiles** are battle-local entities with a sequence number from
    `next_proj_seq` (Runtime ID Service: projectiles use a battle-local sequence,
    not Runtime IDs). Lifetime is `ceil(range_u × TICK_RATE ÷ speed_u_s)` ticks.
