@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-29
 > **Last Verified**: 2026-10-29
-> **Implements Pillar**: Pillar 4 (Plan in the Open — everything the player optimises is readable data, including the counter taxonomy the Dossier speaks); Pillar 5 (Living Against Made — the two resource models expressed as data)
+> **Implements Pillar**: Pillar 4 (Plan in the Open — everything the player optimises is readable data, including the counter taxonomy the Dossier speaks); Pillar 2 (The Truth Is Yours to Tell — the seeded case is fixed into the save, so no content change can alter it); Pillar 5 (Living Against Made — the two resource models expressed as data)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS resolved. The seeded case is written into the save when it is seeded (Core Rule 18); the pre-load summary itemises what the player owns and flags the case; counter statements come from counter data, never from description text; every counter must carry a cause and a counter-action
 
 ## Summary
 
@@ -29,8 +30,9 @@ definition**: a record written in JSON or CSV, loaded at startup, checked agains
 a schema, and turned into a typed, read-only object. Every definition has a
 **content ID**, a stable namespaced string such as `base:hull.lancer` or
 `mymod:weapon.arc`. The base game is simply the `base` content package. A mod
-is another package, with its own namespace, that adds definitions or changes
-existing ones under rules this system enforces.
+is another package, with its own namespace, that adds new definitions under
+rules this system enforces. At MVP a mod can only add; it cannot change anyone
+else's content (Core Rule 5).
 
 A content ID is **not** a Runtime ID. The content ID `base:hull.lancer` names
 the *kind*, the Lancer hull. A Runtime ID names *one* Lancer in this campaign
@@ -162,7 +164,7 @@ secondary line because the concept makes modding "a secondary channel later".*
      - Windows reserved device names.
    - After that lexical check, the canonical resolved path must still be inside
      the package's root. Symbolic links and junctions are refused, not followed.
-   - The loader writes only its own error log under `user://`.
+   - The loader writes only its own error log, `user://logs/content.log`.
 4. **Content IDs are permanent, namespaced strings.**
    - Format `<namespace>:<kind>.<name>`, for example `base:hull.lancer`. Lowercase
      ASCII, `[a-z0-9_]` in each part, at most 64 bytes in total (D1), the same cap
@@ -170,7 +172,9 @@ secondary line because the concept makes modding "a secondary channel later".*
    - **A package may define IDs only in its own namespace.** `base` is reserved.
      If two mod packages claim the same namespace, **both are refused**, so the
      outcome never depends on folder order (rule 9).
-   - **An ID is permanent once it has shipped in a save.**
+   - **An ID is permanent once it has shipped in a save.** The validator, given
+     the previous version of a package (`--previous <dir>`), refuses any ID that
+     was removed without a `retired_ids` entry.
      - A rename goes through an `aliases` list on the new definition (old ID →
        new ID), in the same namespace and kind. Chains are flattened: if `B`
        lists alias `A` and later `C` lists alias `B`, then `A` resolves to `C`. An
@@ -229,8 +233,9 @@ secondary line because the concept makes modding "a secondary channel later".*
      range. A script checks that each such knob maps to a field (AC).
    - **Numbers:** integers are validated as integers, within ±2^53, rejecting
      `1.5` where an integer is required. NaN and infinity are always rejected.
-     Floats are discouraged in definitions; probabilities are integer permille
-     (Deterministic RNG & Seed Streams, D4).
+     **A field may be a float only if its kind's schema explicitly allows it**;
+     every other number is an integer. Outcome-deciding values are never floats;
+     probabilities are integer permille (Deterministic RNG & Seed Streams, D4).
 8. **This system validates the RNG system's inputs.**
    - **Weighted tables** (for `weighted_pick`): integer weights from 0 to 2^31, a
      total from 1 to 2^31, at most 2^16 entries, stored sorted by unique
@@ -278,7 +283,8 @@ secondary line because the concept makes modding "a secondary channel later".*
       first tick.
     - The simulation and UI read them through an injected `ContentDatabase` with a
       typed getter per kind (`get_hull(id)`, `get_weapon(id)`). It is never an
-      autoload, and no code outside this system opens a content file.
+      autoload, and no code outside this system opens a content file (a CI lint
+      checks this, AC-30).
     - **What changes is never the definition.** Damage, refits, ammunition and
       modifiers live on the instance's record in `SimState`, keyed by Runtime ID
       (Runtime ID Service, Core Rule 5). Derived stats are a pure function of the
@@ -307,7 +313,7 @@ secondary line because the concept makes modding "a secondary channel later".*
         integers.
 
       It does not cover file names, paths, whitespace, line endings or
-      timestamps. It is the same on every platform.
+      timestamps. It is the same on every shipped platform (Open Questions).
     - Each package also gets its own **package hash**, so a mismatch can say
       which package differs.
     - Save and replay headers record the global hash, the ordered package list
@@ -328,7 +334,7 @@ secondary line because the concept makes modding "a secondary channel later".*
       instance whose content ID no longer resolves is handled in this order:
       - **Substituted:** if a loaded package lists the ID in `retired_ids` with a
         `replaced_by` of the same kind, the instance is rebound to the
-        replacement and stays live. The rebinding happens in the post-validation
+        replacement and stays live. **Never for truth kinds** (Core Rule 18). The rebinding happens in the post-validation
         migration step, and is a recorded identity event (Runtime ID Service,
         Core Rule 11).
       - **Removed:** if a loaded package lists the ID in `retired_ids` with no
@@ -341,7 +347,8 @@ secondary line because the concept makes modding "a secondary channel later".*
     - A package refused only by the load-time watchdog (`LOAD_TIMEOUT`, D2) is
       reported as such in the summary, never as missing content.
     - **An extra package the save did not use:** allowed. It only adds IDs the
-      save never mentions. The header is updated at the next save.
+      save never mentions, and it never joins the campaign's seeded case (Core
+      Rule 18). The header is updated at the next save.
     - **A renamed ID:** the save's IDs are mapped through the alias table during
       load validation, before the first tick.
     - **A `base` version difference with no migration:** the save is refused.
@@ -359,6 +366,11 @@ secondary line because the concept makes modding "a secondary channel later".*
     - Numbers shown to the player are never baked into text; they are formatted
       from definition values, so the screen and the simulation agree (Player
       Fantasy).
+    - **Every counter statement the Dossier or the Debrief shows** ("weak to
+      arc", "exploited by relay cuts") **is generated from `counter` data**, never
+      from description text. Descriptions are shown, and labelled, as flavour.
+      The Dossier stores content IDs, never copied numbers, so its entries always
+      follow the loaded definitions.
     - **Mod and save text is plain text to the UI.** It is never rendered as
       BBCode or used as a format template. Brackets are escaped before any
       BBCode-enabled control, and control, bidirectional-override and zero-width
@@ -371,20 +383,28 @@ secondary line because the concept makes modding "a secondary channel later".*
 15. **Mods are enabled only between sessions.**
     - The enabled set changes only on the mod screen, with no campaign loaded. It
       never changes mid-campaign.
-    - The game tells the player once that mods are community content loaded at
-      their own risk, and always shows which mods are active.
+    - The first time any mod is enabled on this install, the mod screen shows a
+      **risk notice**: mods are community content, loaded at the player's own
+      risk. The active mod list is always visible from the main menu (UI
+      Requirements).
     - **Hot reload** exists only in dev builds, only on the main menu with no
       campaign loaded. It builds a second, staged content database through the
       full load, and swaps it in only if `base` succeeds. If the reload fails, the
       previous database stays loaded and the errors are shown. Requested in a
       release build or with a campaign loaded, it is refused and logged.
 16. **One loader, two front ends.**
-    - A **headless validator** shares the game loader's code, so the two can never
-      disagree. It runs from the command line and in CI. It reports every error
+    - A **headless validator** shares the game loader's code. On the shared
+      fixture set, the two report identical sets of (package, file, line, code)
+      (AC-25). It runs from the command line and in CI. It reports every error
       in one pass, as `file:line: [severity] field: message` with a stable error
       code, and optionally as JSON.
     - **Exit codes:** 0 means clean (warnings allowed), 1 means validation
       errors, 2 means the tool itself failed.
+    - **Every refusal has a stable error code** from the error catalogue the
+      content/mod data format ADR defines (`docs/architecture/content-error-codes.md`).
+      Codes named in this GDD (`DEP_VERSION`, `ENCODING`, `CSV_DIALECT`,
+      `KIND_MISMATCH`, `REF_DEPTH`, `LOAD_TIMEOUT`, `WEIGHT_TOTAL_RANGE`) are part
+      of it; the Acceptance Criteria's other codes are provisional names.
     - **Errors are structured:** package, file, line or row, field, code and a
       message key. They appear on the mod screen and in the log, and never crash
       the game.
@@ -397,7 +417,34 @@ secondary line because the concept makes modding "a secondary channel later".*
       Dependencies).
     - Mods may add counters in their own namespace. Under add-only (rule 5), they
       cannot change base counters.
+    - **Every counter, base or mod, must carry:** a name key, a Debrief cause key,
+      a counter-action key, and at least one inbound and one outbound reference
+      (something it affects, and something that exploits it). A counter missing
+      any of them is a validation **error**, so the Debrief can always name a
+      specific cause and counter (Pillar 1's design test).
 
+18. **The seeded case is written into the save when it is seeded.**
+    - **Truth kinds** are the candidate races, the per-race attribute table,
+      claim templates and fragment definitions, and any kind Truth Seeding (#16)
+      or Archive Fragments & Evidence (#28) declares as one.
+    - When a campaign's case is seeded, the save stores the case **materialised**:
+      - the true maker and the candidate set;
+      - every seeded fragment with its claims filled in;
+      - where each piece came from (package and content ID).
+
+      From then on, the case is read from the save, never re-derived from loaded
+      content. No later content change, added mod or removed mod can alter it
+      (Pillar 2: "The truth about who built the machines is fixed").
+    - **Truth kinds are never substituted** (Core Rule 13), so claims never change
+      in the middle of a campaign.
+    - **An extra package never joins an existing campaign's case**: it adds no
+      candidate, template or fragment to a case already seeded.
+    - **If a package that supplied a candidate or a seeded fragment is missing**,
+      the pre-load summary says plainly that the case may be unsolvable or
+      incomplete with that mod removed (UI Requirements). The materialised case
+      still loads, unchanged, so it resumes intact if the mod returns.
+    - This is a contract with Truth Seeding (#16) and Archive Fragments & Evidence
+      (#28), whose GDDs define what is materialised.
 ### States and Transitions
 
 **Each package**, in load order:
@@ -569,8 +616,8 @@ every one at its limits).
 + 42 ≈ **88 ms**.
 
 **The spike measures** per-row parse, validate and link time for JSON and for
-CSV; `c_hash`; and `t_io` from `res://` and `user://`. All of it on the
-minimum-spec machine.
+CSV; `c_hash`; and `t_io` from `res://` and `user://`. All of it on the reference
+machine named in the Tick/Pause/Determinism ADR (Simulation Tick & Pause, D10).
 
 ### D3. Canonical content hash
 
@@ -651,7 +698,7 @@ estimate was corrected (an 8 MiB mod parses in under 100 ms).*
 *For the ADR:*
 - the single constants file
 - D3's exact byte layout and `FMT`, with golden-hash test vectors
-- D2's measurements on the minimum-spec machine
+- D2's measurements on the ADR's reference machine
 - confirming that GDScript's `int` is 64-bit on 4.7.2 (NOT SOURCEABLE)
 
 ## Edge Cases
@@ -740,10 +787,19 @@ estimate was corrected (an 8 MiB mod parses in under 100 ms).*
 - **If a save's `base` version differs and no migration exists**: the save is
   refused.
 - **If a save carries object data, a resource path or a script reference**: it is
-  read as plain data or refused; nothing is ever instantiated from it (Core Rule
-  13).
+  refused, and nothing is ever instantiated from it (Core Rule 13).
 - **If the player cancels the pre-load summary**: nothing changes, and they return
   to the menu.
+- **If a mod that supplied the seeded maker, a candidate race or a seeded fragment
+  is removed**: the save still loads its materialised case unchanged. The
+  pre-load summary flags "affects your case", warning that the case may be
+  unsolvable or incomplete without the mod, and the case is intact if the mod
+  returns (Core Rule 18).
+- **If a loaded package retires a truth-kind ID with a `replaced_by`**: the
+  replacement is never applied to an existing case; the materialised case keeps
+  its original claims (Core Rule 18).
+- **If a new mod adds candidate races or claim templates mid-campaign**: they are
+  available only to campaigns seeded afterwards (Core Rule 18).
 
 ### Runtime
 
@@ -830,11 +886,11 @@ another system's logic:
 |---|---|---|
 | Gameplay Settings & Modifiers (#7) | Hard | Difficulty presets as a kind; the enabled mod set |
 | Hulls & Ship Definition (#10) | Hard | Owns the hull kind's schema; reads frozen hull definitions |
-| Truth Seeding & Candidates (#16) | Hard | Candidate races and the per-race attribute table as content |
+| Truth Seeding & Candidates (#16) | Hard | Candidate races and the per-race attribute table as content. **Must materialise the seeded case into the save at seeding; declares its truth kinds** (Core Rule 18) |
 | Faction Reputation & Standing (#17) | Hard | Faction definitions |
-| Machine Nodes & Strongholds (#23) | Hard | Owns the `counter` kind (Core Rule 17) and node definitions |
+| Machine Nodes & Strongholds (#23) | Hard | Owns the `counter` kind and node definitions. Every counter must carry a name, a Debrief cause, a counter-action, and inbound and outbound references (Core Rule 17) |
 | Sector Map & Travel (#26) | Hard | Systems, lanes and hand-placed anchors as content |
-| Archive Fragments & Evidence (#28) | Hard | Claim templates and fragment definitions |
+| Archive Fragments & Evidence (#28) | Hard | Claim templates and fragment definitions. **Seeded fragments are stored with their claims filled; truth kinds are never substituted** (Core Rule 18) |
 | Loot & Crafting (#39) | Hard | Loot tables, validated by D4 and Core Rule 8 |
 
 **Not yet listed in the index.** Each needs this system in its own Dependencies,
@@ -922,9 +978,17 @@ belong to Menus, Settings & Save UI (#51).
 2. **The pre-load summary** (Core Rule 13). Shown before a save whose content
    differs from the loaded set. It lists, by package:
    - what is missing, refused (including a watchdog timeout) or changed;
-   - how many things will be **kept inert** (they come back if the mod returns),
-     **substituted**, or **removed** because their author retired them;
+   - **each thing the player owns that is affected** (fleet ships, fragments,
+     Dossier entries), by name, and whether it will be **kept inert** (it comes
+     back if the mod returns), **substituted**, or **removed** because its author
+     retired it;
+   - for a substituted thing, or one whose package changed, **its old and new
+     values** for every stat that differs;
+   - a separate flag, **"affects your case"**, when a package that supplied a
+     candidate or a seeded fragment is missing or changed (Core Rule 18);
    - that replays from this save will be "unverified".
+
+   After loading, inert things stay visibly marked in the fleet and Ledger.
 
    The player chooses **Continue** or **Cancel**; Cancel changes nothing.
 3. **Text safety for every screen.** Mod and save text is plain text (Core Rule 14):
@@ -965,7 +1029,275 @@ cross-reference this GDD when it is written.
 
 ## Acceptance Criteria
 
-[To be designed]
+**How tests stay isolated.** The fixtures:
+- **`MemReader`** is the loader's injected reader. It maps paths to bytes, sizes
+  and link flags, so unit tests do no file I/O. Real files are tested only under
+  `tests/integration/content/`.
+- **`FatalSink`** and **`AssertMode`** (`DEBUG` / `RELEASE`) are injected, as in
+  Runtime ID Service.
+- **`FakeClock`** drives the watchdog, and **`SpyIdService`** counts `issue()`
+  calls.
+- **`ContentFixtures`** builds packages with factory functions. D1 boundary values
+  appear inline, because the exact number is the point of those tests.
+
+Test files are named `content_[feature]_test.gd`, and functions
+`test_[scenario]_[expected]`. Error checks compare exact codes, and hash checks
+compare all 64 hex characters. Error codes not named in the Core Rules are
+provisional until the ADR's catalogue fixes them (Core Rule 16).
+
+### Logic: unit tests, `tests/unit/content/` (BLOCKING)
+
+- **AC-01 (Core Rule 1, States)**: **GIVEN** a `base` with one schema error,
+  **THEN** the database is `Failed`, the error is reported, and nothing reaches
+  `Ready`. **GIVEN** a valid `base` and a mod manifest missing any one of its seven
+  fields, **THEN** `base` is `Frozen` and that mod is `Refused`.
+- **AC-02 (Core Rule 2)**: `HULL.JSON` is accepted. `.csv`, `.zip`, an
+  extensionless file and `hull.json.gd` each refuse the whole package with
+  `BANNED_EXT`. A field holding `res://x.gd` fails the schema.
+- **AC-03 (Core Rule 3; edges: Files)**: each of these paths refuses the package
+  with `PATH_ESCAPE`: `/a`, `C:a`, `res://a`, `user://a`, `../a`, `a//b`, `a\b`,
+  `a%2e%2e`, `a\0b`, `CON.json`, `a.json.`, and two paths that differ only by case.
+- **AC-04 (Core Rule 4; edges: IDs)**:
+  - A 64-byte ID is accepted; a 65-byte one is refused.
+  - `Base:hull.x`, a `base:` ID defined by a mod, and an ID in a foreign namespace
+    are each refused.
+  - Two mods sharing a namespace are both refused, with both folder orders
+    tested.
+  - The alias chain A → B → C resolves A to C.
+  - Each is an error: an alias colliding with a live ID, an alias claimed by two
+    definitions, an ID that is both an alias and retired.
+  - Given `--previous`, an ID removed without a `retired_ids` entry is refused.
+- **AC-05 (Core Rule 4, retirement)**:
+  - A `replaced_by` chain of depth 8 resolves; at depth 9 it is refused with
+    `REF_DEPTH`.
+  - A `replaced_by` of a different kind, of a missing ID, or into a namespace the
+    package does not `depends_on` is an error.
+  - A reference to an alias resolves and logs one warning; a reference to a
+    retired ID is an error.
+- **AC-06 (Core Rule 5)**: a mod that defines, aliases or retires a `base` ID is
+  refused, and `base` is unchanged.
+- **AC-07 (Core Rule 6; edges: Files)**:
+  - A leading BOM is stripped. A BOM elsewhere, invalid UTF-8, or a lone CR is
+    refused with `ENCODING`. A 0-byte file is a parse error.
+  - CRLF and LF text parse to equal definitions. CSV columns in any order parse
+    identically. A header-only CSV holds zero records.
+  - An unknown column fails. A semicolon-delimited CSV fails with `CSV_DIALECT`. A
+    duplicate JSON key fails.
+- **AC-08 (Core Rule 7; edges: Schemas)**:
+  - Each is an error: an unknown field, a missing required field, a value out of
+    range, a newer `schema_version`, an older one with no migration. An older
+    version that has a migration loads in its migrated form.
+  - Integer fields refuse `5.0`, `1e3`, `+5`, `005`, `1.5`, `9007199254740993` and
+    `-9007199254740993`. `NaN`, `Infinity` and `-Infinity` are refused in every
+    field. A float in a field whose schema does not allow floats is refused.
+- **AC-09 (Core Rule 8, D4)**:
+  - `[700, 250, 50]` passes. `[2^31]` passes. `[2^31, 0]` passes with one warning.
+  - `[2^31, 2^31]` is refused with `WEIGHT_TOTAL_RANGE`. `[0, 0]`, `[-1, 5]`, 65,537
+    entries, and a duplicate `stable_id` are each refused.
+  - Permille 1000 passes; 1001 and −1 are refused.
+  - A `base:` stream name refuses the mod. Two mods with colliding stream names are
+    both refused. A mod whose stream name collides with a `base` stream is refused
+    alone.
+- **AC-10 (Core Rule 9; edges: Packages)**:
+  - Mod B `depends_on` mod A, and A has one error: A and B are refused, B's error
+    names A, and nothing from either can be looked up.
+  - Shuffling the reader's listing order gives the same load order and file order.
+    Ties are broken by namespace bytes.
+  - A `depends_on` cycle refuses its members. A `load_after` cycle loads, with one
+    warning.
+  - `DEP_VERSION` for a dependency outside its range. A `game_version_range` that
+    excludes this build refuses the package. A chain of depth 17 refuses its tail.
+  - With 65 mods enabled, the 65th in load order is refused.
+- **AC-11 (D1)**: for each D1 constant, a fixture at the limit passes and one at
+  limit + 1 refuses the package (for example nesting depth 16 and 17, 10,000 and
+  10,001 array items, and a file of 1 MiB + 1 byte). **GIVEN** mods that push past
+  `TOTAL_DATA_MAX`, **THEN** the one that crosses is refused and a later one that
+  fits loads.
+- **AC-12 (Core Rule 10; edges: References)**: each is an error: a dangling
+  reference, a wrong-kind reference, a cycle in a kind whose schema forbids cycles
+  (the error lists its members), and a reference to a loaded package not in
+  `depends_on`. A resolved definition keeps its raw ID.
+- **AC-13 (Core Rule 11)**: an unknown ID passed to `get_hull()` asserts in `DEBUG`
+  and records exactly one `FatalSink` entry in `RELEASE`. A full load leaves the
+  `SpyIdService` issue count at 0.
+- **AC-14 (Core Rule 12, D3)**:
+  - The ADR's golden vectors `tests/fixtures/content/hash/golden_*.json` reproduce
+    their pinned `H_pkg` and `H_global` exactly.
+  - Shuffled file order, CRLF and reformatted whitespace leave both hashes
+    unchanged. Changing one integer by 1, or one key, changes both.
+  - CSV `5` and JSON `5` hash the same, and so do `−0.0` and `0.0`.
+  - An empty mod changes `H_global`. Editing a string table changes neither hash.
+- **AC-15 (Core Rule 13, saves; round-tripped through an in-memory buffer)**:
+  - **Identical:** the save loads with no summary.
+  - **Missing package:** a summary is shown. On continue, its instances are
+    `INERT` and are saved inert; when the package returns, they are `LIVE`.
+  - **Retired with `replaced_by`:** the instance is rebound to the replacement,
+    and exactly one identity digest event is recorded.
+  - **Retired without replacement:** the instance is `RETIRED` at the first retire
+    point after the load, never during it.
+  - **Extra package:** the save loads, and the next save's header lists it.
+  - **Same version, different package hash:** the summary names the package as
+    changed.
+  - **Alias:** saved IDs are mapped before tick 1.
+  - **`base` version changed with no migration:** the save is refused.
+  - **Watchdog refusal:** the summary says `LOAD_TIMEOUT`, not "missing".
+  - **Cancel:** state, files and header are byte-identical before and after.
+- **AC-16 (Core Rule 13, untrusted saves)**: a save of `SAVE_MAX` + 1 bytes is
+  refused before parsing. A save using a namespace missing from its own header is
+  refused as malformed. Saves carrying an object blob, `res://` paths or a script
+  reference are each refused, and their canary never runs.
+- **AC-17 (Core Rule 14)**:
+  - A key missing in one locale falls back to the base locale, then to the key
+    itself, with one warning each time.
+  - A reference to an undefined key is an error. A table key nothing refers to is a
+    warning.
+  - `{stat:armour}` is filled from the definition; `{0}`, `%s` and `{stat:nope}`
+    stay literal.
+- **AC-18 (Core Rule 15)**: a hot reload is refused and logged in a release build,
+  and with a campaign loaded. A dev reload whose new `base` fails keeps the
+  previous `H_global`.
+- **AC-19 (Core Rule 16)**: one run over a package with three errors reports all
+  three. Each error carries package, file, line or row, field, code and message
+  key. The text form matches `file:line: [severity] field: message`, and the JSON
+  form parses.
+- **AC-20 (Core Rule 17)**: `base:counter.*` loads as the `counter` kind. A mod's
+  `modx:counter.y` loads. A mod that alters a `base` counter is refused.
+- **AC-21 (D2, watchdog)**: **GIVEN** a `FakeClock` advanced by 5,001 ms during one
+  package, **THEN** that package is refused with `LOAD_TIMEOUT`. In validator mode
+  the same run passes.
+- **AC-22 (fuzz)**: 10,000 mutations each of the JSON, CSV and save corpora, with
+  seed `0xFC0DE`, each return either a result or a structured error. `FatalSink`
+  stays empty, and the suite finishes within the CI job timeout.
+- **AC-23 (Core Rule 11, contract)**: one shared contract suite runs against
+  `FakeContentDatabase` and the real database loaded from `ContentFixtures`. Both
+  pass every case: getters per kind, unknown-ID behaviour, read-only collections.
+
+### Security: `tests/integration/content/` (BLOCKING)
+
+- **AC-24 (Core Rules 2–3, D1; edges: Security)**: fixtures in
+  `tests/fixtures/content/malicious/<case>/`, one package each:
+  - a `.tres` with an embedded script that would create a canary file;
+  - `.gd`, `.gdextension` and `.pck` files;
+  - a `.dll` renamed `.json` (`ENCODING`);
+  - `hull.json.gd`;
+  - a manifest with a `..` path, and one with an absolute path;
+  - a symlink out of the package, created at setup;
+  - an oversize file;
+  - nesting depth 17, an array of 10,001 items, a 65-byte ID;
+  - a reference cycle, and a reference depth of 9;
+  - negative weights, and zero-total weights;
+  - `NaN` and `Infinity`;
+  - an integer written `5.0`, and one greater than 2^53.
+
+  **THEN**, for each case, the whole package is refused with its code, the game
+  reaches `Ready` with `base`, and the canary file does not exist. Snapshots of
+  `user://`, the package folder and the temp folder taken before and after differ
+  only by `user://logs/content.log`.
+
+### Validator and CI (BLOCKING)
+
+- **AC-25 (Core Rule 16)**: run on `tests/fixtures/content/shared/`, the headless
+  validator and the in-game loader report identical sets of (package, file, line,
+  code).
+- **AC-26 (Core Rule 16)**: the validator exits 0 on a clean set and on warnings
+  only, 1 on validation errors, and 2 on an unreadable root or bad arguments.
+- **AC-27 (Core Rule 16)**: every code in the error catalogue has a planted fixture
+  `tests/fixtures/content/errors/<CODE>/`, on which the validator reports exactly
+  that code. A script fails if any code has no fixture.
+- **AC-28 (Core Rule 16)**: CI regenerates the schema docs and fails on any diff.
+- **AC-29 (Core Rule 7)**: a script lists every "data file" knob in
+  `design/gdd/*.md`, and fails unless each maps to a schema field with the same
+  range.
+- **AC-30 (Core Rules 2, 11)**: a lint fails on `load(`, `ResourceLoader`,
+  `load_resource_pack` or `FileAccess` in the loader's mod path; on a content-file
+  open outside `src/content/`; and on an assignment to a definition field outside
+  `src/content/`.
+
+**Shown to fail:** AC-27 to AC-30 each have planted violations in
+`tests/fixtures/lint/content/bad_<item>`: a missing code fixture, a stale doc, an
+unmapped knob, and each lint pattern. CI must exit non-zero on every fixture.
+
+### Integration: `tests/integration/content/` (BLOCKING)
+
+- **AC-31 (Core Rule 12, D3)**: CI jobs on Windows and Linux (and every other
+  shipped platform, Open Questions) produce the same `H_global` for `base` plus the
+  fixture mods, equal to the golden value.
+- **AC-32 (Core Rule 11)**: after a 10,000-tick scripted campaign run headless, a
+  re-hash of every definition equals the load-time hash.
+
+### Engine-behaviour probes: `tests/integration/content/content_engine_probe_test.gd` (BLOCKING)
+
+These behaviours are **NOT SOURCEABLE** in `docs/engine-reference/godot/` and must
+be verified on 4.7.2.
+
+- **AC-33 (Core Rule 11)**: writing to a frozen array or dictionary, including a
+  nested one, raises an error and leaves the value unchanged.
+- **AC-34 (Core Rules 1, 2, 6)**:
+  - the exported build reads `base` JSON and `.fctable` files through the export
+    filter;
+  - a `.fctable` file is read as raw text, never imported as a translation;
+  - a BOM at the start of a file is visible to the loader;
+  - a JSON parse error reports its line number;
+  - `user://mods/` is readable, and symlinks and junctions are detected, on each
+    shipped platform.
+
+### Performance: `tests/performance/content/`
+
+- **AC-35 (D2)**: a cold load of `base` takes at most 250 ms
+  (`BASE_COLD_BUDGET_MS`), the median of 5 runs, recorded with the machine and the
+  build. A pass reports `PROVISIONAL` until the reference machine is named and the
+  spike has measured it.
+
+### UI (BLOCKING once Menus, Settings & Save UI #51 exists)
+
+- **AC-36 (Core Rules 14, 15)**: the fixture mods use names and descriptions
+  containing `[b]x[/b]`, `{0}`, `%s`, U+202E and U+200B, and one mod's display name
+  cannot be loaded. **THEN**:
+  - the BBCode and the placeholders are shown literally;
+  - the control characters are absent from the label text;
+  - the unloadable mod is listed by its namespace;
+  - the active mods and the risk notice are visible.
+
+  The mod screen and the pre-load summary are kept as retained screenshots,
+  `production/qa/evidence/content-mod-screen-[date].png` and
+  `production/qa/evidence/content-preload-summary-[date].png`.
+
+### Pillar alignment (CD-GDD-ALIGN revisions; BLOCKING)
+
+- **AC-37 (Core Rule 18)**: **GIVEN** a campaign seeded with a fixture mod that
+  supplies the true maker and two fragments, **WHEN** it is saved, the mod is
+  removed and the save is loaded, **THEN** the maker, the candidate set and every
+  fragment's claims equal those at seeding, the summary shows "affects your case",
+  and after the mod returns they are still equal. **GIVEN** a loaded package that
+  retires a claim template with a `replaced_by`, **THEN** the case's claims are
+  unchanged. **GIVEN** an extra package adding a candidate race, **THEN** the
+  existing case's candidate set is unchanged, and a newly seeded campaign can
+  include it.
+- **AC-38 (Core Rule 17)**: a counter missing its name key, its Debrief cause key,
+  its counter-action key, an inbound reference or an outbound reference is
+  refused with an error, for `base` and for a mod.
+- **AC-39 (Core Rule 14)**: **GIVEN** a mod counter whose description says "weak
+  to arc" while its data names a different exploit, **THEN** the Dossier's and the
+  Debrief's counter statements match the data, and the description is shown
+  labelled as flavour. A Dossier entry, after a package version change, shows the
+  newly loaded value, never a copied old number.
+- **AC-40 (UI Requirements 2)**: **GIVEN** a save whose changed package alters a
+  fleet ship's armour, **THEN** the pre-load summary names that ship with its old
+  and new armour. Inert things are marked in the fleet and Ledger after loading.
+  Retained screenshot at
+  `production/qa/evidence/content-preload-itemised-[date].png`.
+
+*Specialist consulted: `qa-lead`. It flagged nine items as not testable as
+written, all resolved in the Core Rules, Edge Cases and Formulas:*
+- *Refusals have codes from the ADR's catalogue (Core Rule 16).*
+- *"The two can never disagree" became the AC-25 check.*
+- *The content-file lint is named (Core Rule 11, AC-30).*
+- *ID permanence is checked with `--previous` (Core Rule 4).*
+- *The log path is fixed; platforms are an open question.*
+- *A save with object data is now refused, not "plain data or refused".*
+- *The risk notice shows once per install (Core Rule 15).*
+- *Timings use the ADR's reference machine (D2).*
+- *Floats are allowed only where a kind's schema permits them (Core Rule 7).*
 
 ## Open Questions
 
@@ -980,3 +1312,4 @@ cross-reference this GDD when it is written.
 | 7 | **The content/mod data format ADR:** schema language and parser; `.fctable` and the export filters; the canonical hash's exact bytes (D3); typed-class generation; read-only probes; symlink detection per platform; the lexical integer check; the translation server or a custom table. Every engine fact here is NOT SOURCEABLE. | technical-director | Before any content is authored in quantity |
 | 8 | **A distribution channel for mods** (a workshop or a plain folder), and whether it changes the trust model. | producer, security-engineer | Post-MVP, with platform integration (#57) |
 | 9 | **Simulation Tick & Pause amendment** at its re-review: its rule 14 header should record the package list and per-package hashes (Core Rule 12), not only one content hash. | Simulation Tick & Pause owner | Its re-review |
+| 10 | **Which platforms ship?** `project.yaml` lists none yet. The content hash (D3), symlink detection and `user://mods/` must be verified on each (AC-31, AC-34). | release-manager, producer | Before the ADR is accepted |

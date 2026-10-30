@@ -54,7 +54,7 @@
 #   in any other shape is reported as unsupported layout, with its number.
 
 version: 1
-last_updated: "2026-10-29"
+last_updated: "2026-10-30"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -166,6 +166,7 @@ formulas:
     source: design/gdd/deterministic-rng-and-seed-streams.md
     referenced_by:
       - design/gdd/deterministic-rng-and-seed-streams.md
+      - design/gdd/content-data-and-mod-loading.md
     variables:
       - w_i
       - W
@@ -235,6 +236,7 @@ constants:
     source: design/gdd/deterministic-rng-and-seed-streams.md
     referenced_by:
       - design/gdd/deterministic-rng-and-seed-streams.md
+      - design/gdd/content-data-and-mod-loading.md
     value: 1000
     unit: permille
     notes: "The unit of every outcome-deciding probability (D4). Consumers (Weapons & Damage, Loot, Contracts) store odds as integer permille 0-1000."
@@ -257,6 +259,7 @@ constants:
     source: design/gdd/deterministic-rng-and-seed-streams.md
     referenced_by:
       - design/gdd/deterministic-rng-and-seed-streams.md
+      - design/gdd/content-data-and-mod-loading.md
     value: 64
     unit: bytes
     notes: "Longest legal stream name including its key suffix (D1). Mod namespaces and keyed patterns must fit; checked when the registry loads."
@@ -301,6 +304,7 @@ constants:
     source: design/gdd/runtime-id-service.md
     referenced_by:
       - design/gdd/runtime-id-service.md
+      - design/gdd/content-data-and-mod-loading.md
     value: 8
     unit: MB
     notes: "PROVISIONAL. Ceiling on the uncompressed identity section of a save (D2). Unreferenced tombstones are compacted at campaign saves to stay under it. Save/Load must budget for it."
@@ -316,6 +320,50 @@ constants:
     unit: fraction
     notes: "PROVISIONAL until technical-director sign-off. Share of the per-tick pass line L (Simulation Tick & Pause D10) that Runtime ID lookups may use (D4)."
     added: 2026-10-29
+    revised: ""
+
+  - name: content_id_max_bytes
+    status: active
+    source: design/gdd/content-data-and-mod-loading.md
+    referenced_by:
+      - design/gdd/content-data-and-mod-loading.md
+    value: 64
+    unit: bytes
+    notes: "Longest content ID (namespace:kind.name), ASCII. Deliberately equal to name_max_bytes (RNG stream names) so one cap covers both (D1)."
+    added: 2026-10-30
+    revised: ""
+
+  - name: save_max_mib
+    status: active
+    source: design/gdd/content-data-and-mod-loading.md
+    referenced_by:
+      - design/gdd/content-data-and-mod-loading.md
+    value: 32
+    unit: MiB
+    notes: "PROVISIONAL. Largest save file accepted; refused before parsing above it (D1). Final value set once Save/Load (#5) sums its section ceilings; should be at least 1.5x that sum. Must exceed identity_table_save_ceiling_mb plus other sections."
+    added: 2026-10-30
+    revised: ""
+
+  - name: content_hash_fmt
+    status: active
+    source: design/gdd/content-data-and-mod-loading.md
+    referenced_by:
+      - design/gdd/content-data-and-mod-loading.md
+    value: 1
+    unit: version
+    notes: "Version of the canonical content serialization (D3). Bumping it changes every content hash, so old replays become unverified."
+    added: 2026-10-30
+    revised: ""
+
+  - name: weight_total_max
+    status: active
+    source: design/gdd/content-data-and-mod-loading.md
+    referenced_by:
+      - design/gdd/content-data-and-mod-loading.md
+    value: 2147483648
+    unit: weight
+    notes: "2^31. Largest legal total of a weighted table, checked by the content validator before any RNG call (D4). Matches weighted_pick's W range."
+    added: 2026-10-30
     revised: ""
 
 # Example:
