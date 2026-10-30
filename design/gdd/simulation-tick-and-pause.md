@@ -127,12 +127,12 @@ carried into Game Feel and Acceptance Criteria instead.*
    |---|---|
    | P0 | Tick begins (hold check already passed) |
    | P1 | Apply queued player orders, in enqueue order, plus the flagship's current command (rule 6) |
-   | P2 | AI decisions (Ship AI, then Fleet Coordination), written directly into `SimState` |
+   | P2 | AI decisions (Fleet Coordination first, writing goals and focus into Fleet Orders' slots; then Ship AI), written directly into `SimState` |
    | P3 | Movement (Combat Space integrates positions) |
    | P4 | Weapons fire; projectiles advance |
    | P5 | Hit resolution and damage |
    | P6 | Vigor update, then Coherence and link update |
-   | P7 | Resolution checks, in order: destruction, retreat, battle end (all Battle Resolution #22, rule 14), then **auto-pause trigger evaluation** |
+   | P7 | Resolution checks, in order: destruction (with the Coherence & Links **destruction hook**, which snaps the dead ship's links that tick), retreat, battle end (all Battle Resolution #22, rule 14), then **auto-pause trigger evaluation** |
    | P8 | World Clock advance |
    | P9 | Event flush to the Combat Event Bus & Battle Record, stamped with `tick_index`; tick ends |
 
@@ -254,7 +254,9 @@ carried into Game Feel and Acceptance Criteria instead.*
     - The reasons are:
       - `PLAYER_PAUSE`
       - `AUTO_PAUSE:<trigger_id>`
-      - `PLANNING:<screen_id>` (Dossier, Ledger, Case File, Debrief)
+      - `PLANNING:<screen_id>` (Dossier, Ledger, Case File, Debrief, every port
+        service screen — market, refit, care, contract board — and the sector
+        map's route planner; World Clock rule 3)
       - `SYSTEM:<cause>` (menu, loading, save in progress, window focus lost)
     - **In `BATTLE`, opening any planning screen also adds `PLAYER_PAUSE`**, as
       opening the menu or losing focus does (rule 16). Closing the screen
@@ -448,7 +450,7 @@ This is the order `holds()` returns (rule 10).
 | Ship AI (#20), Fleet Coordination (#21) | P2 handlers that write AI intents directly into `SimState` | Their phase is called in fixed order | AI owns decisions. AI intents never enter the order queue or the replay log (rule 3) |
 | Battle Resolution & Retreat (#22) | P7 end-of-battle and escort-lost signals | Context end, which clears player and auto holds | Battle Resolution owns outcomes |
 | AI-vs-AI Runner (#25) | `step(n)` calls | Final state, the per-tick state hash, the event log | The runner owns pacing; this system owns determinism |
-| Planning screens: Dossier (#47), Public History / Case File (#49), Ledger (#48), Debrief (#24) | Add and remove `PLANNING:<screen_id>` | — | Each screen owns its own reason key |
+| Planning screens: Dossier (#47), Public History / Case File (#49), Ledger (#48), Debrief (#24), port service screens (#27 and the Port screens), route planner (#26) | Add and remove `PLANNING:<screen_id>` | — | Each screen owns its own reason key |
 | Camera & Combat View (#45) and all presentation | — | Interpolation alpha; read-only state | Presentation owns drawing. The engine does not pause effects automatically under this design, so each effect class is assigned. **Frozen while held:** ship and projectile visuals, combat VFX and particles, combat tweens and animations, and combat sound one-shots (paused, then resumed). **Running while held:** all UI and planning screens, camera pan and zoom, selection and hover feedback, queued-order and latch markers, and music and ambience. **Mechanism, per class** (driven by one hold-changed signal; the driver lives outside every frozen subtree, rule 7): ship, projectile and VFX nodes, and the AnimationPlayers and node-bound Tweens under them, sit under one `CombatView` root whose `process_mode` is set to `PROCESS_MODE_DISABLED` while held and restored on resume; combat Tweens not bound to that subtree register with `CombatView` and get `pause()`/`play()`; particle nodes also get `speed_scale = 0` while held; combat one-shot players get `stream_paused = true`; combat presentation uses no `Timer` (timed effects are driven by tick events). UI, camera, planning screens and music sit outside `CombatView`. *These engine behaviours are NOT SOURCEABLE in `docs/engine-reference/godot/` (there is no `modules/core.md`); the tick-rate spike verifies them on 4.7.2* |
 
 **What the player cannot do:**

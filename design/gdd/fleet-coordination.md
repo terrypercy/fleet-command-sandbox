@@ -299,6 +299,6 @@ All in `assets/data/doctrine/`.
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **P2 order** (Fleet Coordination before Ship AI) must be written into Simulation Tick & Pause's phase table. | Tick owner | Tick re-review |
+| 1 | ~~**P2 order**~~ **Resolved 2026-10-30:** written into Simulation Tick & Pause's phase table (Fleet Coordination first, then Ship AI). | Tick owner | Closed |
 | 2 | **A fourth doctrine** ("Swarm": many small relays). | game-designer | Post-MVP |
 | 3 | **Doctrine values** are starting points for the AI-vs-AI Runner. | systems-designer | Runner tuning |
