@@ -220,7 +220,7 @@ Later tiers:
 | 21 | Fleet Coordination | Gameplay | MVP | Designed | design/gdd/fleet-coordination.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Fleet Orders, Ship AI, Runtime ID Service |
 | 22 | Battle Resolution & Retreat | Gameplay | MVP | Designed | design/gdd/battle-resolution-and-retreat.md | Simulation Tick & Pause, Combat Event Bus & Battle Record, Weapons & Damage, Fleet Orders, Runtime ID Service |
 | 23 | Machine Nodes & Strongholds | Gameplay | MVP | Designed | design/gdd/machine-nodes-and-strongholds.md | Content Data & Mod Loading, Hulls & Ship Definition, Coherence & Links, Fleet Coordination |
-| 24 | After-Action Debrief | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds, Runtime ID Service |
+| 24 | After-Action Debrief | Gameplay | MVP | In Design | design/gdd/after-action-debrief.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds, Runtime ID Service |
 | 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds, Runtime ID Service |
 | 26 | Sector Map & Travel (inferred) | Gameplay | MVP | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Not Started | — | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
