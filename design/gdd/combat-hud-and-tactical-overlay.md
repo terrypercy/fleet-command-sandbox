@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (single-layer Vigor bar; SR as ratio ticks, no fill; thresholds always shown; race-neutral vocabulary; return-attempt lead in pre-battle; no fog at any tier; held-tier toggles; notices pause while held)
 > **Implements Pillar**: Pillar 4 (Plan in the Open — everything the fight depends on is readable once learned); Pillar 5 (Living Against Made — Vigor and Coherence read differently at a glance); Pillar 3 (Hands on the Helm — the flagship's state is always in view)
 
 ## Summary
@@ -39,10 +39,11 @@ name of what it is doing, how close it is to falling back, which link will snap
 next. Nothing on the board lies, and nothing is missing that the fight depends on.
 
 *Anchor moment:* the player pauses. Over the enemy fleet: "Lattice Screen —
-ENGAGE", a strength bar at 5:4 with two notches marked "falls back" and "breaks".
+ENGAGE", a strength ratio of 5:4 on a chart-ink line, with two tick marks
+labelled "falls back at 1:1" and "breaks at 3:5".
 A dashed link line carries "2 hits to snap". The player sets Focus on the
 relay's link partner, resumes, and watches the bar slide past the first notch as
-the tell pulse fires.
+the tell pulse fires. The ratio drops past the first tick.
 
 **Pillars served:**
 - **Pillar 4 (Plan in the Open):** every rule the fight depends on has a readout,
@@ -92,6 +93,10 @@ can't tell those two states apart without colour".
    no maker, lineage or attribute from Truth Seeding & Candidates, and no
    Dossier sentence the Dossier has not yet revealed. Enemy doctrine is shown
    only as its name and its live phase; the rules behind it stay in the Dossier.
+   Withdrawal thresholds are combat information, not doctrine rules, and are
+   always shown. Doctrine and phase names, HUD glyphs and palettes come from a
+   race-neutral vocabulary; none may echo an attribute in the per-race
+   attribute table.
 6. **No raw IDs.** Ships are named by their display names (Runtime ID Service
    rule on display names); a Runtime ID never appears in a release build.
 7. **Reason codes are debug only.** Ship AI's reason codes, candidate scores
@@ -148,9 +153,10 @@ can't tell those two states apart without colour".
     - formation slots and the **phase name** over each enemy fleet; the tell
       countdown in seconds while one runs (Fleet Coordination UI);
     - each enemy fleet's **strength ratio** against the player's fleet, as a
-      ratio ("5:4") and a bar notched at `consolidate_sr` ("falls back") and
-      `withdraw_sr` ("breaks"); a stronghold with `withdraw_sr` 0 shows only the
-      first notch and "never withdraws";
+      ratio ("5:4") with notch words beside it ("falls back at 1:1", "breaks at
+      3:5"), drawn as chart-ink tick marks on a line, with no fill. The ticks sit
+      at `consolidate_sr` and `withdraw_sr`. A stronghold with `withdraw_sr` 0
+      shows only the first tick and "never withdraws";
     - order lines, queue numbers, escort and regroup slot ghosts, the focus
       marker, and the **leash ring** of each selected Hold or Escort ship (Fleet
       Orders UI);
@@ -174,7 +180,9 @@ can't tell those two states apart without colour".
     Hover shows after `HOVER_DELAY_MS`; keyboard focus on a ship (rule 30) shows
     the same inspector at once.
 14. **A tier adds; it never hides.** Opening the held tier never removes a live
-    element. Leaving it removes only held and hover elements.
+    element. Leaving it removes only held and hover elements. In the held tier,
+    order lines, link lines, rings and ghost paths each have a show/hide toggle;
+    they all start shown, and hiding one never hides a live element.
 
 **D. The pre-battle panel**
 
