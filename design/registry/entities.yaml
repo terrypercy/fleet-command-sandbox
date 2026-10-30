@@ -534,6 +534,40 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: armour_floor_pm
+    status: active
+    source: design/gdd/weapons-and-damage.md
+    referenced_by:
+      - design/gdd/weapons-and-damage.md
+    value: 150
+    unit: permille
+    notes: "Weapons D2 FLOOR_PM: minimum share of damage reaching hull; with the max(...,1) term guarantees no ship is immune."
+    added: 2026-10-30
+    revised: ""
+
+  - name: armour_ablate_pm
+    status: active
+    source: design/gdd/weapons-and-damage.md
+    referenced_by:
+      - design/gdd/weapons-and-damage.md
+    value: 250
+    unit: permille
+    notes: "Weapons D2 ABLATE_PM: armour removed per point of damage reaching armour."
+    added: 2026-10-30
+    revised: ""
+
+  - name: weapons_share_ms
+    status: active
+    source: design/gdd/weapons-and-damage.md
+    referenced_by:
+      - design/gdd/weapons-and-damage.md
+      - design/gdd/combat-space.md
+    value: 1.2
+    unit: ms
+    notes: "Weapons rule 14: p95 cap for P4+P5 incl. projectile sweeps at the Tick D10 fixture (30% of L = 4.0 ms). Combat Space 1.2 ms and RNG 0.6 ms also draw from L."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:
