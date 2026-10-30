@@ -75,9 +75,11 @@ floor, the defeat-cost limit and the money sinks, suppression included. The
 design review found no money sink, so this system exists to provide one.
 
 **Feature (26).** The mystery chain comes first in design order.
-- **Archive Fragments & Evidence** is the finite seeded set: claim templates,
-  provenance classes and independence groups. It owns how a fragment discovery
-  is presented to the player (a short artifact with a provenance stamp).
+- **Archive Fragments & Evidence** presents the finite seeded set: template
+  text, the provenance stamp, placement, and how a fragment discovery is shown
+  (a short artifact with a provenance stamp). What a claim means, provenance
+  reliability, independence groups and case generation belong to Truth
+  Seeding & Candidates (#16, 2026-10-30).
 - **Faction Belief & Blame** holds each faction's belief distribution, the
   reaction matrix and the derived public history, plus the record of what was
   shared, to whom and when. It also owns **suppression** — the in-case action
