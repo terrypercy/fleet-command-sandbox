@@ -257,7 +257,8 @@ carried into Game Feel and Acceptance Criteria instead.*
       - `PLANNING:<screen_id>` (Dossier, Ledger, Case File, Debrief, every port
         service screen — market, refit, care, contract board — the sector
         map's route planner, and an open encounter offer,
-        `PLANNING:encounter_offer`; World Clock rule 3, Sector Map & Travel)
+        `PLANNING:encounter_offer`; the port screens are `PLANNING:port_hub`,
+        `port_rest`, `port_care` and `port_fleet` (Ports, Rest & Care); World Clock rule 3, Sector Map & Travel)
       - `SYSTEM:<cause>` (menu, loading, save in progress, window focus lost)
     - **In `BATTLE`, opening any planning screen also adds `PLAYER_PAUSE`**, as
       opening the menu or losing focus does (rule 16). Closing the screen

@@ -383,7 +383,7 @@ All in `assets/data/vigor/`.
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Reference loadout and `vigor_per_shot` values** must be set so D5 holds; Weapons' numbers are starting values. | systems-designer, Weapons & Damage | Balance pass |
-| 2 | **Which ports offer rest and care**, and care's standing price. | Ports, Rest & Care (#27), Faction Reputation | When designed |
+| 2 | ~~**Which ports offer rest and care**~~ **Resolved 2026-10-30:** every dockable port offers rest; care is offered where the owner is an organic faction, priced by Faction Reputation D2 (Ports, Rest & Care rules 3, 18–19). | Ports, Rest & Care (#27) | Closed |
 | 3 | ~~**Ember policy for AI**~~ **Resolved 2026-10-30** by Ship AI rule 7. | Ship AI (#20) | Resolved |
 | 4 | **Chronicler at 73 %** after 3 battles is accepted; revisit in playtest. | game-designer | First expedition playtest |
 | 5 | ~~**Travel healing gate**~~ **Resolved 2026-10-30**: Credits, Upkeep & Sinks rule 13 signs it off with three conditions. | Credits, Upkeep & Sinks (#18) | Resolved |

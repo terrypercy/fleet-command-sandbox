@@ -311,6 +311,6 @@ None of its own. The faction panel shows the band, the value and the log.
 |---|---|---|---|
 | 1 | **Releasing the enmity lock** (a later reconciliation). | game-designer | 1.0 |
 | 2 | **MVP faucets without contracts** may make care scarce; check in playtest. | economy-designer | First campaign playtest |
-| 3 | **Free unaligned ports** (rule 9): Sector Map requires one per region (Sector Map & Travel rule 3); Ports, Rest & Care must still honour it. | #27 | When #27 is designed |
+| 3 | ~~**Free unaligned ports**~~ **Resolved 2026-10-30:** one per region (Sector Map & Travel rule 3); a free port always docks the player (Ports, Rest & Care rule 5). | #27 | Closed |
 | 4 | **Reaction magnitudes** per kind of share come from Faction Belief & Blame's reaction matrix. | #30 | When #30 is designed |
 | 5 | **Accusation-keyed hostility** (rule 8): Faction Belief & Blame must confirm that naming any race as maker sets it Hostile (or name a truth-blind alternative). | #30 | When #30 is designed |
