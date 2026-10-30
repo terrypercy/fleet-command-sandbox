@@ -304,6 +304,7 @@ already name Vigor.
 | Knob | Default | Safe range | Affects |
 |---|---|---|---|
 | `ERODE_MV` | 20 mV per V | 10 – 50 | Expedition length per spend |
+| Per-ship erosion modifier | 0 ‰ | −500 – +500 (Refit & Loadout D7 clamp) | A fitted graft module (`vigor_ceiling_erosion`, e.g. Deep Vein +200) scales this ship's `ERODE_MV` by `(1,000 + m) ÷ 1,000`; ember erosion and the floor are unchanged |
 | `MEMB_MV` | 100 mV per point | 50 – 200 | Membrane's erosion cost |
 | `REFILL_PM` | 500 | 250 – 1,000 | In-battle recovery |
 | `VIGOR_FLOOR_PM` | 250 | 150 – 400 | Floor (never changed by difficulty) |

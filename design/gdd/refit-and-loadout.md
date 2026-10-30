@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (Deep Vein costs ceiling erosion, not flux; MODULE_CHEAP_COST and WEAPON_DOMINATES; 'Kit fitted' not 'Realised'; mothball and clamp shown; truth-neutral stock)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — the refit is where a named counter becomes a fleet change); Pillar 4 (Plan in the Open — every fit shows what it counters and costs before you commit)
 
 ## Summary
@@ -31,7 +31,7 @@ is bought and sold here only.
 
 *"The Debrief said the relay held. So I docked, sold the thorns off two line
 ships, bolted Rootcutters on, and watched the Dossier line turn green: Relay
-cut, realised."* Refit is the moment a defeat becomes a plan. The player should
+cut, fitted."* Refit is the moment a defeat becomes a plan. The player should
 feel like an engineer answering a question the enemy asked, not a shopper
 buying a bigger number.
 
@@ -67,6 +67,9 @@ which ports stock which gear is a property of who owns them).
    `refit_stock`, amendment to Ports rule 1). Stock is fixed: no randomness, no
    quantities, no restocking. Every listed item can be bought any number of
    times.
+2a. **Truth-neutral stock.** No stock list, price or gear definition may vary
+    with the seeded maker. Machine gear (when it exists) carries no race
+    attribute (lore bible §6: the Instrument has no race lineage).
 3. **Stock validation** (content load, errors):
    - `REFIT_STOCK_MISSING`: a port lists `refit` with no `refit_stock`, or names
      one without listing `refit`.
@@ -74,7 +77,8 @@ which ports stock which gear is a property of who owns them).
      player can own (at MVP: organic hulls only; Hulls rule 6).
    - `REFIT_KIT_UNSTOCKED`: for each solo counter (`requires_allies` false),
      every weapon and module in its cheapest kit (D4) must be in the stock of at
-     least one free port. A counter that needs no ally must never need standing
+     least one free port, and a counter's kit may not be stocked only at one
+     race's ports. A counter that needs no ally must never need standing
      either (Machine Nodes rule 19; Sector Map rule 3 gives every region a free
      port).
 4. **Gear unlocks are Alpha.** At MVP everything in a stock is buyable. Loot &
@@ -95,9 +99,14 @@ which ports stock which gear is a property of who owns them).
    | `base_price` | int | D6 band | |
 7. **A module is a trade, never raw power** (concept: gear unlocks a counter).
    - `stat` is one of `armour`, `max_speed`, `accel`, `turn_rate`,
-     `vigor_flow`, `membrane_permille` (graft only), `ward_points` (kit only).
+     `vigor_flow`, `vigor_ceiling_erosion` (graft only; scales the erosion
+     Vigor charges from spending, Vigor rule 9), `membrane_permille` (graft
+     only), `ward_points` (kit only).
    - Every module has at least one positive and at least one negative entry.
-     Error `MODULE_NO_COST` otherwise.
+     Error `MODULE_NO_COST` otherwise. The sum of its negative permille must be
+     at least half the sum of its positive permille (counting an erosion
+     increase as negative), or it fails `MODULE_CHEAP_COST`: a token cost
+     never hides raw power.
    - One stat appears at most once per module. Error `MODULE_DUP_STAT`.
    - Effects enter the instance's modifier list (Hulls rule 12) and are
      derived on load, never saved as stats (Hulls rule 2). The maths is D7.
@@ -111,7 +120,8 @@ which ports stock which gear is a property of who owns them).
    Arcs, facings and positions belong to the mount and never change at refit.
    `fits` is the single predicate the Runner uses (rule 22).
 9. **No power or slot budget at MVP.** Organic guns already pay Vigor per shot
-   (Weapons rule 1, `vigor_per_shot`), which is the budget. A slot holds at most
+   (Weapons rule 1, `vigor_per_shot`). Vigor is a living reserve that erodes
+   and is restored only at port, not a capacity to vent. A slot holds at most
    one item. A mount or slot may be empty.
 10. **Fitted ships must still make sense.** At commit:
     - a non-relay **machine** hull in the player fleet must keep at least one
@@ -179,15 +189,20 @@ which ports stock which gear is a property of who owns them).
     Escort mounts have no group: they fire by Ship AI (Weapons rule 3).
 19. **The counter line.** The Refit screen lists every counter the Dossier
     shows for a known node, and for each one state, computed from data only:
-    - **Realised**: some kit's weapons and modules are all fitted on eligible
-      **active** ships (D5 = 0 with nothing taken from stores). Orders are not
-      gear: they are listed as "plus order: {order}" and never block Realised;
+    - **Kit fitted**: some kit's weapons and modules are all fitted on eligible
+      **active** ships (D5 = 0 with nothing taken from stores), with the
+      tooltip "The Dossier's counter is fitted. You still have to win it."
+      Orders are not gear: they are listed as "plus order: {order}" and never
+      block Kit fitted;
     - **In stores**: D5 is 0 but some items are in stores, not fitted;
     - **Missing**: D5 > 0, shown as "{k} items away ({cost})" with the kit
       named.
     Lent ships' gear counts toward the state, marked "(with lent ships)", and a
-    counter realised only with them is shown as such, never as solo. Mothballed
-    ships' gear never counts: they cannot deploy.
+    counter fitted only with them is shown as such, never as solo. Mothballed
+    ships' gear never counts, and the line says so: "{ship} is mothballed: its
+    gear does not count." In the Hull view each module-affected stat shows its
+    effective value, with "capped at +500‰" (or −500‰) when D7's clamp
+    applies.
     Each line also shows the counter's **cheapest kit cost** (D4 at the
     current yield) — the same figure the Dossier shows (Machine Nodes UI).
     The state updates on every draft change.
@@ -232,9 +247,9 @@ which ports stock which gear is a property of who owns them).
 
 | Counter state | Condition | Exits |
 |---|---|---|
-| Missing | D5 > 0 | In stores, Realised |
-| In stores | D5 = 0, some kit item in stores | Realised (fit), Missing (sell) |
-| Realised | a kit fully fitted on active ships | In stores, Missing (unfit, sell, mothball) |
+| Missing | D5 > 0 | In stores, Kit fitted |
+| In stores | D5 = 0, some kit item in stores | Kit fitted (fit), Missing (sell) |
+| Kit fitted | a kit fully fitted on active ships | In stores, Missing (unfit, sell, mothball) |
 
 ### Interactions with Other Systems
 
@@ -353,7 +368,9 @@ speed 120: armour 400 × 1,200 ÷ 1000 = **480**; speed 120 × 900 ÷ 1000 = **1
 
 MVP modules (placeholder names for the narrative team): **Thick Rind**
 (armour +200, max_speed −100); **Long Fronds** (turn_rate +250, armour −150);
-**Deep Vein** (vigor_flow +200, membrane_permille −150).
+**Deep Vein** (vigor_flow +200, vigor_ceiling_erosion +200): the ship lives
+faster and wears faster (not a flux distributor: its cost is lasting erosion
+of the ceiling, restored only at port).
 
 ## Edge Cases
 
@@ -382,14 +399,16 @@ MVP modules (placeholder names for the narrative team): **Thick Rind**
 - **If a counter has no priced kit**: it is not shown as affordable; Machine
   Nodes rule 20 fails it (`COUNTER_UNAFFORDABLE`), and the line reads
   "No kit available".
-- **If a counter's kit has orders only**: D4 = 0, always Realised for gear; the
+- **If a counter's kit has orders only**: D4 = 0, always Kit fitted for gear; the
   line lists the orders.
 - **If two kits tie on D5**: the first listed is shown.
 - **Degenerate: stacking one module type to max a stat.** Each module carries a
   cost, and D7 clamps the sum to ±500 ‰, so stacking trades as much as it gains.
 - **Degenerate: buying the strongest gun everywhere.** Price is set by size
   band, not quality, and types counter each other (Weapons rule 6). There is no
-  top-tier gun to buy.
+  top-tier gun to buy: weapons of one size and family must differ in
+  `dmg_type` or `feed`, and a weapon better than another in every field fails
+  `WEAPON_DOMINATES`.
 
 ## Dependencies
 
@@ -428,7 +447,7 @@ MVP modules (placeholder names for the narrative team): **Thick Rind**
 - Fitting a part plays a short, side-specific cue: organic grafting is wet and
   growing; machine fitting is a clean clamp. Owned by audio-director and
   art-director.
-- A counter line turning Realised gets one distinct confirmation cue, never
+- A counter line turning Kit fitted gets one distinct confirmation cue, never
   repeated on reopen.
 
 ## Game Feel
@@ -466,7 +485,7 @@ MVP modules (placeholder names for the narrative team): **Thick Rind**
 
 - **AC-01 (Logic; rule 1)**: at a port without `refit`, `open` returns the not-listed reason; at a Hostile-band port docking is already refused; at a free port with stock, `open` returns OK.
 - **AC-02 (Logic; rule 3)**: a solo counter whose cheapest kit names an item in no free port's stock fails `REFIT_KIT_UNSTOCKED`.
-- **AC-03 (Logic; rule 7)**: a module with only positive entries fails `MODULE_NO_COST`; one with a stat twice fails `MODULE_DUP_STAT`.
+- **AC-03 (Logic; rule 7)**: a module with only positive entries fails `MODULE_NO_COST`; one with +300 armour and −1 turn_rate fails `MODULE_CHEAP_COST`; one with a stat twice fails `MODULE_DUP_STAT`.
 - **AC-04 (Logic; rule 8)**: an S spine weapon fits an L mount accepting `spine`; an L weapon in an M mount, a `photic` weapon in a `spine`-only mount, and a graft in a kit slot are all refused.
 - **AC-05 (Logic; rule 10)**: a test machine hull in the player fleet with its only unfed mount emptied cannot commit (`REFIT_NO_UNFED_GUN`).
 - **AC-06 (Logic; rule 11)**: the World Clock's campaign time is identical before opening and after committing a refit.
@@ -477,7 +496,7 @@ MVP modules (placeholder names for the narrative team): **Thick Rind**
 - **AC-11 (Logic; rule 15)**: a draft leaving 49 items in stores cannot commit.
 - **AC-12 (Logic; D4)**: `cheapest_kit(relay_cut)` returns kit B, 2,800; with A and B tied, A is returned.
 - **AC-13 (Logic; D5)**: the D5 example shows "1 item away (1,000)", kit B.
-- **AC-14 (Logic; rule 19)**: a kit fitted only on a mothballed ship is not Realised; fitted on an active ship it is; fitted partly on a lent ship it shows "(with lent ships)".
+- **AC-14 (Logic; rule 19)**: a kit fitted only on a mothballed ship is not Kit fitted; fitted on an active ship it is; fitted partly on a lent ship it shows "(with lent ships)".
 - **AC-15 (Logic; rule 18)**: swapping the weapon in a PRIMARY mount keeps PRIMARY; a never-set mount takes Flagship rule 6's default.
 - **AC-16 (Logic; D6)**: an M weapon priced 2,300 fails `REFIT_PRICE_BAND`.
 - **AC-17 (Logic; D7)**: Thick Rind on armour 400 / speed 120 gives 480 / 108; three Thick Rinds clamp armour at +500 ‰ (600).
@@ -485,7 +504,7 @@ MVP modules (placeholder names for the narrative team): **Thick Rind**
 - **AC-19 (Integration; rule 22)**: the Runner fits `relay_cut` kit B on the reference fleet with `fits` in the stated order and gets the same loadout as a hand trace; an unfittable kit gives `RUNNER_KIT_UNFIT`.
 - **AC-20 (Logic; rule 23)**: loading a save whose stored item's definition is gone keeps it inert, worth 0; a fitted missing item leaves its slot empty.
 - **AC-21 (Logic; D2)**: property test over every preset pair: no buy-then-sell sequence ends with more credits.
-- **AC-22 (Playtest)**: after a scripted loss, 4 of 5 players reach a Realised counter line within 3 minutes of opening Refit, and can say which counter it is.
+- **AC-22 (Playtest)**: after a scripted loss, 4 of 5 players reach a Kit fitted counter line within 3 minutes of opening Refit, and can say which counter it is.
 - **AC-23 (Playtest)**: 4 of 5 players describe modules as trade-offs, not upgrades.
 
 ## Open Questions
