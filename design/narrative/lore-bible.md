@@ -486,7 +486,7 @@ Names are working names pending the clean-room check (Open Question 2).
 | 2 | **Open.** Clean-room lore check against Starsector, and Mass Effect for the Instrument and the Patchwork (names, the Dimming, the Turning, the Patchwork), before this bible is approved (concept, Originality). The 2026-10-30 revision addressed the CD's flagged echoes but does not replace this check. | creative-director |
 | 3 | Starting beliefs: lore suggests a symmetric blame cycle (Halsk suspect Quorrin, Quorrin suspect Ithren, Ithren suspect Orrowen, Orrowen suspect Halsk), seed-independent. It breaks at C = 3. Input for #30, not a decision. | game-designer (#30) |
 | 4 | Hues for Ithren and Quorrin, and confirmation that "bone" on machines does not read as shell or carapace. | art-director |
-| 5 | Should a forger's identity ever appear on a fragment? Recommendation: never at MVP. | game-designer (#28) |
+| 5 | **Answered 2026-10-30 (Archive Fragments #28): never.** Should a forger's identity ever appear on a fragment? Recommendation: never at MVP. | game-designer (#28) |
 | 6 | Confirm the Reckoning's "origin" is the Midwater Common Yards in every seed. | #34 owner |
 | 7 | Localisation of value slots (grammar-neutral; Truth Seeding OQ 5). | localization-lead |
 | 8 | Scope: producer sign-off on codex volume implied by sections 4 and 7. | producer |

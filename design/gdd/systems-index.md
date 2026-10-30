@@ -224,7 +224,7 @@ Later tiers:
 | 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Designed | design/gdd/ai-vs-ai-runner-and-ai-debug-tools.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds, Runtime ID Service |
 | 26 | Sector Map & Travel | Gameplay | MVP | Designed | design/gdd/sector-map-and-travel.md | Deterministic RNG & Seed Streams, Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Designed | design/gdd/ports-rest-and-care.md | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
-| 28 | Archive Fragments & Evidence | Narrative | MVP | In Design | design/gdd/archive-fragments-and-evidence.md | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
+| 28 | Archive Fragments & Evidence | Narrative | MVP | Designed | design/gdd/archive-fragments-and-evidence.md | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
 | 29 | Points of Interest (inferred) | Gameplay | MVP | Not Started | — | Sector Map & Travel, Archive Fragments & Evidence |
 | 30 | Faction Belief & Blame | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Faction Reputation & Standing, Credits, Upkeep & Sinks, Archive Fragments & Evidence, Runtime ID Service |
 | 31 | Case File & Deduction | Narrative | MVP | Not Started | — | Truth Seeding & Candidates, Archive Fragments & Evidence |
@@ -479,10 +479,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 27 |
+| Design docs started | 28 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 27/43 (#1 In Review; #2–#27 pending review) |
+| MVP systems designed | 28/43 (#1 In Review; #2–#28 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---

@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (medium-neutral tells; honest fantasy; unfound count and lost sites in the share preview; witness race never implied)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — fragments are the evidence the player weighs and chooses what to share); Pillar 1 (Every Defeat Is a Lead — breaking a stronghold yields a fragment); Pillar 4 (Plan in the Open — provenance and reliability are readable)
 
 ## Summary
@@ -33,9 +33,10 @@ maker (G6).
 
 You are a detective with a locker of evidence. Each card has a story of how it
 got to you: a relic sealed where it was dug up, a machine log with an unbroken
-chain, an elder's account, or a copy whose seal was pressed over an older one.
-You learn to read those stories. By the third forgery you know a dated-before-
-its-source copy at a glance. Testimony feels like a real witness: sure of
+chain, an account kept at a port, or a copy dated before its own source. The
+card never names a race: you turn its value into suspects yourself, from the
+Dossier. A forgery is always marked, and its tell shows you how copies give
+themselves away, a vocabulary you carry from one campaign to the next. Testimony feels like a real witness: sure of
 itself, often right, never proof. The fragments come in the order you found
 them, so your locker is a record of your own campaign.
 
@@ -62,7 +63,7 @@ there because of who did it" or "the game tricked me with a hidden label".
    | `slot_kind` | enum | `document`, `account` | `document` hosts DIRECT_PHYSICAL, RECORD or FORGERY; `account` hosts TESTIMONY only |
    | `source_kind` | enum | `node`, `derelict`, `archive`, `witness` | `node`, `derelict`, `archive` need `document`; `witness` needs `account` |
    | `host` | ref → `machine_node`, `poi` or `port` | 1 | `node` → a machine node's `fragment_slot`; `derelict`, `archive` → a POI (#29); `witness` → a port or a POI |
-   | `site_name` | string key | 1 | Shown on the card. Authored, truth-neutral (lore bible §1.1) |
+   | `site_name` | string key | 1 | Shown on the card. Authored, truth-neutral (lore bible §1.1). A witness's `site_name` and testimony card never state or imply the speaker's race: the host port is where the account is kept, not whose it is |
 
 2. **Load validation** (content load, all errors): `SLOT_KIND_MISMATCH`
    (`source_kind` and `slot_kind` disagree); `SLOT_HOST_UNKNOWN`;
@@ -143,7 +144,7 @@ there because of who did it" or "the game tricked me with a hidden label".
     - DIRECT_PHYSICAL: "Recovered in place. The builders' script on it: {value}."
     - RECORD: "A machine log gives the builders' script as: {value}."
     - TESTIMONY: "An elder's account of the builders' script: {value}."
-    - FORGERY: "A copied page gives the builders' script as: {value}."
+    - FORGERY: "A copy gives the builders' script as: {value}."
 19. **The provenance block** has three lines: **Class** (fixed line per class),
     **Custody** (a stamp), **Chain** (rule 14).
 
@@ -157,10 +158,13 @@ there because of who did it" or "the game tricked me with a hidden label".
     The stamp depends on class only (and, for a forgery, the drawn tell).
 20. **Forgery tells** come from one shared set, used for every race (lore bible
     §7.1). MVP set of 4 (illustrative):
-    - "Seal pressed over an earlier seal."
     - "The copy is dated before its source."
-    - "The ink is newer than the page."
-    - "Cites a ledger not yet kept when it was written."
+    - "Its mark of origin is newer than the work."
+    - "The custody chain skips a keeper."
+    - "Two keepers claim to have held it at once."
+    Each tell must fit every race's forging medium in lore bible §7.1 (house
+    seals, strand-books, spar-charts, ore cords); no tell names a seal, ledger,
+    tally, knot or incision, so no tell implies which race forged the copy.
 
     Tells never use attribute vocabulary (no era names, scripts, numbering
     bases, metals), never a race's seal, house, script or name. The Dossier's
@@ -186,6 +190,12 @@ there because of who did it" or "the game tricked me with a hidden label".
     #30 snapshots `held_fragments()` itself when a share is committed (good
     faith is judged on the held set at share time). Shared and suppressed state
     belong to #30; the card shows a "Shared with ⟨faction⟩" line read from #30.
+    For the preview, #28 also provides `unfound_count_by_class()`, so it can
+    state "k reliable fragments are still unfound; any may contradict this"
+    (class counts are knobs, so this is maker-neutral). If a share would make a
+    host port Hostile, the preview lists that port's unclaimed evidence site as
+    lost. #49's preview and #30's commit read `held_fragments()` inside one
+    planning hold, so no grant can land between them.
 25. **To Exposure (#32).** `unfound_fragments()` returns every fragment in
     PLACED or RESERVED, in ascending Runtime ID. A RESERVED fragment counts as
     unfound until claimed (Machine Nodes rule 17). `is_unfound(id)` answers for
@@ -306,7 +316,7 @@ Shuffle `[f1, f2, f3, f4, f6]` with draws 2, 0, 2, 1:
 - i = 2, j = 2 → unchanged; i = 1, j = 1 → unchanged.
 
 So A1 ← f4, D1 ← f2, N1 ← f6, N2 ← f1, N3 ← f3. W1 ← f5 (no draws). Tell for f6:
-draw 0 → "Seal pressed over an earlier seal." Draws used: 0 + 4 + 0 + 0 + 1 = 5,
+draw 0 → "The copy is dated before its source." Draws used: 0 + 4 + 0 + 0 + 1 = 5,
 matching D1. Runtime IDs go in slot order: A1's f4, D1's f2, N1's f6, N2's f1,
 N3's f3, W1's f5.
 
@@ -447,7 +457,9 @@ Truth Seeding's knobs.
 - **AC-22 (Logic; D4)**: at `N` = 24 with longest strings, the section is ≤ 64 KiB.
 - **AC-23 (Logic; rule 15)**: toggling `read` on every card leaves every simulation hash unchanged.
 - **AC-24 (Review; rules 18–20)**: a writing review confirms templates name values only, never races; wording per (axis, class) is fixed with only the value slot changing; tells use no attribute vocabulary and no race seal or name; the lore bible §1.1 checklist passes.
-- **AC-25 (Playtest; rules 13, 20)**: in a 5-player playtest, at least 4 of 5 explain why a forgery is marked by citing its tell, and none reports that wording, order or location "gave away" the maker.
+- **AC-25 (Playtest; rules 13, 18)**: in a 5-player playtest, at least 4 of 5 map a held reliable fragment to the candidate it contradicts before opening the Case File, and none reports that wording, order or location "gave away" the maker.
+- **AC-27 (Review; rule 20, lore bible §7.1)**: no tell names or implies a race's forging medium (seal, ledger, tally, knot, incision).
+- **AC-28 (Logic; rule 24)**: the share preview states the unfound reliable count from `unfound_count_by_class()`, lists evidence sites lost to a share's new hostility, and a grant attempted between preview and commit is deferred until the hold ends.
 - **AC-26 (Playtest; rule 5)**: every tester holds at least one fragment before the first stronghold return.
 
 ## Open Questions
