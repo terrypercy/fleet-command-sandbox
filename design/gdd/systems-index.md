@@ -231,7 +231,7 @@ Later tiers:
 | 32 | Exposure & Rival Investigation | Narrative | MVP | Designed | design/gdd/exposure-and-rival-investigation.md | Deterministic RNG & Seed Streams, World Clock, Archive Fragments & Evidence, Faction Belief & Blame, Runtime ID Service |
 | 33 | Allied Lending | Gameplay | MVP | Designed | design/gdd/allied-lending.md | Hulls & Ship Definition, Fleet Coordination, Faction Belief & Blame, Runtime ID Service |
 | 34 | Reckoning & Endings | Narrative | Vertical Slice | Not Started | — | Truth Seeding & Candidates, Credits, Upkeep & Sinks, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
-| 35 | Refit & Loadout | Progression | MVP | Not Started | — | Hulls & Ship Definition, Weapons & Damage, Credits, Upkeep & Sinks |
+| 35 | Refit & Loadout | Progression | MVP | In Design | design/gdd/refit-and-loadout.md | Hulls & Ship Definition, Weapons & Damage, Credits, Upkeep & Sinks |
 | 36 | Salvage & Recovery | Economy | Vertical Slice | Not Started | — | Credits, Upkeep & Sinks, Battle Resolution & Retreat, Runtime ID Service |
 | 37 | Markets & Trade | Economy | MVP | Not Started | — | Credits, Upkeep & Sinks, Sector Map & Travel |
 | 38 | Contracts & Missions | Economy | Alpha | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Faction Reputation & Standing, Credits, Upkeep & Sinks, Sector Map & Travel |
