@@ -144,15 +144,17 @@ migration beat lives in the paragraph above.*
    arrays, and string-keyed maps; content IDs as strings; Runtime IDs as
    integers. Forbidden: engine objects, nodes, resources, callables, node
    paths, resource paths, engine value types (stored as explicit integer or
-   fixed-point fields instead), and floats in authoritative simulation state.
-   If a float cannot be avoided, it is stored as its exact bit pattern, never
-   as decimal text, with -0.0 written as +0.0 and NaN or infinity refused (the
+   fixed-point fields instead), and raw floats anywhere in a payload.
+   If a float cannot be avoided, its schema declares an explicit bit-pattern
+   field and the value is stored as its exact bit pattern, never as decimal
+   text, with -0.0 written as +0.0 and NaN or infinity refused (the
    same rule as Content Data D3). Saves never use an object-deserialising engine
    call or a resource load (rule 26).
 5. **Canonical output.** Keys sorted by byte value, arrays in their stored order,
    collections keyed by Runtime ID written sorted by ID, sections written in
-   registry order. Saving, loading and saving again produces a byte-identical
-   file. Dictionary iteration order is never a source of order.
+   registry order. Saving, loading and saving again produces byte-identical
+   sections and a byte-identical header, except `save_counter`, `saved_at_utc`
+   and the header checksum, which change with every save. Dictionary iteration order is never a source of order.
 6. **A checksum detects accidental corruption, nothing more.** Each section and
    the header carry a checksum. It is never described, to players or in code, as
    tamper protection. Editing your own save is allowed: validation, not trust,
@@ -173,8 +175,11 @@ migration beat lives in the paragraph above.*
    - one migration per version step, N to N+1, with no gaps.
    The registry is built at startup and injected; it is never an autoload.
    A duplicate ID, a dependency cycle or a missing migration step stops the game
-   at startup as a programmer error. A test enumerates every stateful system and
-   fails if one owns no section.
+   at startup as a programmer error. Every member of the simulation state is
+   tagged with the one section that owns it; a test walks the simulation state's
+   members and fails if any member has no section or more than one. (A missing
+   migration step is therefore caught at startup; the load-time refusal in rule
+   16 is defence in depth.)
 8. **A section owns its payload; Save/Load owns the envelope.** Save/Load never
    reads inside a payload. A section never reads another section's payload:
    links between systems go by ID only (Runtime ID Service, Core Rule 7), and
@@ -257,7 +262,9 @@ migration beat lives in the paragraph above.*
 18. **When a save may happen.** Only at a tick boundary, with no load, migration
     or other save in progress. A request made mid-step waits for the next
     boundary. Outside BATTLE, saving is free (manual or autosave). In BATTLE,
-    the only save is the suspend save (rules 22–24); the Save UI greys out
+    the only saves are the battle-start autosave, written at the tick-0
+    boundary before the first step (rule 19), and the suspend save (rules
+    22–24); the Save UI greys out
     manual saving there and says why.
 19. **Autosave triggers**, each at the next boundary:
     - battle start, at tick 0, before the first step (the battle-start slot);
@@ -281,8 +288,11 @@ migration beat lives in the paragraph above.*
     verify) deletes the `.tmp`, leaves the slot and `.bak` untouched, and tells
     the player the save failed and why. The game keeps running and the player can
     retry. A section over its ceiling fails the save; it is never trimmed. On
-    startup, orphaned `.tmp` files are deleted, and a slot whose file is missing
-    or fails its checksum falls back to its `.bak`, telling the player.
+    startup, orphaned `.tmp` files are deleted. The slot list reads headers only
+    and verifies the header checksum; a slot whose file is missing, or whose
+    header fails, is listed from its `.bak`. The full section checksums are
+    verified when the slot is loaded; a failure there falls back to the `.bak`,
+    telling the player.
     *Whether the platform rename replaces atomically is NOT SOURCEABLE; the
     guarantee is the behaviour above, not a rename property (save schema ADR).*
 
@@ -317,16 +327,21 @@ migration beat lives in the paragraph above.*
 25. **Limits before reading, in order.** File size against `SAVE_MAX` before any
     read; header against `HEADER_MAX`; declared lengths against the actual size;
     section count against `SECTIONS_MAX`; each section against its own
-    `ceiling_bytes`; then Content Data D1's depth, array, key, string and ID
-    limits during parsing; non-finite or out-of-range numbers refused. The first
-    failure refuses the load. No limit failure ever crashes or hangs the game.
+    `ceiling_bytes`; then Content Data D1's limits during parsing (`JSON_DEPTH`,
+    `ARRAY_LEN`, `OBJECT_KEYS`, `STRING_FIELD_MAX`, `ID_MAX_BYTES`); non-finite
+    or out-of-range numbers refused. The first failure refuses the load. The one
+    exception is carried sections over `OPAQUE_MAX`: they are not a refusal but
+    a declared loss in the confirm summary (rule 17, Edge Cases). No limit failure ever crashes or hangs the game.
 26. **No object deserialisation, ever.** Save code never calls an engine API
     that rebuilds objects from save data, and never loads a resource from a path
     in a save. A static check enforces this.
 27. **Paths and names.** The folder is named by `campaign_id`, never by
-    player text. A player-chosen slot label is display meta only. Importing a
-    save copies the chosen file into the campaign folder through the size-capped
-    read, then validates it; nothing is ever loaded in place from an arbitrary
+    player text. A valid `campaign_id` is exactly 32 lowercase hex characters;
+    anything else refuses the save. A player-chosen slot label is display meta
+    only. Importing a save copies the chosen file, through the size-capped read,
+    into a staging folder, validates it, then moves it into the folder of the
+    `campaign_id` in its header (created if absent) as a new manual slot; if that
+    campaign's manual slots are full, the import is refused with that reason; nothing is ever loaded in place from an arbitrary
     path. Links and non-regular files are refused.
 28. **Header text is plain text.** Captain name and every display string are
     shown as plain text with Content Data, Core Rule 14's escaping: length
@@ -426,7 +441,8 @@ guard, whatever compression the save schema ADR picks).
 At write: `bytes_s ≤ ceiling_bytes_s` for every section, or the save fails
 (Core Rule 21). At load: every declared `bytes_s ≤ ceiling_bytes_s` and
 `Σ carried_bytes ≤ OPAQUE_MAX`, checked before the section is parsed (Core
-Rule 25). `SECTIONS_MAX` = 256 bounds the section count (registered plus
+Rule 25). Carried sections that do not fit are dropped, largest first, as a
+declared loss in the confirm summary, not a refusal. `SECTIONS_MAX` = 256 bounds the section count (registered plus
 carried).
 
 ### D3. Autosave due
@@ -512,7 +528,7 @@ save schema ADR is accepted.
   failed: not enough disk space" (or "…cannot write to the save folder") with a
   Retry. The game keeps running.
 - **If autosaves keep failing**: the failure message is shown the first time,
-  then once per 10 minutes at most, so the player is told but not spammed. A
+  then once per `AUTOSAVE_FAIL_NOTICE_MIN` (10) minutes at most, so the player is told but not spammed. A
   manual save attempt always shows its result.
 - **If a section is over its ceiling at write**: the save fails, naming the
   section ("Save failed: fleet data too large"), and a bug is logged. It is a
@@ -637,11 +653,13 @@ designed; their GDDs must list this contract.
 | `HEADER_MAX` | 64 KiB | 16 – 256 KiB | Header size cap | Large package lists refused | Weaker guard |
 | `OPAQUE_MAX` | 2 MiB | 0.5 – 8 MiB | Missing-mod data carried | Mod state lost on load | Larger saves |
 | `SECTIONS_MAX` | 256 | 64 – 1,024 | Section count cap | Heavily modded saves refused | Weaker guard |
+| `AUTOSAVE_FAIL_NOTICE_MIN` | 10 | 1 – 60 | How often a repeating autosave failure is shown | Message spam | Player unaware saves are failing |
 | `SAVE_CAPTURE_MS` | 50 (provisional) | 16 – 100 | Hitch budget (D6) | Unmeetable | Visible stalls |
 | `MIN_SAVE_FORMAT` | first public format | fixed | Oldest loadable save (Core Rule 12) | — | — (raising it needs an ADR) |
 
 All live in a data file (coding standards: gameplay values data-driven), except
-`MIN_SAVE_FORMAT`, which changes only by ADR.
+`MIN_SAVE_FORMAT`, which changes only by ADR. A knob outside its safe range in the data file stops
+the game at startup as a programmer error, like a registry error (Core Rule 7).
 
 ## Visual/Audio Requirements
 
@@ -695,7 +713,134 @@ Owned by Menus, Settings & Save UI (#51); this system supplies the data.
 
 ## Acceptance Criteria
 
-[To be designed]
+**Test harness for every Logic AC:** Save/Load runs against an injected in-memory
+store that logs every open, read, write, rename and delete and can be told to
+fail at any one of them, plus an injected wall clock, entropy source and section
+registry. Logic tests never touch the real filesystem (migration fixtures are
+GDScript constant data, Open Question 10). An AC that needs a real filesystem, a
+real process kill or a real device is tagged **Integration** and says so.
+*Drafted by `qa-lead`; test counts are its proposals (Open Question 11).*
+
+### Logic — `tests/unit/save/` (BLOCKING)
+
+**A. What a save is**
+
+- **AC-01 (Logic; Core Rule 1)**: **GIVEN** an injected entropy source and seed streams in a known state, **WHEN** a campaign is created, **THEN** `campaign_id` is the 128-bit value from the entropy source written as 32 lowercase hex characters, and every seed stream's state is unchanged. Every path the store is asked to write starts with `user://saves/<campaign_id>/`; none starts with `res://`. One save commits exactly one slot file.
+- **AC-02 (Logic; Core Rules 1, 16; Game Feel)**: **GIVEN** each refusal reason in Core Rule 16 and each failure message in Edge Cases, **WHEN** its player-facing message is built, **THEN** it contains no `user://`, no `res://` and no absolute path, and it names a reason and an action the player can take.
+- **AC-03 (Logic; Core Rule 2, D5)**: a campaign offers exactly `MANUAL_SLOTS` (20) manual, `AUTOSAVE_SLOTS` (3) autosave, one battle-start and one suspend slot. A 4th autosave replaces the autosave slot with the smallest `save_counter`. With all 20 manual slots full, saving asks the player to overwrite or delete, and no manual save is ever deleted without the player. A second battle start overwrites the battle-start slot.
+- **AC-04 (Logic; Core Rule 3)**: **GIVEN** a save whose section bytes are garbage but whose header is intact, **WHEN** the slot list is built, **THEN** it returns every header field Core Rule 3 names and a section-parser spy records zero calls. **GIVEN** a Runtime ID of 2^63 − 1 and an RNG state with its top bit set, **THEN** both round-trip exactly, and the encoded file holds every 64-bit value as a string, with no bare number above 2^53.
+- **AC-05 (Logic; Core Rule 4)**: a payload holding, one case each, a node, a resource, a callable, a node path, a resource path, an engine vector value, or a raw float fails the save, naming the section; nothing is committed. In a declared bit-pattern field, −0.0 is written with +0.0's bits, and NaN, +inf and −inf are refused at write.
+- **AC-06 (Logic; Core Rule 5)**: the same state built with dictionaries filled in two insertion orders encodes to identical bytes. Keys come out in byte order (test `"B"`, `"a"`, `"é"`); a collection keyed by Runtime ID comes out sorted by ID; sections come out in registry order whatever the registration order.
+- **AC-07 (Logic; Core Rule 5, round trip)**: **GIVEN** every migration fixture after migration (AC-15) plus 100 saves generated from fixed seeds, **WHEN** each is saved, loaded and saved again, **THEN** every section is byte-identical, and the header is byte-identical except `save_counter`, `saved_at_utc` and the header checksum.
+- **AC-08 (Logic; Core Rule 6)**: flipping any byte of any section refuses the load with a checksum failure naming that section; flipping a header byte refuses it with a header checksum failure. A player-edited, re-checksummed payload that still validates loads. No player-facing string in save code calls the checksum tamper protection (static check).
+
+**B. The section registry**
+
+- **AC-09 (Logic; Core Rule 7, startup errors)**: each of these registries stops the build with a named programmer error, and no save or load can start: a duplicate `section_id`; a `loads_after` cycle of length 2 and of length 3; a section at `version` 3 with only the 1→2 migration; a `section_id` of `NAME_MAX_BYTES` + 1 (65) bytes; a `section_id` outside `base:` or a loaded package's namespace. A 64-byte `section_id` is accepted. The registry is not an autoload in `project.godot` (static check).
+- **AC-10 (Logic; Core Rule 7, coverage)**: a test walks every member of the simulation state and fails if any member is tagged with no section, or with more than one.
+- **AC-11 (Logic; Core Rule 8)**: during a load each section's entry point receives only its own payload and the ID resolver; a call-order spy shows the cross-reference pass starts only after every section is built. The envelope code saves and loads a section whose payload is opaque random bytes accepted by a schema stub, showing it never reads inside a payload.
+- **AC-12 (Logic; Core Rule 9)**: running every section's write twice on the same state gives byte-identical output, and leaves `state_hash`, the Runtime ID `next_id`, the retired-ID set and the store log unchanged.
+- **AC-13 (Logic; Core Rule 10)**: each section's schema has a recorded fingerprint per `version`. The test fails if a fingerprint changes without `version` rising by exactly 1, or if `version` rises without a matching N→N+1 migration and fixture. Raising `format_version` changes no section `version`.
+- **AC-14 (Logic; Core Rule 11)**: every registered migration, run with the clock, random source, Runtime ID Service and scene tree injected as spies that fail on any call, calls no spy, and the same input twice gives byte-identical output. A declared ID request is fulfilled after validation and before tick 1 (order spy). A declared loss appears in the confirm summary.
+
+**C. Loading**
+
+- **AC-15 (Logic; Core Rule 12, fixtures)**: for every `format_version` from `MIN_SAVE_FORMAT` to current, and every `(section_id, version)` from 1 to current, a fixture exists, migrates to current, passes the current schema and equals its stored expected output. A CI check against the last public release tag fails if any fixture is missing or changed. A fixture below `MIN_SAVE_FORMAT` gets the named refusal naming the build that can open it. A v1 fixture of a section now at v6 runs all 5 steps.
+- **AC-16 (Logic; Core Rule 13)**: one section set registered in 5 orders shuffled from fixed seeds gives an identical load-order log every time: header, format check, content comparison, Runtime ID section, then the rest in dependency order with ties by `section_id` byte order.
+- **AC-17 (Logic; Core Rule 14, no partial load)**: one test per stage 1–7 with a failure injected there. Each refuses with a named reason, never calls the swap (stage 8), leaves the running game's `state_hash` and Runtime ID table unchanged, and the store log shows no write, rename or delete. Stage 6 uses three fixtures: a dangling reference, a wrong-kind reference, and `next_id` ≤ the highest ID seen.
+- **AC-18 (Logic; Core Rule 15)**: a table-driven test expects Refuse > Confirm > Migrate > Compatible: identical content and current versions → Compatible, silent; older section with a complete chain → Migrate, silent; Migrate plus a declared loss → Confirm; content differs → Confirm; content differs plus a refusal reason → Refuse; different build, OS or CPU architecture only → Compatible with the information line. With a chain missing, the confirm-summary callback is never called. Cancelling a confirm leaves the running game and the store log unchanged.
+- **AC-19 (Logic; Core Rule 16)**: one fixture per refusal reason, each refused with its named code and data: over `SAVE_MAX`; parse or limit failure; checksum failure (section); newer format; newer section (section); missing migration step (section and both versions — through a test registry that skips the startup check, since rule 7 catches it first); older than `MIN_SAVE_FORMAT`; Runtime ID validation failure (ID); missing required section; unresolved reference (section, field, ID); battle state at a different `TICK_RATE`.
+- **AC-20 (Logic; Edge Cases: newer build)**: a save with a newer `format_version` is refused before any section is read (parser spy: zero calls), and the message names the save's build.
+- **AC-21 (Logic; Edge Cases: `TICK_RATE`)**: a suspend and a battle-start autosave written at 60 and loaded at 30, and the reverse, are refused with "This battle can't resume on this machine's simulation rate", and the newest campaign save is offered. A campaign save loads across 60 and 30 in both directions.
+- **AC-22 (Logic; Core Rule 17, missing mod)**: a save with sections from `modA`, loaded without `modA`, names `modA` in the pre-load summary and loads. Saved again, `modA`'s sections are byte-identical to the originals. With `modA` reinstalled, its state equals its state before removal. An unknown `base:` section, an unknown section in a loaded package's namespace, and a section with no valid namespace are each refused.
+- **AC-23 (Logic; Edge Cases: older mod reinstalled)**: a carried `modA` section at v3 with `modA` reinstalled at v2 is refused, naming `modA`, v3 and v2.
+- **AC-24 (Logic; Edge Cases: `OPAQUE_MAX`; D2)**: carried sections totalling exactly `OPAQUE_MAX` (2 MiB) load with no loss line. At `OPAQUE_MAX` + 1, from 3 sections of different sizes, the confirm summary lists the ones that do not fit, largest first, as "will be lost". Cancel changes nothing; accepting loads, and the next save omits exactly those sections.
+
+**D. Saving**
+
+- **AC-25 (Logic; Core Rule 18)**: a mid-step request is captured at the next tick boundary (tick spy). A manual save in BATTLE is refused with the in-battle reason. During a load an autosave request is refused silently and a manual one gets "Can't save while loading". While a save is in flight a second request waits, and a further autosave request merges into the waiting one.
+- **AC-26 (Logic; Core Rule 19, D3)**, injected wall clock and World Clock day, each boundary tested one step either side:
+  - `day_now − day_at_last_autosave` = 2 not due, = 3 due; `real_s_since_last_autosave` = 599 not due, = 600 due;
+  - a docking trigger and an outcome trigger each make an autosave due;
+  - docking 40 s after an outcome autosave is deferred and runs at the first boundary at or after 60 s;
+  - three due triggers give one autosave; a deferred trigger is never dropped;
+  - the battle-start autosave runs at tick 0 before the first step, even 1 s after another autosave;
+  - autosave is on by default;
+  - two runs differing only in the injected wall clock give equal `state_hash` at every tick.
+- **AC-27 (Logic; Core Rule 20)**: `SYSTEM:save` is held for the whole capture and released before encoding starts; zero ticks run during the capture. Changing live state after the capture does not change the committed bytes. Encoding and writing run while ticks continue. Only one save is ever in flight.
+- **AC-28 (Logic; Core Rule 21, D2 write side)**: the store fails, one test per point, at `.tmp` open, a partial write, flush, close, the re-read, a re-read checksum mismatch, and the replace. In each: the `.tmp` is deleted; slot and `.bak` bytes are unchanged; the machine goes WRITING or VERIFYING → FAILED → IDLE with the reason; ticks keep running; a retry then succeeds. A section at exactly `ceiling_bytes` saves; at `ceiling_bytes` + 1 the save fails naming the section, untrimmed, with a bug logged.
+- **AC-29 (Logic; Edge Cases: disk full)**: out-of-space and permission-denied each show "Save failed: not enough disk space" or "…cannot write to the save folder" with Retry, and the old save is unchanged. Autosave failures show the first time, then at most once per `AUTOSAVE_FAIL_NOTICE_MIN` (10) minutes on the injected clock. A failed manual save always shows its result.
+- **AC-30 (Logic; Core Rule 21, damaged slot and `.bak`)**: at startup an orphaned `.tmp` is deleted. In the slot list, a slot whose file is missing, or whose header checksum fails, is listed from its valid `.bak`. On load, a slot whose section checksum fails loads its `.bak` with "The latest save was damaged; loaded the one before it (<time>)". A slot whose file and `.bak` both fail is DAMAGED, listed as "This save is damaged and can't be loaded", never deleted, and the load screen points at the newest valid slot. A failed `.bak` cleanup after a successful replace leaves the slot valid, and the stale `.bak` is replaced next save. The first overwrite of an older-format slot first keeps `<slot>.v<N>.bak`, one per slot.
+- **AC-31 (Logic; D5)**: `save_counter` starts at 1 and rises by exactly 1 per committed save of any kind; a failed save does not raise it. A slot written later with `saved_at_utc` one day earlier is still newest.
+- **AC-32 (Logic; Interactions: Runtime ID Service)**: an injected compaction failure does not stop the campaign save from committing.
+
+**E. Suspend (battle)**
+
+- **AC-33 (Logic; Core Rule 22, quit)**: quitting in BATTLE finishes the current step, adds `PLAYER_PAUSE`, writes the suspend at that tick, and exit waits for the commit. Quitting during a refresh waits for it, then writes at the current tick. A failed suspend write on quit offers "Retry" and "Quit anyway (you'll resume from <time> ago)", naming the last good suspend or the battle start.
+- **AC-34 (Logic; Core Rule 22, D4)**, injected clock: at 119 s of unpaused battle no refresh is due, at 120 s one is due and is captured at the next boundary; 300 s with the hold set non-empty adds 0 to `unpaused_real_s_since_last_suspend`; at 4× speed a refresh still comes every 120 real seconds; a 9-minute 1× battle writes refreshes at 2, 4, 6, 8 min and a simulated crash at 7:50 resumes at 6:00. A suspend missing a declared battle part is refused at write; a campaign save holding a battle part is refused at load.
+- **AC-35 (Logic; Core Rule 23, consumption)**: a loaded suspend arms at its `tick_index` under `PLAYER_PAUSE` and its file is still present. It is deleted only after Simulation Tick's first-whole-tick-after-resume signal; aborting before that signal leaves it loadable again. A failed delete is retried each tick and done at battle end at the latest, and until then the load screen does not offer it. Quitting before the first resumed tick replaces it at the same tick. A refresh during the resumed battle writes it again. A battle ending between refreshes writes the outcome autosave and deletes it. Loading another save of the same campaign leaves it offered as "Resume battle". The slot runs ABSENT → WRITTEN → LOADED_UNCONSUMED → CONSUMED → ABSENT.
+- **AC-36 (Logic; Core Rule 23, battle-start)**: a battle-start autosave loads as a fresh battle at tick 0 with an empty replay log; with the original inputs, `state_hash` at tick 500 equals the original run's.
+- **AC-37 (Logic; Core Rule 24)**, injected window and platform events: a close request in BATTLE writes the suspend then exits; outside battle it runs an autosave first (waiting for one in progress) then exits; a platform suspend or sleep signal starts the same save. The engine side is AC-55 and AC-56.
+
+**F. Saves are untrusted input**
+
+- **AC-38 (Logic; Core Rules 25–28, hostile fixtures)**: each fixture in `tests/fixtures/save/hostile/` is refused by the first limit or validation that catches it, naming file and field, without a crash, within the D6 5-s load budget, and with no write, rename or delete in the store log:
+  - H01 file of `SAVE_MAX` + 1 (zero bytes read past the size probe); H02 header of `HEADER_MAX` + 1;
+  - H03 a declared section length past the end of file; H04 one overlapping the next section;
+  - H05 `SECTIONS_MAX` + 1 (257) sections; H06 a section of `ceiling_bytes` + 1;
+  - H07 a small file decoding to more than `SAVE_MAX`, refused the moment decoding would pass it;
+  - H08–H12 `JSON_DEPTH`, `ARRAY_LEN`, `OBJECT_KEYS`, `STRING_FIELD_MAX`, `ID_MAX_BYTES` each exceeded by 1;
+  - H13 a duplicate key; H14 a duplicate `section_id` in the index;
+  - H15 NaN, +inf and −inf bit patterns; H16 a 64-bit field that is not a number string, or out of range;
+  - H17 a newer format, a newer section, and a format below `MIN_SAVE_FORMAT`;
+  - H18 a dangling Runtime ID, a wrong-kind Runtime ID, and a `next_id` too low;
+  - H19 an encoded engine object and a resource path (resource-loader spy: zero calls);
+  - H20 slot labels `../../x`, `/etc/x` and `C:\x`: shown as display meta only, and every store path stays under `user://saves/<campaign_id>/`;
+  - H21 a 0-byte file and a truncated header;
+  - H22 a header `campaign_id` that is not 32 lowercase hex characters (including path characters): refused.
+- **AC-39 (Logic; Core Rule 28)**: a captain name and other display strings holding control characters, U+202E, markup and one character past Content Data Core Rule 14's cap are shown as plain text, stripped and capped, markup uninterpreted, using Content Data's escaping function itself.
+- **AC-40 (Logic; Core Rule 26)**: a CI static check scans save code for the banned object-deserialising and resource-loading calls listed in the save schema ADR; a call planted in a test fixture fails it.
+- **AC-41 (Logic; fuzz)**: a recorded fixed seed drives 10,000 mutations (bit flips, truncation, length and version edits, nesting inflation) of 5 valid fixtures, one a suspend. Each mutant loads and passes the cross-reference pass, or is refused with a named reason; none crashes, none passes the 5-s budget, none writes. A failing mutant is kept under `tests/fixtures/save/hostile/fuzz/` as a permanent regression fixture. The same seed gives the same mutants every run.
+
+**Formulas and knobs**
+
+- **AC-42 (Logic; D1)**: with the current ceilings (8,000,000 B; 64,000 B; 4 MiB; 1 MiB; 8 MiB), `HEADER_MAX` 64 KiB and `OPAQUE_MAX` 2 MiB, the startup computation gives Σ = 23,858,176 B and **`SAVE_MAX` = 35 MiB (36,700,160 B)**, equal to the registered value. One more 1 MiB section gives 36 MiB. A file of exactly `SAVE_MAX` passes the size probe; `SAVE_MAX` + 1 fails it.
+- **AC-43 (Logic; D2 read side)**: a section declaring exactly `ceiling_bytes` passes; `ceiling_bytes` + 1 is refused before its parse (parser spy: zero calls). 256 sections (registered plus carried) pass; 257 are refused.
+- **AC-44 (Logic; Tuning Knobs)**: every knob except `MIN_SAVE_FORMAT` is read from the data file; setting `AUTOSAVE_MIN_GAP_S` to 30 changes AC-26's deferral to 30 s with no code change; a knob outside its safe range stops startup with a named programmer error; no knob default appears as a literal in save code (static check).
+
+### Integration — `tests/integration/save/` (BLOCKING)
+
+- **AC-45 (Integration; Core Rule 14, determinism; in memory)**: with a fixed seed and input script, T = M = 3,000, in one campaign run and one battle run: run A saves at T, loads, runs M ticks; run B runs T + M ticks. `state_hash` at T + M and the replay log are identical. The same holds for a suspend saved at T in battle.
+- **AC-46 (Integration; real filesystem and process kill; crash mid-write)**: a child game process is killed (SIGKILL on Linux, process termination on Windows) after `.tmp` creation, mid-write, after flush before the replace, and during the replace, 50 times each. On relaunch no `.tmp` remains and the slot's hash equals the old or the new complete save, never a mix; `.bak` is intact.
+- **AC-47 (Integration; real filesystem; disk full)**: the save folder on a size-limited volume filled below the save size, and separately read-only: the save fails with the AC-29 message, the old slot's hash is unchanged, no `.tmp` remains, and ticks continue.
+- **AC-48 (Integration; real filesystem; damaged slot)**: AC-30's cases on real damaged files give the same results; a DAMAGED slot's files survive 3 relaunches.
+- **AC-49 (Integration; real filesystem; Core Rules 25–28)**: every AC-38 fixture placed in a real campaign folder and also imported: a hash of every file under `user://`, before and after, is identical, and the process exits normally after the full set.
+- **AC-50 (Integration; real filesystem; Core Rule 27, import)**: importing a symbolic link, a directory, a named pipe (Linux) and a file of `SAVE_MAX` + 1 is refused with no file created. A valid import is staged, validated, then placed as a new manual slot in its header's campaign folder; with that campaign's manual slots full it is refused with that reason. No open on the source path happens beyond the size-capped read.
+- **AC-51 (Integration; real process kill; D4)**: killed at 7:50 of unpaused 1× battle with `SUSPEND_REFRESH_S` 120, the relaunch offers "Resume battle" at the 6:00 refresh under `PLAYER_PAUSE`; the loss is ≤ `SUSPEND_REFRESH_S` + measured `t_write` (AC-58). Killed just after the resumed first tick, no suspend remains and the newest save is offered.
+- **AC-52 (Integration; real launch; Core Rule 7)**: a headless launch with each AC-09 broken registry exits non-zero with the named error, never reaches the main menu, and creates nothing under `user://saves/`.
+- **AC-53 (Integration; Core Rule 17 with Content Data)**: a save made with a real mod package loads with the package removed, is saved, and loads again with it reinstalled; the mod's section bytes and live state match the original, using Content Data's real loader and pre-load summary.
+
+### On-device probes — Linux, Windows, Steam Deck (BLOCKING before the save schema ADR is accepted)
+
+The behaviours marked NOT SOURCEABLE are verified here, never assumed. Each
+result goes to `production/qa/evidence/` with device, OS build and engine build
+`4.7.2.stable`.
+
+- **AC-54 (Integration probe; Core Rule 21, rename)**: 1,000 replaces, each interrupted by a kill at a seeded random point, always leave the slot hash equal to the old or new file, never missing or partial. A platform that fails is recorded in the save schema ADR, and AC-46 must still pass there through the `.tmp`/`.bak` fallback alone.
+- **AC-55 (Integration probe; Core Rule 24, close)**: the window close button, Alt+F4 (Windows), window-manager close (Linux) and the Steam overlay "Exit game" (Steam Deck), in battle and outside, each commit the suspend or an autosave before exit. Any close path that cannot be caught is recorded and handed to Platform Integration (#57).
+- **AC-56 (Integration probe; Core Rule 24, sleep)**: Steam Deck power-button sleep, Windows sleep and Linux suspend mid-battle: the probe records whether a suspend write starts and commits before sleep, and a wake then forced kill resumes from it. No signal is recorded as a finding, not a pass.
+
+### Performance — `tests/performance/save/` (ADVISORY until baselines exist, then BLOCKING against D6)
+
+- **AC-57 (Performance; D6, Core Rule 20, Game Feel)**: capture with `SYSTEM:save` held takes ≤ `SAVE_CAPTURE_MS` (50 ms) at the 95th percentile of 100 captures at max fleet and projectile counts (fixture: Open Question 9); inputs made during capture apply on the next tick, none dropped.
+- **AC-58 (Performance; D6, D4)**: capture to committed file ≤ 1 s typical and ≤ 3 s at `SAVE_MAX`; the measured value is `t_write`.
+- **AC-59 (Performance; D6)**: load, header to ARMED, ≤ 2 s typical and ≤ 5 s at `SAVE_MAX`.
+- **AC-60 (Performance; D6)**: the slot list of one campaign with every slot full takes ≤ 100 ms, reading headers only.
+- **Baselines**: AC-57–60 run on Linux, Windows and Steam Deck and are recorded in `production/qa/evidence/` before the save schema ADR is accepted; later runs compare against them.
+
+### UI — evidence through Menus, Settings & Save UI (#51)
+
+- **AC-61 (UI; Core Rule 18, UI Requirements)**: each screen #51 builds from this data contract has a retained screenshot in `production/qa/evidence/` when its story closes: manual Save greyed in battle with "Saving is only possible outside battle. Quitting keeps your place."; a damaged slot listed, not hidden; "Resume battle" when a suspend exists; one confirm summary combining content changes, migration losses and carried-section losses, with information lines shown apart.
 
 ## Open Questions
 
@@ -709,3 +854,6 @@ Owned by Menus, Settings & Save UI (#51); this system supplies the data.
 | 6 | **Cloud conflict resolution** (two devices, same campaign). `save_counter` is provided; the rule belongs to Platform. | Platform Integration (#57) | When #57 is designed |
 | 7 | **Time budgets** (D6) are estimates and must be measured. | performance-analyst | Before the save schema ADR is accepted |
 | 8 | **Thumbnails** are omitted at MVP (a sidecar breaks single-file saves; image decoding adds attack surface). Post-MVP, an optional, ignorable section with decode caps. | game-designer | Post-MVP |
+| 9 | **Performance fixtures**: "max fleet and projectile counts" and a "typical" campaign save (D6) need named fixtures from the owning GDDs (Combat Space, Fleet, Battle Record). | performance-analyst, owning GDDs | Before AC-57–AC-59 can run |
+| 10 | **Migration fixtures vs no-file-I/O unit tests**: proposed as generated GDScript constant data under `tests/fixtures/save/`, so unit tests load a script, not a file. | lead-programmer | Save schema ADR |
+| 11 | **AC test counts** (10,000 fuzz mutations, 100 round-trip saves, 50 kills per point, 1,000 rename probes, p95 capture, T = M = 3,000) are qa-lead proposals. | qa-lead | First test plan |
