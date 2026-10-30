@@ -204,8 +204,10 @@ options; **competence** through exact, truthful time and risk previews.
     their system has `start_known_sites` true.
 23. **How sites are revealed.** Arriving in a system reveals all its sites.
     Other systems reveal sites through `reveal(site_id, source)`, called by
-    Ports, Rest & Care (port rumours) and Points of Interest (testimony that
-    points elsewhere). Visiting a node's system, or a reveal naming the node,
+    Ports, Rest & Care (port rumours) and Points of Interest (a finished search,
+    source `poi_search`). A route commit, docking, an encounter offer or a loss
+    fallback pauses an active site search (Points of Interest), keeping its
+    progress. Visiting a node's system, or a reveal naming the node,
     reveals its roaming route. A reveal is permanent.
 24. **Sighting.** A hostile map fleet is sighted while it is in, or on a lane
     touching, the system the player fleet is in or is travelling to. Sighting is

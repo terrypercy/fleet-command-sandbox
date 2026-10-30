@@ -168,7 +168,9 @@ reading" or "I lost the campaign by resting".
     replay repeats it.
 15. **The only explicit wait is port rest** (Ports, Rest & Care #27). No other
     "wait N days" command exists. Idling in flight still passes time at the
-    CAMPAIGN rate. Making contract replacement worthless to farm by idling
+    CAMPAIGN rate. A site search (Points of Interest #29) is not a wait: it is
+    an action that runs at the CAMPAIGN rate, is never a skip, and ends with a
+    `poi.search_done` event (priority 150). Making contract replacement worthless to farm by idling
     belongs to Contracts & Missions (#38), for example by drawing replacements
     in a fixed seeded sequence so waiting never improves the draw.
 
