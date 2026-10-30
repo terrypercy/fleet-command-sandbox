@@ -204,6 +204,20 @@ formulas:
     notes: "Settings D2. Integer permille composition of a campaign modifier onto a consumer's base value; m within the key's range (at most 250-2000). Every consumer of a Tier C permille key (Vigor, Ship AI, Battle Resolution, Ports & Rest, Loot & Contracts, Rival Investigators, Defeat & Debrief) must use exactly this rounding."
     added: 2026-10-30
 
+  - name: clock_rate_per_tick
+    status: active
+    source: design/gdd/world-clock.md
+    referenced_by:
+      - design/gdd/world-clock.md
+    variables:
+      - DAY_S
+      - REAL_S_PER_DAY_ctx
+      - TICK_RATE
+    output_range: [1, 48]
+    expression: "DAY_S / (REAL_S_PER_DAY_ctx x TICK_RATE)"
+    notes: "World Clock D1. Game-seconds added per unheld tick; must be an exact integer (content validation). Campaign 12 at 60 Hz, battle 2 at 60 Hz."
+    added: 2026-10-30
+
 # Example:
 #
 # formulas:
@@ -244,6 +258,7 @@ constants:
       - design/gdd/deterministic-rng-and-seed-streams.md
       - design/gdd/save-load-and-migration.md
       - design/gdd/input-and-controls.md
+      - design/gdd/world-clock.md
     value: 60
     unit: Hz
     notes: "Target rate, gated by a headless spike (about 100 ships and 500 projectiles must fit the frame budget); fallback is 30 Hz. Versioned engineering constant: written into every save and replay header, and changing it breaks replays."
@@ -445,6 +460,40 @@ constants:
     value: 500
     unit: permille
     notes: "Settings rule 11 / D3. Lowest investigator_pace_permille any preset, mod or override may resolve to; Rival Investigators must honour it (Pillar 2: a lie always carries risk)."
+    added: 2026-10-30
+    revised: ""
+
+  - name: day_s
+    status: active
+    source: design/gdd/world-clock.md
+    referenced_by:
+      - design/gdd/world-clock.md
+      - design/gdd/save-load-and-migration.md
+    value: 86400
+    unit: game_s
+    notes: "Game-seconds per game day (World Clock rule 1). clock_s is int64; never 32-bit."
+    added: 2026-10-30
+    revised: ""
+
+  - name: battle_max_s
+    status: active
+    source: design/gdd/world-clock.md
+    referenced_by:
+      - design/gdd/world-clock.md
+    value: 43200
+    unit: game_s
+    notes: "Most game time one battle can add to the clock (World Clock D3). Bounds a battle's day cost (Pillar 1)."
+    added: 2026-10-30
+    revised: ""
+
+  - name: defeat_max_s
+    status: active
+    source: design/gdd/world-clock.md
+    referenced_by:
+      - design/gdd/world-clock.md
+    value: 1209600
+    unit: game_s
+    notes: "PROVISIONAL. Hard ceiling on one defeat's day cost, as a single skip (World Clock rule 13). Defeat & Debrief must honour it."
     added: 2026-10-30
     revised: ""
 
