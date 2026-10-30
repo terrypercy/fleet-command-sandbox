@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (opening loss cost shown; read-only in battle; a loss always reveals something; honest wiki note; seen-only readiness; truth-blind lines)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — defeats fill in the Dossier); Pillar 4 (Plan in the Open — per-node weaknesses, counters and readiness are readable before you commit)
 
 ## Summary
@@ -166,10 +166,11 @@ one defeat at a time.
     suggests a share or accusation (Allied Lending rule 23).
 18. **The defeat-cost quote.** Each node page shows Credits' defeat cap
     (Credits rule 7) "If you lose: up to {X} credits, plus up to {N} rest days
-    (≈ {Y} upkeep)", and, while a lie is held, "suppression covered for {N}
-    days after a worst-case bill". On a node with `exempt_lasting_cost` true
-    the line reads "A loss here costs nothing" (Credits rule 8; Open
-    Question 4).
+    (≈ {Y} upkeep)", and, while suppression upkeep is active, "suppression
+    covered for {N} days after a worst-case bill". On a node with
+    `exempt_lasting_cost` true, the opening node included, the line reads
+    "A loss here costs nothing" (Credits rule 8). Planning information is
+    never withheld.
 
 **E. Truth, determinism and the Runner**
 
@@ -299,6 +300,9 @@ not named; Anvil `on_cut` contraction; one `FocusAssigned`.
 
 - **`DossierFacts` empty** (no counter held, no observation): only the
   attempt log row is added; the Debrief shows no "Dossier updated" note.
+  On a loss with held causes but no new line, rule 10a reveals the first
+  held cause. If every counter is already revealed, the row reads "No new
+  counters: all seen."
 - **Same facts handed twice** (save and load during the Debrief hold): the
   `(node_id, attempt_index)` key ignores the second (rule 9).
 - **A counter evidenced that the node does not list**: ignored (rule 10).
@@ -326,9 +330,9 @@ not named; Anvil `on_cut` contraction; one `FocusAssigned`.
 - **Degenerate: throwing battles to farm reveals.** Each loss costs days and
   credits (Credits rule 7) and reveals only predicates that held. A counter
   you never trigger never reveals, so farming buys no free answers.
-- **Degenerate: reading the wiki.** The Runner proves every counter at the
-  proof reveal set (rule 21), so the shown text alone is enough to win; the
-  wiki adds nothing the Dossier withholds for long.
+- **Degenerate: reading the wiki.** A wiki can name counters early; that
+  saves an attempt, not the game. The Dossier never requires it (rule 21),
+  and the truth is seeded, so it cannot be looked up.
 
 ## Dependencies
 
@@ -425,7 +429,8 @@ redefines them.
 - **AC-14 (UI; rule 16)**: a revealed counter shows role words, provenance, action, kit cost and fitted state; retained screenshot in `production/qa/evidence/`.
 - **AC-15 (UI; rule 17)**: with an investigation running whose exposure would push `S_f` past `REFUSE_PM`, the node page shows the exposure line, matching Allied Lending AC-20; retained screenshot.
 - **AC-16 (UI; rule 18)**: the defeat-cost quote equals the pre-battle panel's figures; the opening node reads "A loss here costs nothing"; retained screenshot.
-- **AC-17 (Logic; rule 19)**: two saves with different seeded makers and the same facts give byte-identical node pages for every node.
+- **AC-17 (Logic; rule 19)**: two saves with different seeded makers and the same facts give byte-identical node pages for every node, including with an investigation running and suppression active.
+- **AC-17a (Logic; rule 10a)**: a loss whose facts reveal no new line reveals the first held cause in `counters_evidenced[]` order as *seen as cause*; with every counter already revealed, the log row reads "No new counters: all seen."
 - **AC-18 (Logic; rules 20–21)**: `present(n, proof_set(n, c))` shows counter `c` and no other counter or sentence; `BotView`'s field set at that set equals the presenter's (Runner AC-01b).
 - **AC-19 (Logic; rule 7)**: the Table page shows all candidates and 8 axes at campaign start.
 - **AC-20 (Logic; rule 8)**: the Sites page lists searched POIs only, in search order.
