@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (case flag only for held fragments; display rows; floors stated; rule 9 restated; photosensitivity)
 > **Implements Pillar**: Pillar 4 (Plan in the Open — every setting says what it changes, and difficulty never touches the explanation); Pillar 1 (Every Defeat Is a Lead — saves never make a defeat the end of the run)
 
 ## Summary
@@ -98,7 +98,13 @@ Competence (settings explain themselves; failures name a cause and an action).
 13. **Custom.** Selecting Custom opens a panel listing every registered Tier C
     key, grouped as *Challenge*. Each row shows the key's display name, its
     one-line effect, its current value, and its range. Values start at
-    Standard. A value outside the range cannot be entered.
+    Standard. A value outside the range cannot be entered. Where Gameplay
+    Settings rule 9 sets a floor, the row also states it, e.g.
+    `defeat_cost_permille`: "How many days a defeat costs. Never zero, never
+    the run." The Custom panel and Challenge tab list only registered Tier C
+    keys (plus the Ironman switch, rules 14 and 23). No menu control alters the
+    Debrief's cause and counter, the Dossier, or the clarity of any telegraph or
+    readout (Gameplay Settings rule 9).
 14. **Ironman is a switch, not a preset** (#7 rule 12). It sits beside the
     preset cards with one line: "Only automatic saves. You can turn this off
     later, but never back on." It works with every preset, including Custom.
@@ -161,7 +167,8 @@ Competence (settings explain themselves; failures name a cause and an action).
     - **Palette**: Default (colour-vision-deficiency safe) or High contrast
       (HUD rule 32). Meaning never changes with palette.
     - **Reduce motion**: on removes camera shake, camera glides that are not
-      needed to follow the flagship, menu transitions and scrolling credits.
+      needed to follow the flagship, menu transitions and scrolling credits,
+      and full-screen flashes on hits and losses are replaced by a steady tint.
     - **Camera shake** (`CAMERA_SHAKE_PM`, 0–1,000 ‰, step 100, default 500):
       greyed and shown as 0 while Reduce motion is on (Camera rule 20).
     - **Held-tier layer defaults**: order lines, link lines, rings, ghost paths
@@ -240,7 +247,9 @@ Competence (settings explain themselves; failures name a cause and an action).
 42. **Missing mods.** Sections of a missing package are listed as "Kept for
     when [mod] returns" (carried untouched, Save/Load rule 17). Items kept
     inert, substituted or removed are named with old and new values (Content
-    Data UI Requirement 2). "Affects your case" is a separate flag line.
+    Data UI Requirement 2). "Affects your case" appears only when a fragment the player holds is kept
+    inert, substituted or removed, and names that fragment. It never refers to
+    unfound fragments, the candidate set or the maker.
 
 **J. Mods**
 
@@ -439,13 +448,17 @@ names are content strings owned by their systems, not knobs here.
 | Bindings, presets, hold/toggle, thresholds | P | Controls | per Input's table |
 | Text scale | P | Display & Accessibility | "Size of all menu and HUD text." |
 | Palette | P | Display & Accessibility | "Colours of ships, markers and readouts. Meaning never changes." |
-| Reduce motion | P | Display & Accessibility | "Removes shake, non-essential camera glides and menu animation." |
+| Reduce motion | P | Display & Accessibility | "Removes shake, non-essential camera glides and menu animation. Full-screen flashes become a steady tint." |
 | Camera shake | P | Display & Accessibility | "Strength of the shake on hits and losses. 0 is none." |
 | Held-tier layer defaults | P | Display & Accessibility | "Which planning layers show when you pause a battle." |
 | Telegraph early warning | P | Display & Accessibility | "Shows enemy attack warnings earlier. Attacks are not slower." |
 | Edge scroll | P | Display & Accessibility | "Pan the paused battle by moving the cursor to the screen edge." |
+| Window mode | P | Display & Accessibility | "Fullscreen, borderless or windowed." |
+| Resolution | P | Display & Accessibility | "Pixel size the game draws at. Text scale is set separately." |
+| VSync | P | Display & Accessibility | "Matches frames to your screen's refresh to stop tearing." |
+| First-use prompts | P | Display & Accessibility | "Show each control's first-use hint again." |
 | Master / Music / Effects volume | P | Audio | "Loudness of [channel]." (key proposed, Open Question 7) |
-| Each Challenge key | C | Challenge | from the key's schema (for example `defeat_cost_permille`: "How many days a defeat costs.") |
+| Each Challenge key | C | Challenge | from the key's schema (for example `defeat_cost_permille`: "How many days a defeat costs. Never zero, never the run.") |
 | Turn off Ironman | C | Challenge | "Allow manual saves for this campaign. Cannot be undone." |
 
 **Screens to build (each needs a UX spec):** main menu; new-campaign setup with
@@ -495,6 +508,7 @@ list and hold set.
 - **AC-18 (Logic; D3)**: 45,296 s shows "12 h 34 min"; 2,100 s shows "35 min"; 59 s shows "< 1 min".
 - **AC-19 (Logic; rule 26)**: with Reduce motion on, the shake control shows 0 and is disabled, and the camera receives shake 0; turning it off restores the previous shake value.
 - **AC-20 (Logic; rule 20)**: every Tier P change from Settings is visible to its consumer on the next frame with no restart.
+- **AC-20a (Logic; rule 42)**: with a missing mod that holds only unfound fragments, the confirm summary shows no "Affects your case" flag; with one holding a held fragment, the flag names that fragment only.
 
 **Integration — `tests/integration/menus/`.**
 

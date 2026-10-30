@@ -247,7 +247,7 @@ Later tiers:
 | 48 | Ledger | UI | Vertical Slice | Not Started | — | Simulation Tick & Pause, Sector Map & Travel, Markets & Trade |
 | 49 | Public History Screen | UI | MVP | Designed | design/gdd/public-history-screen.md | Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 50 | Port & Fleet Management Screens | UI | MVP | Designed | design/gdd/port-and-fleet-management-screens.md | Ports, Rest & Care, Refit & Loadout, Markets & Trade |
-| 51 | Menus, Settings & Save UI | UI | MVP | In Design | design/gdd/menus-settings-and-save-ui.md | Simulation Tick & Pause, Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
+| 51 | Menus, Settings & Save UI | UI | MVP | Designed | design/gdd/menus-settings-and-save-ui.md | Simulation Tick & Pause, Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
 | 52 | Audio Direction & Adaptive Music | Audio | Vertical Slice | Not Started | — | Combat Event Bus & Battle Record, Vigor, Coherence & Links, Battle Resolution & Retreat, After-Action Debrief, Archive Fragments & Evidence, Exposure & Rival Investigation |
 | 53 | Onboarding & Opening Sequence | Meta | MVP | In Design | design/gdd/onboarding-and-opening-sequence.md | Battle Resolution & Retreat, Machine Nodes & Strongholds, After-Action Debrief, Dossier |
 | 54 | Telemetry & Playtest Logging | Meta | MVP | In Design | design/gdd/telemetry-and-playtest-logging.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout, Runtime ID Service |
@@ -482,7 +482,7 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Design docs started | 38 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 40/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
+| MVP systems designed | 41/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
 | Vertical Slice systems designed | 0/6 |
 
 ---

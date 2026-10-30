@@ -164,7 +164,8 @@ causes (concept: Starsector's start is the cautionary example).
     true, whatever the outcome: win, loss, retreat, standoff or mutual. It is
     written in the same save transaction as the outcome. A battle with no
     report (application closed or crashed mid-battle) consumes nothing; the
-    deterministic setup is rebuilt from the last save.
+    deterministic setup is rebuilt from the last save. Exception: a
+    PLAYER_RETREATED report with no first enemy contact consumes nothing.
 16. **Never re-granted.** Nothing resets `opening_exempt_consumed` in a save:
     not a settings change, not a reload of an older save of the same campaign
     (that save simply predates the consumption), not skip or practice. A new
@@ -335,10 +336,12 @@ inverse proof. One failure fails the build's content check.
   harmless and consistent with Battle Resolution rule 19. The lead line moves to
   the first later loss.
 - **The player retreats at once.** PLAYER_RETREATED is loss class, so
-  `opening_loss` is true and nothing is charged. The exemption is consumed.
-  Dossier rule 10a still reveals something if any counter was evidenced. If
-  none was (retreat before contact), the Debrief shows what it has; #53 adds no
-  special case. The player chose it (autonomy); see Open Question 3.
+  `opening_loss` is true and nothing is charged. If the retreat came after first
+  enemy contact, the exemption is consumed and Dossier rule 10a reveals
+  something if any counter was evidenced. If it came before first contact, the
+  exemption is **not** consumed (rule 15 exception): the player learned nothing,
+  so the free lesson is kept and the next setup at the opening node still
+  carries the flag.
 - **The player never goes to the opening node.** Nothing forces them. The flag
   waits. Their first battle there, however late, is exempt. Hints for B3–B7
   wait for their triggers.
@@ -460,7 +463,7 @@ All in `assets/data/onboarding/opening.tres` (path proposed; data, not code).
 ## Acceptance Criteria
 
 - **AC-01 (Logic; rule 14)**: D2 returns true for the first setup at `base:node.opening` and false for any other node, any roaming fleet and the skirmish.
-- **AC-02 (Logic; rule 15)**: after a report of a flagged battle is published with each outcome (win, loss, retreat, standoff, mutual), `opening_exempt_consumed` is true and the next setup at the opening node has the flag false.
+- **AC-02 (Logic; rule 15)**: after a report of a flagged battle is published with each outcome (win, loss, retreat after first enemy contact, standoff, mutual), `opening_exempt_consumed` is true and the next setup at the opening node has the flag false; a published PLAYER_RETREATED report with no first enemy contact leaves `opening_exempt_consumed` false and the next setup's flag true.
 - **AC-03 (Logic; rule 15)**: a flagged battle aborted without a report leaves `opening_exempt_consumed` false; reloading rebuilds an identical setup (same hash).
 - **AC-04 (Logic; rule 16)**: no settings change, mode change or Practice run sets `opening_exempt_consumed` back to false.
 - **AC-05 (Integration; rules 5, 14)**: an opening loss leaves Credits hold, Vigor `C` and campaign day unchanged, and the Debrief shows rule 20's struck-through costs.
@@ -493,7 +496,7 @@ proceed (the owner may revisit any of them at review):
   build-time check (D4) makes it unlosable with the flagship idle.
 - **No retry prompt at Tier 0**: no "try again", no waypoint back; the
   Debrief's lead does the work (Pillar 1's design test).
-- **An immediate retreat consumes the exemption**: one simple rule.
+- **A retreat before first contact consumes nothing** (CD review reversed the earlier default): a free lesson is never lost without a lesson.
 - **The pre-battle slot** is Combat HUD & Tactical Overlay rule 16's panel.
 - **The order taught at B2 is F1 Attack** (Fleet Orders).
 
