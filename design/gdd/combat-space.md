@@ -193,7 +193,7 @@ couldn't predict" or "two ships merged into one blob".
 | System | Direction | Contract |
 |---|---|---|
 | Simulation Tick & Pause (#1) | Tick → #11 | P3 call; `TICK_RATE`; ascending ID order; no engine physics |
-| Runtime ID Service (#3) | #3 → #11 | IDs for ships and projectiles; order |
+| Runtime ID Service (#3) | #3 → #11 | Runtime IDs for ships and their order; projectiles use Weapons & Damage's battle-local sequence (Runtime ID Service rule 2), and Weapons & Damage owns projectile processing |
 | Hulls & Ship Definition (#10) | #10 → #11 | `max_speed`, `accel`, `turn_rate`, `mass`, `world_radius` |
 | Weapons & Damage (#12) | both | Grid queries in P4/P5; projectile insertion; longest range constrains `FIELD_R` |
 | Coherence & Links (#14) | #11 → #14 | Range queries for links |

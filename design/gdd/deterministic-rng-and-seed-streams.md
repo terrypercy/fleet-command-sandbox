@@ -641,7 +641,9 @@ The rng_tick_cost formula is defined as:
   - 100 AI tie-breaks (one per actor);
   - hit rolls, about 10 on an average tick and up to about 600 on a
     full-broadside volley;
-  - 2 per spread `unit_float`.
+  - spread: **one `int_range` per shot** (Weapons & Damage rule 9, revised
+    2026-10-30; no `unit_float` in hit logic), staggered so a fleet never
+    fires every gun on one tick (Weapons & Damage rule 4).
 - **At 3 µs a volley tick fails the budget.** That is the trigger for the
   GDExtension fallback (ADR).
 - A demand of 5,000 draws per tick (5–15 ms) would break `L` on its own.

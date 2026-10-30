@@ -206,7 +206,7 @@ Later tiers:
 | 9 | Combat Event Bus & Battle Record | Core | MVP | Designed | design/gdd/combat-event-bus-and-battle-record.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service |
 | 10 | Hulls & Ship Definition (inferred) | Gameplay | MVP | Designed | design/gdd/hulls-and-ship-definition.md | Content Data & Mod Loading |
 | 11 | Combat Space (inferred) | Core | MVP | Designed | design/gdd/combat-space.md | Simulation Tick & Pause, Runtime ID Service, Hulls & Ship Definition |
-| 12 | Weapons & Damage (inferred) | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Combat Space |
+| 12 | Weapons & Damage (inferred) | Gameplay | MVP | Designed | design/gdd/weapons-and-damage.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Combat Space |
 | 13 | Vigor | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space |
 | 14 | Coherence & Links | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Combat Event Bus & Battle Record, Combat Space |
 | 15 | Flagship Piloting | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space, Weapons & Damage, Vigor, Coherence & Links |
@@ -477,10 +477,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 11 |
+| Design docs started | 12 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 11/43 (#1 In Review; #2–#11 pending review) |
+| MVP systems designed | 12/43 (#1 In Review; #2–#12 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---

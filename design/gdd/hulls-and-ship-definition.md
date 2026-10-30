@@ -128,7 +128,8 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
 
 7. **The `organic` block**: `vigor_ceiling` (100 – 2,000), `vigor_flow` (maximum
    spend per second, 5 – 200), `armour_regrow_permille_per_min` (0 – 100),
-   `scar_line_permille` (0 – 1,000). Vigor maths belong to Vigor (#13); the hull
+   `scar_line_permille` (0 – 1,000), `membrane_permille` (0 – 600; the share of
+   each hit the membrane absorbs for Vigor, Weapons & Damage rule 7). Vigor maths belong to Vigor (#13); the hull
    only states capacity. **Vigor lives in physical cores at positions on the
    hull** (`glow_anchors`, rule 15, each with a core id): unlike a single
    ship-wide flux number, a ship's Vigor is located, and Vigor (#13) must make
@@ -148,7 +149,9 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
      any owned ship, the sharing preview must list it as a first-order
      consequence (Pillar 2: consequences of sharing are always previewed).
 9. **The `machine` block**: `coherence_demand` (1 – 20), `relay_capacity`
-   (0 – 60), `link_range` (0 – 3,000 world units), `link_ports` (0 – 8) and
+   (0 – 60), `link_range` (0 – 3,000 world units), `link_ports` (0 – 8),
+   `ward_points` (0 – 5,000) and `ward_refill` (0 – 500 per second, only while
+   linked; Weapons & Damage rule 7) and
    `cut_behaviour` (an ID chosen by Coherence & Links #14 and Ship AI #20).
 10. **Machine ships depend on the network; organic ships stand alone.** A
     `network_fed` mount, and the ship's coordination, work only while the ship
