@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (shake 500‰; Escort follow after loss; frame sets only visible ships; no shake/glide while held)
 > **Implements Pillar**: Pillar 3 (Hands on the Helm — the camera keeps the flagship central while the fleet stays readable); Pillar 4 (Plan in the Open — pause and zoom let the player read the whole field)
 
 ## Summary
@@ -113,6 +113,8 @@ flagship in a quarter-second and the battle runs on.
     - on the **frame all** action (Home, an Input amendment): every ship.
     Frame is fitted once on entry, not re-fitted every frame, except in Fleet
     frame (rule 17).
+    - Frame sets include only ships the player's view currently shows; the
+      camera never fits to a position the HUD does not display.
 13. **Zoom.** Each wheel notch multiplies `H` by `ZOOM_STEP_PM` (in or out),
     clamped to `ZOOM_MIN_H` … `ZOOM_MAX_H` (D3). The change eases over
     `ZOOM_EASE_MS`.
@@ -138,7 +140,17 @@ flagship in a quarter-second and the battle runs on.
     - glides into **Fleet frame**: Frame of the player's surviving ships,
       re-fitted every `FLEET_REFIT_MS`, with the zoom only easing, never
       jumping. Pan or zoom enters Free (live or held); C returns to Fleet frame.
+      Fleet frame is the default after Loss hold.
+    - From Fleet frame, selecting a surviving player ship enters **Escort
+      follow**: the same as Follow (rule 10), but it does not feed the aim
+      conversion and issues no command. If that ship is lost, glide back to
+      Fleet frame. C returns to Fleet frame.
+    - If the flagship is lost while held, the camera does not shake or glide.
+      Loss hold begins on resume. Until then the off-screen marker points at
+      the loss position.
     - If no player ship survives on the field, Fleet frame fits every ship left.
+      Frame sets include only ships the player's view currently shows; the
+      camera never fits to a position the HUD does not display.
 18. **The edge is shown, not hidden.** Follow never clamps the centre, so the
     lock holds at the edge. Outside `FIELD_R` the view shows the chart margin
     (art: Visual/Audio). Free clamps `c` to `FIELD_R`, so the view centre is
@@ -154,8 +166,8 @@ flagship in a quarter-second and the battle runs on.
 20. **Shake is small, rare and reducible.** Only two events shake: a hit on the
     flagship, and the flagship's loss. Shake is screen-space translation only:
     no rotation, no zoom punch, no flash. Its size is multiplied by
-    `CAMERA_SHAKE_PM` (a #7 setting, 0 – 1,000 ‰). At 0, or with Reduce motion
-    on, there is no shake. No shake starts while held, and a hold clears it.
+    `CAMERA_SHAKE_PM` (a #7 setting, 0 – 1,000 ‰, default 500 ‰). At 0, or
+    with Reduce motion on, there is no shake. No shake starts while held, and a hold clears it.
 21. **Shake reads events, not state.** Shake triggers come from the Combat
     Event Bus (#9) presentation feed. Its noise uses a presentation-only random
     source, never a simulation stream.
@@ -171,8 +183,9 @@ flagship in a quarter-second and the battle runs on.
 | Follow | Glide ends; resume; C | `c = p_draw(flagship) + o`; zoom about centre; live pan changes `o` | Free (pan while held), Frame (Home), Loss hold |
 | Free | pan or Frame-zoom while held; pan in No flagship | `c` fixed in field, clamped to `FIELD_R`; zoom to cursor | Glide → Follow (resume, C), Frame (Home), Loss hold |
 | Glide | resume from Free/Frame; C; end of Loss hold | Eased move over `RECENTRE_MS` (D6); input pans cancel it into the target mode | Follow, Fleet frame |
-| Loss hold | flagship disabled or departed | Still on loss position for `LOSS_HOLD_MS`; loss shake | Glide → Fleet frame; Free (pan/zoom) |
-| Fleet frame | after Loss hold; C in No flagship | Re-fit survivors every `FLEET_REFIT_MS` | Free (pan/zoom), End beat |
+| Loss hold | flagship disabled or departed; resume after a loss while held | Still on loss position for `LOSS_HOLD_MS`; loss shake | Glide → Fleet frame; Free (pan/zoom) |
+| Fleet frame | after Loss hold (default); C in No flagship; Escort ship lost | Re-fit visible survivors every `FLEET_REFIT_MS` | Escort follow (select a ship), Free (pan/zoom), End beat |
+| Escort follow | a surviving player ship selected in Fleet frame | As Follow (rule 10) on that ship; no aim conversion; issues no command | Glide → Fleet frame (that ship lost, C), Free (pan while held), End beat |
 | End beat | battle ends | Still; input ignored; shake cleared | — (Debrief) |
 
 Any state goes to End beat when the battle ends.
@@ -250,7 +263,9 @@ under the cursor.
 Over the set's drawn positions: box `[x_min, x_max] × [y_min, y_max]`; `c` = box
 centre; `H = clamp(max(h_y, h_x ÷ aspect) + FRAME_PAD_U, ZOOM_MIN_H,
 ZOOM_MAX_H)`, with `h_x = (x_max − x_min) ÷ 2`, `h_y = (y_max − y_min) ÷ 2`. An
-empty set keeps the current view; a single ship gives `ZOOM_DEFAULT_H`.
+empty set keeps the current view; a single ship gives `ZOOM_DEFAULT_H`. The set
+holds only ships the player's view currently shows (rule 12); jammed or
+undetected ships are left out.
 
 **Example:** ships span x −1,700 … 1,400 and y −200 … 500; aspect 16/9;
 `FRAME_PAD_U` 200. c = (−150, 150); h_x = 1,550, h_y = 350; 1,550 ÷ 1.778 =
@@ -272,7 +287,8 @@ where n(t) is presentation noise in −1 … 1 per axis.
 
 **Example:** flagship hit (`add` 0.5), `SHAKE_MAX_PX` 6, setting 1,000 →
 peak 6 × 0.25 = **1.5 px**; at decay 2.5/s it is gone in 200 ms. Flagship loss
-(`add` 1.0) → **6 px**, gone in 400 ms. At setting 500 the loss peaks at 3 px.
+(`add` 1.0) → **6 px**, gone in 400 ms. At the default 500 ‰: hit peaks at
+0.75 px, loss at 3 px.
 
 ### D8. Key pan speed
 
@@ -283,8 +299,8 @@ half-height in 0.83 s at any zoom.
 
 ## Edge Cases
 
-- **If the flagship dies while the battle is held**: Loss hold starts; its
-  timer runs on wall time, so the glide to Fleet frame happens while held.
+- **If the flagship is lost while held**: the camera does not shake or glide;
+  Loss hold begins on resume; the off-screen marker points at the loss position.
 - **If the player pans during Loss hold**: Free; the hold is abandoned.
 - **If the flagship departs by retreat**: the same as loss (rule 17), but no
   loss shake.
@@ -350,7 +366,7 @@ listed in Open Questions.
 | `SHAKE_MAX_PX` | 6 px | 0 – 10 | Feel | Loss shake peak |
 | `SHAKE_DECAY_PER_S` | 2.5 | 1.5 – 5 | Feel | Shake length |
 | shake `add` (hit, loss) | 0.5, 1.0 | 0.2 – 1.0 | Feel | Per-event trauma |
-| `CAMERA_SHAKE_PM` (#7) | 1,000 ‰ | 0 – 1,000 | Player setting | Shake scale |
+| `CAMERA_SHAKE_PM` (#7) | 500 ‰ | 0 – 1,000 | Player setting | Shake scale |
 | `RESUME_RECENTRE` (#7) | on | on/off | Player setting | Rule 15 |
 
 All in `assets/data/camera/camera.tres`, except the #7 player settings.
@@ -362,6 +378,8 @@ All in `assets/data/camera/camera.tres`, except the #7 player settings.
 - The camera adds no audio. Shake has no sound of its own.
 - Reduce motion turns off shake and sets `ZOOM_EASE_MS` to 0; Glides stay
   (they keep orientation) but are capped at 150 ms.
+- With Reduce motion on, the Fleet frame refit snaps zoom changes under 5 %
+  instead of easing them.
 
 ## Game Feel
 
@@ -413,23 +431,24 @@ Hooks for Combat HUD (#46):
 - **AC-14 (UI; rule 18, D3)**: at `ZOOM_MAX_H` the whole field edge and every retreat arc are on screen at 16:9 and 21:9; retained screenshots.
 - **AC-15 (UI; UI Requirements)**: in Free with the flagship off screen, the off-screen marker points to it; retained screenshot.
 - **AC-16 (Playtest; rules 10, 13)**: 4 of 5 testers say the flagship "feels flown, not chased", and none reports the camera moving their aim.
-- **AC-17 (Playtest; rule 20)**: no tester reports discomfort from shake at the default; every tester can find the shake setting from the Settings screen.
+- **AC-17 (Playtest; rule 20)**: no tester reports discomfort from shake at the default (500 ‰); every tester can find the shake setting from the Settings screen.
 - **AC-18 (Playtest; rule 17)**: 4 of 5 testers who lose the flagship can say where it was lost and what the fleet did next.
+- **AC-19 (Logic; rule 17)**: in Fleet frame, selecting a surviving player ship enters Escort follow on it; across 300 ticks no command is issued and the recorded aim does not change; when that ship is lost the camera glides to Fleet frame; C returns to Fleet frame.
+- **AC-20 (Logic; rule 12, D5)**: with a jammed or undetected enemy on the field, battle-start Frame, frame all and Fleet frame each give the same c and H as a fixture without that ship; no Frame fits a position the HUD does not display.
 
 ## Open Questions
 
 Resolved with the recommended defaults (the owner may revisit at review): hard
 follow lock; live pan as a clamped offset; Free only while held; zoom about
 centre in Follow and to cursor elsewhere; Loss hold then Fleet frame; two-event
-shake; α = 1 while held.
+shake; α = 1 while held. Shake default (was OQ 4): half, 500 ‰. After flagship
+loss (was OQ 5): Fleet frame by default, with optional Escort follow (rule 17).
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Tick rule 6 amendment**: in Follow the aim offset is the cursor's field point minus the flagship's **drawn** position (not the last settled one), using the unshaken transform. Otherwise the aim jitters by up to one tick of motion and "a still cursor gives a constant aim" fails. | Tick owner, lead-programmer | Tick re-review |
 | 2 | **Input amendment**: add **frame all** (Home) to the Camera row; C re-fits the fleet in No flagship; close Input OQ 6 (north-up accepted). | Input owner | Input re-review |
-| 3 | **Settings amendment**: add `CAMERA_SHAKE_PM` (0 – 1,000, default 1,000) and `RESUME_RECENTRE` (on) to #7; Reduce motion zeroes shake. | Settings owner | #7 re-review |
-| 4 | **Shake default**: on at full (6 px on loss) or half? | owner | First playtest |
-| 5 | **After flagship loss**: Fleet frame only, or let the player follow a chosen ship? | owner, game-designer | Tier 0 playtest |
+| 3 | **Settings amendment**: add `CAMERA_SHAKE_PM` (0 – 1,000, default 500) and `RESUME_RECENTRE` (on) to #7; Reduce motion zeroes shake. | Settings owner | #7 re-review |
 | 6 | **Presentation feed** (flagship hit, lost) must exist on the Event Bus (#9); Battle Resolution should name the camera's still end beat. | #9 owner, Battle Resolution owner | Next re-review |
 | 7 | **Icon threshold and chart margin look** for max zoom. | art-director, ux-designer | Combat HUD (#46) |
 | 8 | **Zoom range vs weapon ranges**: `ZOOM_DEFAULT_H` 900 assumes engagements within ~900 u; confirm when Weapons & Damage sets ranges. | Weapons & Damage (#12) | When #12 is designed |
