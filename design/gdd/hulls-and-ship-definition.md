@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 5 (Living Against Made — organic and machine hulls are built differently, not reskinned); Pillar 4 (Plan in the Open — a hull's strengths and weaknesses are readable before the fight)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on scar care vs truth-sharing preview, Vigor-vs-flux at the data level, the visible DP adjustment, the stern definition, designation lineage, and the travel-healing gate; all six revised
+> **Implements Pillar**: Pillar 5 (Living Against Made — organic and machine hulls are built differently, not reskinned); Pillar 4 (Plan in the Open — a hull's strengths and weaknesses are readable before the fight); Pillar 2 (no machine hull carries organic lineage)
 
 ## Summary
 
@@ -62,6 +63,9 @@ designation L-07, is marked as the ship to kill first next time.
 - **Pillar 4, *Plan in the Open*:** counter tags are derived from stats where
   possible, so the Dossier never lies about a hull's structure (rule 13).
 - **Pillar 1:** every hull carries at least one counter tag the Debrief can name.
+- **Pillar 2, *The Truth Is Yours to Tell*:** nothing about a machine hull
+  (manufacturer, designation) carries organic lineage (rules 6, 14), and losing
+  a race's care through the truth is always previewed (rule 8).
 
 **This system must never make the player feel:** "these are the same ship with a
 different colour" or "the Dossier told me it had no rear guns, and it did".
@@ -125,7 +129,10 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
 7. **The `organic` block**: `vigor_ceiling` (100 – 2,000), `vigor_flow` (maximum
    spend per second, 5 – 200), `armour_regrow_permille_per_min` (0 – 100),
    `scar_line_permille` (0 – 1,000). Vigor maths belong to Vigor (#13); the hull
-   only states capacity.
+   only states capacity. **Vigor lives in physical cores at positions on the
+   hull** (`glow_anchors`, rule 15, each with a core id): unlike a single
+   ship-wide flux number, a ship's Vigor is located, and Vigor (#13) must make
+   damage to a core's region affect that core.
 8. **Organic hulls heal; machine hulls are repaired.**
    - In battle, organic armour regrows at `armour_regrow_permille_per_min` of its
      maximum while the ship takes no damage (the rate is applied by Weapons &
@@ -136,6 +143,10 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
      rest restores both hull and Vigor. Machine damage needs a repair facility.
    - The healing rate during travel is Ports, Rest & Care's; it must keep the
      defeat-cost floor (Gameplay Settings & Modifiers rule 9).
+   - **Which ports can clear a ship's scars is owned by Ports, Rest & Care
+     (#27).** If naming a race makes it hostile and that removes scar care for
+     any owned ship, the sharing preview must list it as a first-order
+     consequence (Pillar 2: consequences of sharing are always previewed).
 9. **The `machine` block**: `coherence_demand` (1 – 20), `relay_capacity`
    (0 – 60), `link_range` (0 – 3,000 world units), `link_ports` (0 – 8) and
    `cut_behaviour` (an ID chosen by Coherence & Links #14 and Ship AI #20).
@@ -162,7 +173,8 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
 13. **Counter tags are derived where they can be, authored where they can't.**
     - **Structural tags** are added by the validator from the stats:
       `relay` (`relay_capacity` > 0), `network_fed` (any fed mount),
-      `blind_rear` (no mount's arc covers the stern), `unarmoured` (`armour` 0),
+      `blind_rear` (no mount's arc overlaps the **stern**, defined as the arc
+      180° ± `STERN_HALF_ARC`, default 30°), `unarmoured` (`armour` 0),
       `regrowing` (`armour_regrow` > 0).
     - **Doctrine tags** (1 – 6) are authored references to `counter`
       definitions (Content Data Core Rule 17; Machine Nodes & Strongholds owns
@@ -178,7 +190,9 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
     - A **machine** ship gets a **designation**, never a name: the class's short
       code plus a per-class serial counter saved in the campaign (`L-07`). It
       cannot be renamed. The serial is never the Runtime ID (Runtime ID Service,
-      Core Rule 8: IDs are never shown).
+      Core Rule 8: IDs are never shown). **Class codes and serial formats carry
+      no organic-race lineage** (no race's script, letter forms or numbering
+      style), so a designation never hints at the seeded maker (Pillar 2).
 15. **The presentation block** (from `art-director`) holds: `visual_ref` (a
     scene, not a bare sprite, so glow and link anchors are children);
     `world_radius` and `sprite_scale` (kept separate, so collision and art tune
@@ -316,6 +330,7 @@ content and ship IDs. Downstream GDDs must cite this one.
 | `deploy_adjust` limits | ±10 | ±5 – ±20 | Authored correction room |
 | Default `armour_regrow_permille_per_min` | 30 | 0 – 100 | Organic in-battle resilience |
 | Default `scar_line_permille` | 300 | 200 – 600 | How much rest matters |
+| `STERN_HALF_ARC` | 30° | 15 – 60° | What counts as the stern for `blind_rear` |
 | Counter tag cap | 6 | 3 – 8 | Dossier density |
 | Name length | 32 characters | 16 – 48 | UI fit |
 
@@ -346,7 +361,8 @@ damaged silhouettes, the module kit, and how player-owned machine hulls read.
 ## UI Requirements
 
 - Hull card (port, refit, Dossier): class name, role, size, mounts with arcs,
-  counter tags with their meaning, DP, and for organics the scar state.
+  counter tags with their meaning, DP (base and authored adjustment shown as
+  separate lines, D1), and for organics the scar state.
 - Fleet list: names for organic ships, designations for machine ships.
 - 📌 **UX Flag — Hulls & Ship Definition**: include the hull card and fleet
   list in the refit and Dossier UX specs before epics.
@@ -377,16 +393,20 @@ damaged silhouettes, the module kit, and how player-owned machine hulls read.
 - **AC-12 (Logic; rule 13)**: every MVP hull has at least one counter tag that resolves to a `counter` with a Debrief cause key.
 - **AC-13 (Logic; rule 15)**: an organic hull with `link_attach_points` or a machine hull with `glow_anchors` is refused; every point lies inside the outline.
 - **AC-14 (Playtest; rule 16, R1)**: 4 of 5 testers name the two relay hulls as first targets without being told, and tell organic from machine at 32 px in solid black.
-- **AC-15 (Playtest; Pillar 5)**: a Starsector player asked to describe the Spiralward's resource cannot call it "flux" without the reviewer recording a concrete difference.
+- **AC-15 (Playtest; Pillar 5)**: asked to describe the Spiralward's resource after one battle, at least 4 of 5 Starsector players name, unprompted, a behaviour flux and CR lack (located cores, a ceiling eroded by wounds, rest-bound recovery). Owned jointly with Vigor (#13); this GDD's part is the located cores (rule 7).
+- **AC-17 (UI; D1)**: the hull card shows base DP and the authored adjustment as separate lines ("Doctrine premium +4"), and their sum equals the DP charged at deployment.
+- **AC-18 (Logic; rule 13)**: with `STERN_HALF_ARC` 30°, a single mount whose arc ends exactly at 150° (just touching the stern range) does not prevent `blind_rear`; one reaching 151° does.
+- **AC-19 (Logic; rule 14)**: every designation class code and serial format passes a lineage check against the organic races' scripts and numbering styles (review checklist with narrative-director).
 - **AC-16 (Visual; R2–R5)**: the art bible's readability checks pass on every MVP hull, with retained screenshots in `production/qa/evidence/`.
 
 ## Open Questions
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **Travel healing** (rule 8) must not soften defeat costs: Vigor (#13) and Credits, Upkeep & Sinks (#18) must sign off the rate. | #13, #18, economy-designer | When designed |
+| 1 | **Gate: travel healing** (rule 8). Ports, Rest & Care (#27) cannot be approved until Vigor (#13) and Credits, Upkeep & Sinks (#18) show that a defeat still costs time or resources under the default `scar_line_permille`, which is itself subject to that sign-off. | #13, #18, #27, economy-designer | Before #27 approval |
 | 2 | **Stronghold self-repair** between attempts (machine damage). | Machine Nodes & Strongholds (#23) | When #23 is designed |
-| 3 | **Race and class display names**, name tables and designation codes. | narrative-director, writer | Vertical Slice |
+| 3 | **Race and class display names**, name tables and designation codes. Brief: designation codes and serial formats carry no organic-race lineage (rule 14). | narrative-director, writer | Vertical Slice |
+| 7 | **Scar care by port**: does any friendly organic port clear scars, or only the ship's own race's ports? | Ports, Rest & Care (#27) | When #27 is designed |
 | 4 | **Player-owned machine hulls** (a breakaway faction joins late): naming, repair and how they read. | game-designer, art-director | Post-MVP |
 | 5 | **All stat ranges and the roster's numbers** are starting values; no balance data exists yet. | systems-designer, `/balance-check` | When `assets/data/hulls/` exists |
 | 6 | **Art bible** does not exist; R1–R6 and rule 16 must be carried into it. | art-director | Before asset production |
