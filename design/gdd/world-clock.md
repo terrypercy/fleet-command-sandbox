@@ -391,7 +391,7 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **No campaign system acts inside a battle** (rule 9) — Exposure & Rival Investigation must accept that investigators pause during battles. | #32 | When #32 is designed |
-| 2 | **Whether an encounter offer can auto-start after being seen** (e.g. an unavoidable interception) belongs to the encounter's owning GDD. | Sector Map & Travel (#26), encounter owners | When designed |
+| 2 | ~~**Whether an encounter offer can auto-start after being seen**~~ **Resolved 2026-10-30:** never; every contact is an offer the player resolves (Sector Map & Travel rules 17–20; `map.contact` interrupts skips). (e.g. an unavoidable interception) belongs to the encounter's owning GDD. | Sector Map & Travel (#26), encounter owners | When designed |
 | 3 | **Pace values** (120 s/day travel, 720 s/day battle, half-day cap) need a playtest against rival pace and contract lengths. | game-designer | First campaign playtest |
 | 4 | **Time of day** has no rule at MVP; a day/night or shift mechanic would need a GDD change. | game-designer | Post-MVP |
 | 5 | **Section ceiling** (1 MiB) counts within Save/Load's "all other systems" placeholder; confirm when that placeholder is broken down. | Save/Load owner | When ceilings are declared |

@@ -64,7 +64,7 @@ combat-facing system. SDT:
    | Field | Type | Range | Notes |
    |---|---|---|---|
    | `region_id` | ref → `region` | 1 | Sector Map (#26) |
-   | `map_pos` | int pair | map units | Sector Map places it |
+   | `map_pos` | int pair | map units | Must fall within `SYSTEM_RADIUS_MU` of exactly one `star_system` (Sector Map & Travel rule 2) |
    | `keystone` | ref → `hull` | 1 | Role Keystone, class Capital (Hulls rule 2) |
    | `relays[]` | list of `{id, hull, parent}` | 0 – 6 | `parent` is `keystone` or another relay id; must form a tree |
    | `garrison[]` | list of `{hull, base_n, n_min, parent}` | 1 – 12 entries | `parent` is the keystone or a relay |
@@ -164,7 +164,7 @@ combat-facing system. SDT:
 **D. Breaking a node**
 
 14. **Roaming fleets.** A roaming def has `fleet` (relay, garrison, doctrine;
-    same schema as rule 1 minus keystone), `route[]` (map waypoints, ≥ 2),
+    same schema as rule 1 minus keystone), `route[]` (≥ 2 `star_system` refs, each joined to the next by a lane; the first is the node's own system; Sector Map & Travel),
     `period_days`, `roam_max`. On world day `d`, a node in ACTIVE spawns one fleet
     at the node if `(d − phase) mod period_days = 0` and fewer than `roam_max` of
     its fleets exist. `phase` is one draw at campaign start on
@@ -190,7 +190,7 @@ combat-facing system. SDT:
     remaining members are removed; nothing respawns; roaming spawns stop. If the
     outcome is win-class, the fragment slot is granted to Archive Fragments (#28)
     at once and the node goes INERT. Otherwise it stays BROKEN_UNCLAIMED and the
-    fragment is granted, with no battle, the next time a player fleet reaches the
+    fragment is granted, with no battle, the next time a player fleet arrives in the node's system (reaches the
     node. A fragment at a BROKEN_UNCLAIMED node is reserved for the player and
     counts as unfound for exposure until claimed (Exposure & Rival
     Investigation #32). The map marker changes to the broken state. A node with no
