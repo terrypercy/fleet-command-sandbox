@@ -776,8 +776,9 @@ Every worked example was re-checked arithmetically.*
 - **If a mod declares a `base:` name**: Content Data & Mod Loading (#4) rejects
   the mod at load.
 - **If two mods' stream names collide by hash**: both declarations are
-  rejected at load, and the error names both mods. Which mod still loads is
-  #4's decision.
+  rejected at load, and the error names both mods. Both packages are refused,
+  so the outcome never depends on load order (Content Data & Mod Loading, Core
+  Rule 8).
 
 ### Runtime IDs
 
