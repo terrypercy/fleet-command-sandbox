@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 3 (Hands on the Helm — the flagship is never abstracted; the player flies it directly while commanding the fleet)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on missing P5/P4/P1 framing, no flagship loss context for the Debrief, machine flagships, and the pause wording in AC-13; all four revised
+> **Implements Pillar**: Pillar 3 (Hands on the Helm — the flagship is never abstracted; the player flies it directly while commanding the fleet); Pillar 5 (Vigor gates player fire); Pillar 4 (nothing fails silently); Pillar 1 (loss context for the Debrief)
 
 ## Summary
 
@@ -50,9 +51,15 @@ and the broadside lands.
 **Pillars served:**
 - **Pillar 3, *Hands on the Helm*:** live, immediate control of one ship; pause
   is always available; nothing pilots the flagship for the player.
+- **Pillar 5, *Living Against Made*:** Vigor shapes when the flagship can fire
+  and boost; player fire is never free of it (rule 7, ember behaviour).
+- **Pillar 4, *Plan in the Open*:** arcs, cooldowns and Vigor state are always
+  visible; nothing fails silently.
+- **Pillar 1, *Every Defeat Is a Lead*:** a lost flagship reports how it was
+  lost (rule 13), so the Debrief can name the blind side.
 
 **This system must never make the player feel:** "the ship did something I
-didn't tell it to", "my shot came late", or "I can't fly this with the keys I
+didn't tell it to, without showing me why", "my shot came late", or "I can't fly this with the keys I
 have".
 
 ## Detailed Design
@@ -134,6 +141,9 @@ have".
     focus target**.
 13. **If the flagship is destroyed**: its intent goes to zero, the lock clears,
     and Flagship Piloting stops publishing (Tick already ignores the command).
+    It reports **loss context** with the loss: the killing hit's bearing
+    relative to the heading, and whether that bearing was inside any player-
+    group arc, so the Debrief can name it ("struck from the uncovered rear").
     The battle's outcome is Battle Resolution's. The camera follows the flagship
     by default (Camera & Combat View #45).
 14. **The ghost path** uses the flagship's last applied intent (Combat Space
@@ -161,7 +171,7 @@ have".
 | Refit & Loadout | → #15 | Group assignment |
 | Fleet Orders (#19), Ship AI (#20) | both | Retreat intent and AUTO focus; AUTO targeting |
 | Camera & Combat View (#45) | #15 → #45 | Follow target |
-| Battle Resolution | #15 → BR | Flagship loss reported (outcome owned there) |
+| Battle Resolution, After-Action Debrief | #15 → them | Flagship loss + loss context (killing bearing, inside/outside player arcs); outcome owned by Battle Resolution |
 
 ## Formulas
 
@@ -265,7 +275,8 @@ In `assets/data/piloting/` and `assets/data/abilities/`.
 ## UI Requirements
 
 - HUD: player-group arcs and cooldowns, ability cooldowns, lock marker, move
-  frame indicator.
+  frame indicator; a mark when AUTO-group mounts fire on their own, and a mark
+  for the EMPTY Vigor slowdown.
 - Refit screen: weapon-group assignment per mount (Refit & Loadout).
 - 📌 **UX Flag — Flagship Piloting**: include arcs, group readouts and ability
   cooldowns in the Combat HUD UX spec before epics.
@@ -294,7 +305,8 @@ In `assets/data/piloting/` and `assets/data/abilities/`.
 - **AC-10 (Logic; rule 12)**: a queued order to the flagship affects only retreat intent and the AUTO group's focus; it never changes movement, aim or player-group fire.
 - **AC-11 (Logic; rule 4)**: a full battle flown with Q/E, WASD, T and V only (no mouse) fires player groups and completes.
 - **AC-12 (Performance; latency)**: an input event shows its effect (muzzle flash or plume) within ≤ 83 ms worst case at 60 Hz; in the simulation, a changed command is applied in the first P1 after its sample.
-- **AC-13 (Playtest; Game Feel)**: 4 of 5 testers fly the Spiralward and keep its blind rear away from a Vector Line for 60 s without pausing, and describe the controls as "heavy but responsive", never "laggy".
+- **AC-13 (Playtest; Game Feel)**: 4 of 5 testers fly the Spiralward and keep its blind rear away from a Vector Line for 60 s without pausing, and describe the controls as "heavy but responsive", never "laggy"; and 4 of 5 describe pausing to give an order as natural, not as a penalty.
+- **AC-14 (Logic; rule 13)**: a flagship destroyed by a hit from 180° off its heading with no player-group arc covering it reports loss context `(bearing 32,768, covered = false)`, and the record carries it for the Debrief.
 
 ## Open Questions
 
@@ -305,3 +317,4 @@ In `assets/data/piloting/` and `assets/data/abilities/`.
 | 3 | **Aim lead** on locked targets — not at MVP. | game-designer | Post-MVP |
 | 4 | **Flagship swap mid-battle** (transfer command to another ship). | game-designer | Post-MVP |
 | 5 | **A Q/E-only facing setting** (mouse aims turrets only) as an option for Starsector veterans. | game-designer | Vertical Slice |
+| 6 | **Machine flagship piloting** (post-MVP): how Coherence and links change player fire and abilities, resolved inside the asymmetry, never the organic model reskinned. | game-designer | Before machine-flagship content |
