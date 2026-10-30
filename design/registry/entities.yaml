@@ -568,6 +568,42 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: vigor_floor_pm
+    status: active
+    source: design/gdd/vigor.md
+    referenced_by:
+      - design/gdd/vigor.md
+      - design/gdd/gameplay-settings-and-modifiers.md
+    value: 250
+    unit: permille
+    notes: "Vigor rule 15: ceiling floor as share of C0; erosion stops there; never changed by difficulty (Settings rule 9)."
+    added: 2026-10-30
+    revised: ""
+
+  - name: vigor_erode_mv
+    status: active
+    source: design/gdd/vigor.md
+    referenced_by:
+      - design/gdd/vigor.md
+      - design/gdd/weapons-and-damage.md
+    value: 20
+    unit: mV per V
+    notes: "Vigor D2: ceiling erosion per Vigor spent, before vigor_erosion_permille. Tuned with Weapons vigor_per_shot so Standard ends 3 battles at 40-70%."
+    added: 2026-10-30
+    revised: ""
+
+  - name: vigor_rest_restore_pm_per_day
+    status: active
+    source: design/gdd/vigor.md
+    referenced_by:
+      - design/gdd/vigor.md
+      - design/gdd/world-clock.md
+    value: 150
+    unit: permille of C0
+    notes: "Vigor rule 16 / D4: ceiling restored per game day of port rest; floor-to-full is 5 days at Standard. Ports, Rest & Care must honour it."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:

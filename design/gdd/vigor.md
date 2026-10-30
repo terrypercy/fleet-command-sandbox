@@ -4,6 +4,7 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on the 'inverted curve' flux claim, the floor state, erosion causes for the Debrief, invisible ember cost, and core-rule gaps; all five revised
 > **Implements Pillar**: Pillar 5 (Living Against Made — Vigor is living energy, located in cores, eroding and restored only by rest; never flux under another name); Pillar 1 (Every Defeat Is a Lead — running dry changes behaviour, never locks a ship out)
 
 ## Summary
@@ -13,7 +14,7 @@ a pool that refills in battle from the ship's flow, and a ceiling that erodes
 with every spend and every membrane absorption for the rest of the expedition,
 restored only by port rest (days) or care (standing). Running dry never disables
 a ship; it falls to ember fire, and at the floor it fights and retreats
-indefinitely. Located cores, an inverted shield curve, no overload and two
+indefinitely. Located cores, hits that never stop the guns, no overload and two
 timescales on one bar keep it from being flux under another name (Pillar 5).
 
 > **Quick reference** — Layer: `Core` · Priority: `MVP` · Key deps: `Simulation Tick & Pause, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space, Hulls & Ship Definition`
@@ -53,8 +54,8 @@ already down, fires once, and pulls back before the pool runs dry. Back in
 port, the rest takes three days, and a rival gets a system closer.
 
 **Pillars served:**
-- **Pillar 5, *Living Against Made*:** located cores, an inverted shield curve,
-  no overload or vent, two timescales on one bar (rule 11).
+- **Pillar 5, *Living Against Made*:** located cores, hits that never stop the
+  guns, no overload or vent, two timescales on one bar (rule 11).
 - **Pillar 1, *Every Defeat Is a Lead*:** running dry changes behaviour and is
   recorded ("Vigor ran dry" is a Debrief cause, never a lockout).
 
@@ -86,8 +87,8 @@ nothing" (the prototype's worst moment), or "this is just flux".
    limited to `vigor_flow` by a one-second token bucket. When Vigor (#13)
    answers a weapon's request, it answers one of three:
    - **full**: the shot fires normally, `P −= vigor_per_shot`;
-   - **ember**: the pool cannot cover the shot (EMPTY band); the shot fires as an
-     ember shot (rule 9);
+   - **ember**: the band is EMPTY **or** `P < vigor_per_shot`; the shot fires as
+     an ember shot (rule 9);
    - **refused**: only when the flow bucket is spent this second; the weapon
      retries next tick and makes no draw (Weapons & Damage rule 3).
 6. **Every pool spend erodes the ceiling**: a spend of `s` V removes
@@ -99,6 +100,9 @@ nothing" (the prototype's worst moment), or "this is just flux".
      has a strong membrane; a drained one, none);
    - every absorbed point removes `MEMB_MV` (100 mV) from the **core nearest the
      hit's contact point**;
+   - if the nearest core is at 0, it takes from the next-nearest live core; a
+     core reduced to 0 by any cause goes dark and loses its share of refill
+     (rule 4);
    - it never takes `C` below the floor; at the floor it absorbs nothing;
    - it has no toggle and no overload state.
 8. **Bands** (`p = P × 1,000 ÷ C`), with hysteresis, each emitted as a `VigorBand`
@@ -124,8 +128,11 @@ nothing" (the prototype's worst moment), or "this is just flux".
     (Combat Space rule 6a). In EMPTY, boost is an ember boost: 1,150 ‰, burning
     `C` like ember shots.
 11. **Not flux.** These are the differences a Starsector player meets:
-    1. **The shield curve is inverted**: a fuller ship has a *stronger*
-       membrane; with flux, a full bar means near overload.
+    1. **Taking hits never stops you shooting.** In Starsector, shield hits add
+       flux to the same pool the guns use. Here the membrane erodes the ceiling
+       and leaves the pool alone, so taking fire shortens the expedition, not
+       this fight. Membrane strength also fades gradually with the pool; there
+       is no cliff.
     2. **No overload, vent or lockout**: running dry is ember fire, fighting on
        by burning the future.
     3. **Location matters**: the membrane drains the core facing the hit, and
@@ -146,7 +153,11 @@ nothing" (the prototype's worst moment), or "this is just flux".
 **C. Between battles**
 
 14. **Carry-over.** `C` (per core) persists on the ship. At battle end,
-    `VigorCeilingEroded(ship, amount)` is emitted (Battle Record).
+    `VigorCeilingEroded(ship, amount, by_source, by_core)` is emitted (Battle
+    Record): the total split by source (spend, ember, membrane, core strike) and
+    by core, so the Debrief can name the largest erosion source and the core
+    that lost the most ("you lost most of your ceiling to ember fire" → hold
+    fire; "the bow core took every hit" → turn a fresh flank).
 15. **The floor** is `C_floor = (C0 × VIGOR_FLOOR_PM + 999) div 1,000`, with
     `VIGOR_FLOOR_PM` = 250. Difficulty never changes it (Gameplay Settings &
     Modifiers rule 9).
@@ -170,7 +181,7 @@ nothing" (the prototype's worst moment), or "this is just flux".
 | OK | p ≥ 450 (or start) | Full shots and membrane | LOW (p < 350) |
 | LOW | p < 350 | Warning pulse and cue; "dry in N s" marker | OK (p ≥ 450), EMPTY (p < 50) |
 | EMPTY | p < 50 | Ember fire, membrane 0, 900 ‰ movement | LOW (p ≥ 200) |
-| FLOOR | C ≤ C_floor | Erosion stops; membrane 0; 850 ‰ movement | — (rest of battle) |
+| FLOOR | C ≤ C_floor | Erosion stops; membrane 0; 850 ‰ movement; full shots from the pool, ember (free) when the pool is empty | — (rest of battle) |
 | Docked / Resting | between battles | `C` carries; rest restores | Deployed |
 
 ### Interactions with Other Systems
@@ -257,8 +268,15 @@ Standard in band.
 - **If the hull's ceiling is the minimum (100 V)**: the floor is 25 V; ember fire
   still works.
 - **If several bands are crossed in one tick**: only the final band is emitted.
-- **If the player "dives to the floor to fight for free"**: ember damage is 40 %
-  at half rate (about 20 % DPS) and the membrane is gone; it never dominates.
+- **If the player "dives to the floor to fight for free"**: at FLOOR, full shots
+  still fire from the pool and refill is unchanged, so sustained output is about
+  59 % of full fire on the reference ship (30 of 51 V/s); ember shots (about
+  20 % DPS) cover the gaps. But the membrane is gone, so the ship takes full
+  damage, and it faces the longest rest. That is the deterrent. Floor time is
+  logged in playtest (AC-15); if testers dive deliberately, the floor rules are
+  revisited.
+- **If the nearest core is already dark when a hit lands**: the membrane takes
+  from the next-nearest live core (rule 7).
 - **If care would exceed `C0`**: clamped to `C0`.
 - **If an exempt opening battle is lost**: no ceiling is lost (rule 18).
 - **If a rest is interrupted halfway**: half the deficit is restored.
@@ -318,6 +336,11 @@ All in `assets/data/vigor/`.
 
 - Per organic ship: pool and ceiling on one bar (ceiling as the bar's length,
   pool as its fill, floor marked), band, and the "dry in N s" marker.
+- **Ember cost is visible**: while ember fire is active, the ceiling end of the
+  bar visibly burns back, and the first ember shot in each EMPTY band plays a
+  distinct cue.
+- **Flow-cap refusals are explained**: a shot refused by the flow cap (guns plus
+  boost drawing more than `vigor_flow`) shows a brief cue on the weapon.
 - Port and fleet screens: ceiling per ship and rest days needed.
 - 📌 **UX Flag — Vigor**: include the Vigor bar, warning and rest preview in the
   Combat HUD and port UX specs before epics.
@@ -337,7 +360,7 @@ All in `assets/data/vigor/`.
 
 - **AC-01 (Logic; D1)**: at 60 Hz and 30 Hz, a `vigor_flow` 60 ship refills exactly 30,000 mV per second of ticks, clamped at `C`.
 - **AC-02 (Logic; D2)**: a 3,000-V spend removes exactly 60,000 mV at m = 1,000 and 36,000 mV at m = 600.
-- **AC-03 (Logic; D3, rule 7)**: the hit-100 example absorbs 18 and costs 1,800 mV from the core nearest the contact point; `P` is unchanged; at `P` = 0 nothing is absorbed; at the floor nothing is absorbed.
+- **AC-03 (Logic; D3, rule 7)**: the hit-100 example absorbs 18 and costs 1,800 mV from the core nearest the contact point; `P` is unchanged; at `P` = 0 nothing is absorbed; at the floor nothing is absorbed; with the nearest core dark it takes from the next-nearest live core; a core drained to 0 by the membrane goes dark and stops contributing refill.
 - **AC-04 (Logic; rule 8)**: hysteresis holds: p 349 enters LOW, 449 stays LOW, 450 leaves; 49 enters EMPTY, 199 stays, 200 leaves.
 - **AC-05 (Logic; rule 9)**: at EMPTY a weapon fires ember shots at 400 ‰ damage and double cooldown, and `C` falls by `vigor_per_shot × 60` mV per shot; no fixture produces `Disabled` or zero speed from Vigor.
 - **AC-06 (Logic; rules 9, 15)**: at FLOOR, a further 10,000 V of spending leaves `C` = `C_floor` and refill stays 30 V/s; the ship moves at 850 ‰ and reaches its retreat zone.
@@ -349,7 +372,10 @@ All in `assets/data/vigor/`.
 - **AC-12 (Logic; rule 13)**: under a constant drain, the "dry in N s" marker appears at least 3 s before EMPTY.
 - **AC-13 (Logic; rule 5)**: a weapon refused for the flow cap makes no draw and fires on a later tick; full and ember answers are recorded correctly.
 - **AC-14 (Logic; rule 10)**: holding boost publishes 1,400 ‰ to Combat Space and draws 24 V/s on a flow-60 ship.
-- **AC-15 (Playtest)**: across 10 or more 3-battle expeditions on Standard, at least 70 % end at 40 – 70 % of `C0`; at least 3 of 5 testers change how they spend in battle 3 unprompted; how often EMPTY is reached is logged; running dry is nobody's worst moment.
+- **AC-15 (Playtest)**: across 10 or more 3-battle expeditions on Standard, at least 70 % end at 40 – 70 % of `C0`; at least 3 of 5 testers change how they spend in battle 3 unprompted; how often EMPTY is reached and time spent at FLOOR are logged; running dry is nobody's worst moment; if any tester deliberately dives to the floor, the floor rules are revisited.
+- **AC-17 (Logic; rule 14)**: `VigorCeilingEroded` carries the split by source and by core, summing to the total; the Debrief names the largest source and the core that lost the most.
+- **AC-18 (Logic; rule 5)**: in LOW with `P` smaller than a shot's `vigor_per_shot`, the shot is answered ember.
+- **AC-19 (UI)**: ember fire shows the ceiling burning back and plays its cue on the first ember shot of each EMPTY band; a flow-cap refusal shows its cue.
 - **AC-16 (Playtest; flux test)**: at least 4 of 5 Starsector-literate testers, asked whether Vigor is flux, name at least 2 of rule 11's differences and do not call it "flux renamed".
 
 ## Open Questions

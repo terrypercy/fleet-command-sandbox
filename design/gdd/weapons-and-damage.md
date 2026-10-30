@@ -133,11 +133,11 @@ lost to a dice roll", or "I can't tell what that weapon is doing".
      ship's membrane is thin). What it absorbs is taken from the **Vigor
      ceiling**, not from the spendable pool: the membrane trades long-term
      endurance, which only care or port rest restores, for surviving this hit.
-     It has **no toggle and no overload state**. If Vigor (#13) refuses, nothing
-     is absorbed. This keeps shots (spending) and the membrane (erosion) on
-     different parts of Vigor, so the pair never reproduces a single
-     flux-and-overload pool (Pillar 5). **Blocking dependency:** the exact
-     maths are Vigor's, and this rule is provisional until #13 confirms it.
+     It has **no toggle and no overload state**. At the ceiling floor it absorbs
+     nothing (the flow-cap refusal does not apply to the membrane). This keeps
+     shots (spending) and the membrane (erosion) on different parts of Vigor,
+     so the pair never reproduces a single flux-and-overload pool (Pillar 5).
+     The maths are Vigor's (Vigor D3; confirmed 2026-10-30).
    - **Machine ward**: a pool of `ward_points` (new `machine` field in Hulls)
      that refills at `ward_refill` per second **only while the ship is linked**;
      cut, it stops refilling and decays (rate owned by #14). Cutting a link
@@ -423,7 +423,7 @@ All in `assets/data/weapons/`.
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | **Budget split** — with Combat Space 1.2 ms, RNG 0.6 ms and Weapons 1.2 ms, about 1.0 ms of `L` remains for Ship AI, Vigor, Coherence and the record. | technical-director, performance-analyst | Tick/determinism ADR spike |
-| 2 | **Blocking: Vigor draw and membrane maths** (rule 7, `vigor_per_shot`), including how membrane absorption erodes the ceiling and scales with current Vigor. This GDD is not approvable until #13 confirms it. | Vigor (#13) | Before approval |
+| 2 | ~~**Blocking: Vigor draw and membrane maths**~~ **Resolved 2026-10-30** by Vigor rules 5–7 and D3 (grant answers full / ember / refused; membrane erodes the ceiling from the nearest core, scaled by P ÷ C). | Vigor (#13) | Resolved |
 | 3 | **Ward decay and link strain maths** (rules 6–7). | Coherence & Links (#14) | When #14 is designed |
 | 4 | **Stern armour** (half armour inside the stern arc) as optional positional play. | game-designer | Post-MVP |
 | 5 | **Point defence / targetable projectiles** — not at MVP. | game-designer | Post-MVP |
