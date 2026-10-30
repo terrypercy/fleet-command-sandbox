@@ -212,7 +212,7 @@ Later tiers:
 | 13 | Vigor | Gameplay | MVP | Designed | design/gdd/vigor.md | Simulation Tick & Pause, Gameplay Settings & Modifiers, Combat Event Bus & Battle Record, Combat Space |
 | 14 | Coherence & Links | Gameplay | MVP | Designed | design/gdd/coherence-and-links.md | Simulation Tick & Pause, Combat Event Bus & Battle Record, Combat Space |
 | 15 | Flagship Piloting | Gameplay | MVP | Designed | design/gdd/flagship-piloting.md | Simulation Tick & Pause, Input & Controls, Combat Space, Weapons & Damage, Vigor, Coherence & Links |
-| 16 | Truth Seeding & Candidates (inferred) | Narrative | MVP | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Save/Load & Migration |
+| 16 | Truth Seeding & Candidates (inferred) | Narrative | MVP | Designed | design/gdd/truth-seeding-and-candidates.md | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Save/Load & Migration |
 | 17 | Faction Reputation & Standing | Progression | MVP | Not Started | — | Content Data & Mod Loading, Save/Load & Migration |
 | 18 | Credits, Upkeep & Sinks (inferred) | Economy | MVP | Not Started | — | Save/Load & Migration, World Clock |
 | 19 | Fleet Orders | Gameplay | MVP | Not Started | — | Simulation Tick & Pause, Input & Controls, Combat Space, Runtime ID Service |
@@ -479,10 +479,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 15 |
+| Design docs started | 16 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 15/43 (#1 In Review; #2–#15 pending review) |
+| MVP systems designed | 16/43 (#1 In Review; #2–#16 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---

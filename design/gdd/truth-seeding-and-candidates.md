@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — one fixed hidden truth per save, seeded so it cannot be looked up, provable only from evidence)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on the G6 surface-leak contradiction, testimony's false branch, the anchor example, and the pillar header; all revised; Open Question 4 resolved with a concept edit
+> **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — one fixed hidden truth per save, seeded so it cannot be looked up, provable only from evidence); Pillar 4 (Plan in the Open — the attribute table is public)
 
 ## Summary
 
@@ -54,9 +55,10 @@ Its texture is *the archive does not lie, but people do*: stamped relics and
 machine logs can be trusted; testimony and forgeries are marked, and the player
 learns to weigh them.
 
-*Anchor moment:* the player holds a relic stamped in base-12 marks and a machine
-log dated in the Accord era. Neither names anyone. Together they rule one race
-out. The Case File says so, and only so.
+*Anchor moment:* the player holds a relic inscribed in glyph script and, from a
+different archive, a machine log in the same script. Neither names anyone; two
+races share that script. Together, two independent sources, they rule the third
+race out. The Case File says so, and only so.
 
 **Pillars served:**
 - **Pillar 2, *The Truth Is Yours to Tell*:** one fixed hidden truth per save,
@@ -105,7 +107,7 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
    |---|---|---|
    | DIRECT_PHYSICAL (relic) | yes | always consistent with the truth |
    | RECORD (machine log) | yes | always consistent with the truth |
-   | TESTIMONY (eyewitness) | **never**; weight only | consistent with the truth with probability `TESTIMONY_TRUE_PM` (700 ‰) |
+   | TESTIMONY (eyewitness) | **never**; weight only | consistent with the truth with probability `TESTIMONY_TRUE_PM` (700 ‰); otherwise its value is drawn uniformly from the non-maker candidates' values on an all-different axis. The Dossier describes testimony as "often right, never proof", not with the figure |
    | FORGERY (red herring) | **never**; weight only | its value is drawn **without regard to the truth** (uniform over the candidates' values on an all-different axis), so it may name the true maker |
 
    A FORGERY's tell is its provenance (a wrong seal, an anachronism in the chain
@@ -132,10 +134,13 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
      least 2 different groups;
    - **G4** at least `H` (1) FORGERY fragments exist (rule 7);
    - **G5** `T` (1) TESTIMONY fragments exist (rule 7);
-   - **G6 no surface leak**: fragment display order is acquisition order (set
-     by #28), never generation order; per axis, every candidate's value appears
-     in the case's claim texts equally often whether or not it is the maker
-     (testimony and forgeries are used to balance mentions).
+   - **G6 no surface leak**: no feature of a fragment *other than its claim
+     content* (display order, template wording, string length, provenance
+     stamp, group ID, package, location) carries information about the maker.
+     Display order is acquisition order (set by #28), never generation order.
+     Reliable claims naturally favour the maker's values; that skew is the
+     solution, not a leak. Testimony and forgery values are never chosen to
+     balance mentions (rule 7).
 10. **Generate, check, retry.** The case is generated on `base:truth.fragments`,
     checked against G1–G6, and regenerated up to `MAX_ATTEMPTS` (32) times on the
     same stream (deterministic). If none passes, a **fixed fallback build** is
@@ -314,8 +319,8 @@ rule 14).
 - **AC-04 (Logic; rule 10)**: on the same run the fallback rate is ≤ 0.1 %, and every fallback case passes D3.
 - **AC-05 (Logic; G2)**: in every case no single reliable fragment contradicts more than `C − 2` candidates, and no single reliable fragment rules a candidate out.
 - **AC-06 (Logic; G3)**: every false candidate has `contra ≥ 2` from different groups; the truth has `contra` = 0.
-- **AC-07 (Logic; rule 7)**: over 30,000 seeds, the candidate a FORGERY's value points to is the maker in 1 ÷ C ± 1.5 % of cases, and testimony matches the truth in 700 ‰ ± 15 ‰ (neither can be read backwards).
-- **AC-08 (Logic; G6)**: over 30,000 seeds, a classifier given only fragment surface features (wording, length, class, counts of each candidate's values) predicts the maker no better than chance (≤ 1 ÷ C + 2 %).
+- **AC-07 (Logic; rule 7)**: over 30,000 seeds, the candidate a FORGERY's value points to is the maker in 1 ÷ C ± 1.5 % of cases, and testimony matches the truth in 700 ‰ ± 15 ‰, with its false values spread uniformly over the non-maker candidates (neither can be read backwards).
+- **AC-08 (Logic; G6)**: over 30,000 seeds, a classifier given only non-content features (display order, template wording, string length, provenance stamp, group ID, package, location) predicts the maker no better than chance (≤ 1 ÷ C + 2 %); and with claim values hidden, which axes appear predicts the maker no better than chance by the same threshold.
 - **AC-09 (Logic; rule 5)**: a base table that breaks the table rule fails at load with a named reason; a mod race that breaks it is excluded with a warning.
 - **AC-10 (Logic; rule 11)**: changing claim-template content leaves the maker unchanged for a fixed seed.
 - **AC-11 (Logic; rule 11)**: every difficulty preset gives an identical case.
@@ -332,5 +337,5 @@ rule 14).
 | 1 | **A truth-neutral lore bible** (shared backstory; each race's motive, means and innocent gap; the attribute table values) is needed before #28 and the writer start. | narrative-director, writer, world-builder; scope by producer | Before #28 is designed |
 | 2 | **Race names and attribute values** are placeholders. | narrative-director | Lore bible |
 | 3 | **`TESTIMONY_TRUE_PM`** value: testimony must feel worth weighing without being proof. | game-designer | Mystery playtest |
-| 4 | **Testimony and the concept's wording**: the concept says every fragment is consistent with the truth "except the marked red herrings"; this GDD reads testimony, also a marked class that never counts as a contradiction, as covered by that exception (rule 7). Confirm. | creative-director | CD review |
+| 4 | ~~**Testimony and the concept's wording**~~ **Resolved 2026-10-30**: creative-director approved the intent; the concept's Unique Hook now reads "except the marked red herrings and testimony" (concept edit, owner's standing instruction). | creative-director | Resolved |
 | 5 | **Localisation**: grammar-neutral value slots so gender or case agreement cannot leak (G6). | localization-lead | Before localisation |

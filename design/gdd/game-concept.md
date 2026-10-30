@@ -71,7 +71,7 @@ you decide who history blames.**
 - There is **one fixed, hidden truth per save**: the true maker is seeded at new
   game from the candidate races, so it cannot be looked up. The save also seeds a
   **finite set of fragments**, all of them consistent with that truth except the
-  marked red herrings; nothing adds fragments later, free play included. The
+  marked red herrings and testimony; nothing adds fragments later, free play included. The
   **public history** is shaped by which fragments you share, and with whom: each
   faction holds its own belief about who built the machines, and reacts to it.
 - The **consequences of sharing** are previewed before you commit, as
