@@ -96,8 +96,9 @@ SDT: **Autonomy** (three viable recoveries: rest, care, or press on wounded);
      never offer care: they have no ledger row to spend.
    - `market`, `refit`, `contracts`, `salvage` and `repair` are authored per
      port. Each is shown only if its owning system has registered a provider
-     (rule 22). At MVP no provider is registered, so they show as "not yet
-     available".
+     (rule 22). At MVP Refit & Loadout (#35) registers `refit`, reading the
+     port's authored `refit_stock`; the others show as "not yet available"
+     until their systems register.
 4. **Validation** (content load, all errors): `PORT_CARE_AUTHORED` (rule 3);
    `PORT_NO_SYSTEM` (no system references the port); `PORT_SHARED` (two
    systems reference one port); `PORT_RUMOUR_UNKNOWN` (a rumour names no

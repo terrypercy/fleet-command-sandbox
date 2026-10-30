@@ -363,7 +363,7 @@ Solo counter passes: `wins ≥ PROOF_WIN_MIN` over `PROOF_SEEDS` seeds at each o
 
 ### D6. Counter affordability
 
-`min over kits (Σ price(item)) ≤ COUNTER_COST_CAP`, where `COUNTER_COST_CAP`
+`min over kits (Σ price(item)) ≤ COUNTER_COST_CAP`, with price = Refit & Loadout D4 base price (orders cost 0; duplicates count each), where `COUNTER_COST_CAP`
 = the net surplus of a defeated Standard expedition plus one clean expedition
 (Credits Open Question 2, ≈ 4,800 on the D5 fleet). Example: kit A 5,200, kit B
 3,900 → **3,900 ≤ 4,800, pass**.

@@ -147,8 +147,10 @@ them. Then change one value and run the suite again overnight.
     `next_id`, so IDs match across runs (Runtime ID Service, Runner row).
 11. **The counter fleet** (Machine Nodes rule 21) is the reference fleet plus
     the counter's cheapest kit by Machine Nodes D6 price. Ties go to the kit
-    listed first. The kit is fitted by a fixed rule. Each item goes to the
-    first ship, in ascending Runtime ID, that has a free compatible slot. If
+    listed first. The kit is fitted by a fixed rule (compatible = Refit &
+    Loadout's `fits`; weapons first, then modules; ascending `slot_id`). Each
+    item goes to the first ship, in ascending Runtime ID, that has a free
+    compatible slot. If
     there is none, it replaces the default item in the first compatible slot.
     Order-only kits add their orders to the pre-battle plan. If a kit cannot be
     fitted, the counter's proof fails with `RUNNER_KIT_UNFIT`, so a counter that
