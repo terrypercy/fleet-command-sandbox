@@ -548,4 +548,4 @@ proceed (the owner may revisit any of them at review):
 | 4 | ~~**Where a withdrawn machine fleet goes**~~ **Resolved 2026-10-30:** it returns home and refits (#23 rule 15); a node breaks only when its keystone dies (#23 rule 16). | Machine Nodes & Strongholds (#23) | Closed |
 | 5 | **`BATTLE_LIMIT_S`** of 30 unpaused minutes is a starting point; tune it with the AI-vs-AI Runner's battle-length data. The Runner also tests whether kiting to STANDOFF costs less than an ordered retreat; if it does, STANDOFF is cut. | systems-designer | Runner tuning |
 | 6 | ~~**How a defeat's day cost is computed**~~ **Resolved 2026-10-30:** After-Action Debrief D5, `defeat_skip_s(report)`. | Defeat & Debrief (#24) | When #24 is designed |
-| 7 | **Left-behind lent ships**: the standing cost with the lending faction, previewed before battle. | Faction Reputation & Standing, Allied Lending (#33) | When #33 is designed |
+| 7 | ~~**Left-behind lent ships**~~ **Resolved 2026-10-30:** a lent ship destroyed, or disabled and left behind, costs SLIGHT (40) standing with the lender and no credits, previewed on the battle-start screen (Allied Lending). | Allied Lending (#33) | Closed |

@@ -116,7 +116,7 @@ splinter must read as my cut working.
      cut behaviour (Coherence & Links rule 7; Ship AI rule 11);
    - **relinked to FRAYING or better**: doctrine resumes in CONSOLIDATE, after a
      tell.
-10. **The player default doctrine** applies only to player ships with no goal:
+10. **The player default doctrine** applies only to player-side ships (lent ships included; Allied Lending) with no goal:
     Ship AI treats them as a loose Escort of the flagship (Fleet Orders D2 screen,
     D5 leash), following the fleet's Focus slot and never retreating. Nothing is
     written into the Goal slot, so the Debrief can tell "ordered" from "default".

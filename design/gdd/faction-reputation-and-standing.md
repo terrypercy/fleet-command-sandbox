@@ -73,12 +73,13 @@ why" or "I can keep a lie forever for free".
 3. **What each band allows** (each keeps everything below it, from Wary up):
    - **Hostile**: docking refused (no rest, trade, care or refit); not eligible
      to lend; `engages_on_sight` for Sector Map and fleet AI; lent ships of that
-     race are recalled by their lending owner;
+     race are recalled by their lending owner (Allied Lending's Hostile veto);
    - **Wary**: dock, rest and trade (Markets owns prices; this band is a price
      hook);
    - **Neutral**: care offered at 1,500 ‰ of the base price;
-   - **Trusted**: care at 1,000 ‰; eligible to lend (whether it lends is
-     Faction Belief & Blame's call);
+   - **Trusted**: care at 1,000 ‰ (lending does not read Standing: Allied
+     Lending decides from Faction Belief alone, with only the Hostile veto
+     above);
    - **Allied**: care at 750 ‰.
 
 **B. Writes**

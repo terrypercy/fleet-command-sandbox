@@ -83,7 +83,9 @@ where".
 
 **B. Upkeep and the bankruptcy floor**
 
-4. **Fleet upkeep** is charged per ship per day by size class: light 60, line
+4. **Fleet upkeep** is charged per ship per day by size class (lent ships are
+   the lender's: they pay no upkeep, are left out of `U_nominal` and the
+   defeat cap, and are never billed when left behind; Allied Lending): light 60, line
    120, heavy 240, capital 480. A daily World Clock event (priority 100), due at each day boundary
    (`d × DAY_S`), charges it; the charge is all or nothing per ship. It fires inside rests and skips;
    during a **defeat skip** it is held, and those days are billed in the defeat
