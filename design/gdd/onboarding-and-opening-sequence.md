@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (pre-contact retreat consumes nothing; lead line shows, not tells; tighter spoiler AC; pass-bar mapping; win card)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — the game opens with a stronghold you are meant to lose, and teaches that losing is a lead); Pillar 3 (Hands on the Helm — the player flies from the first minute)
 
 ## Summary
@@ -78,7 +78,7 @@ causes (concept: Starsector's start is the cautionary example).
    | B2 | **Skirmish** | ~4 min | Fights the skirmish fleet: one relay and two escorts | Pause/resume, one fleet order, cutting a relay link |
    | B3 | **Approach** | ~1 min | Travels one hop to the opening node; opens its Dossier page; engages from the pre-battle panel | Sector map travel, Dossier (J), readiness |
    | B4 | **Opening battle** | ~5 min | Fights the opening stronghold and, as designed, loses | Nothing new is hinted; the player applies B1–B2 |
-   | B5 | **First Debrief** | player-paced | Reads the opening-loss Debrief | "Losing is a lead" |
+   | B5 | **First Debrief** | player-paced | Reads the opening-loss Debrief | "This is what beat you" |
    | B6 | **Dossier** | player-paced | Sees the counters the loss revealed | Where leads live |
    | B7 | **Port** | player-paced | Docks at the fallback port; sees refit and roster | Changing something between attempts |
 
@@ -142,18 +142,18 @@ causes (concept: Starsector's start is the cautionary example).
 **C. The exemption (exactly once)**
 
 12. **The lead line.** On the opening-loss Debrief (Debrief rule 20), #53 adds
-    one line above the cause block: "Losing is a lead. This is what beat you."
-    and, under the top-ranked cause, its action phrased as a lead ("Next time:
-    {cause action}"). It never says "try again", never names the opening node
+    one line above the cause block: "This is what beat you." and, under the
+    top-ranked cause, its action as "Counter: {cause action}". It never says "try again", never names the opening node
     as a destination and never sets a waypoint back to it. A retry must be the
     player's own idea, because the Tier 0 pass bar measures retry without
     prompt (concept, MVP Definition).
 13. **If the opening is won, the lesson moves.** The win is an ordinary win
     (Battle Resolution rule 19): the node breaks and its fragment slot pays out
     under Archive Fragments' standard rules. #53 adds one card on that Debrief:
-    "You broke it on the first attempt. Most don't." On the player's **first
-    later loss-class Debrief** in this save, #53 shows the lead line of rule 12
-    once, without "Nothing was lost" (that loss is not exempt).
+    "Broken on the first attempt. The archive is open." On the player's **first
+    later loss-class Debrief** in this save, #53 shows the lead lines of rule 12
+    ("This is what beat you." and "Counter: {cause action}") once, without
+    "Nothing was lost" (that loss is not exempt).
 14. **The effective flag** (D2). When a battle setup is built against a node,
     #53 supplies `exempt_lasting_cost = node.exempt_lasting_cost AND NOT
     save.opening_exempt_consumed`. Battle Resolution copies this value, never the
@@ -474,7 +474,7 @@ All in `assets/data/onboarding/opening.tres` (path proposed; data, not code).
 - **AC-10 (UI; rule 9)**: rebinding fire to another key while `h.fire` shows updates its glyph on the next frame (screenshot).
 - **AC-11 (UI; rule 10)**: each MVP hint appears at its trigger in the hint corner and closes on its done condition (one retained screenshot per hint).
 - **AC-12 (UI; rule 17)**: the opening node's Dossier page and pre-battle panel show "A loss here costs nothing" before consumption and Credits' ordinary quote after.
-- **AC-13 (UI; rule 12)**: the opening-loss Debrief contains the lead line and contains none of "try again", "retry", the node's name as a destination, or a waypoint.
+- **AC-13 (UI; rule 12)**: the opening-loss Debrief contains the lead line and contains none of "try again", "retry", "next time", the node's name as a destination, or a waypoint.
 - **AC-14 (Logic; rule 24)**: Allied Lending offers no loan while unconsumed.
 - **AC-15 (Logic; rule 25, D4)**: the skirmish proof passes in every `PROOF_SEEDS` battle at every roamer-affecting setting; a weakened starting fleet fixture makes the check fail.
 - **AC-16 (Integration; rule 21)**: Skip mode starts docked at the start port with no hints, and the first battle at the opening node is exempt.
@@ -483,9 +483,10 @@ All in `assets/data/onboarding/opening.tres` (path proposed; data, not code).
 - **AC-19 (UI; rule 18)**: every hook line is reviewed against each seeded truth and the red herring; the review record shows it is true under all of them (Narrative sign-off).
 - **AC-20 (Logic; Dependencies)**: each telemetry event fires once at its transition with the listed fields.
 - **AC-21 (Playtest; D1, rule 1)**: in the Tier 0 cohort (≥ 5 testers, ≥ 3 new to the genre), at least 4 of 5, including at least 2 of 3 new to the genre, reach the first Debrief with no moderator help, with median unpaused time ≤ `FIRST_DEBRIEF_BUDGET_S`.
-- **AC-22 (Playtest; rules 12, 15; concept pass bar 1)**: at least 4 of 5, including at least 2 of 3 new to the genre, start a new attempt on the opening node after the opening loss without a moderator prompt (same or next session).
-- **AC-23 (Playtest; rule 1 B7; concept pass bar 2)**: at least 4 of 5, including at least 2 of 3 new to the genre, show a logged loadout change (roster, refit or order set) between the opening attempt and their next attempt on it.
-- **AC-24 (Playtest; rules 12, 19)**: asked after the Debrief "why did you lose?", at least 4 of 5 name a cause matching the Debrief's top-ranked cause; asked "who built the machines?", answers are spread across candidates or "don't know" with no candidate given by more than 3 of 5 citing the opening alone (the hook did not give away the maker).
+- **AC-22 (Playtest; rules 12, 15; concept pass bar 1)**: at least 4 of 5, including at least 2 of 3 new to the genre, start a new attempt on the opening node after the opening loss without a moderator prompt (same or next session), using the concept's Pass-bar definitions (MVP Definition) verbatim.
+- **AC-23 (Playtest; rule 1 B7; concept pass bar 2)**: at least 4 of 5, including at least 2 of 3 new to the genre, show a logged loadout change (roster, refit or order set) between the opening attempt and their next attempt on it, using the concept's Pass-bar definitions (MVP Definition) verbatim.
+- **Concept pass bar 3 (share reason)** is outside #53; it is measured by Public History Screen AC-21 and Faction Belief & Blame's ACs.
+- **AC-24 (Playtest; rules 12, 19)**: asked after the Debrief "why did you lose?", at least 4 of 5 name a cause matching the Debrief's top-ranked cause; asked "who built the machines?", answers are spread across candidates or "don't know", with no candidate given by more than 2 of 5 citing the opening alone (the hook did not give away the maker).
 - **AC-25 (Playtest; Player Fantasy)**: at most 1 of 5 describes the opening loss as unfair or as a punishment in the post-session interview; at least 4 of 5 use the taught fleet order unprompted in the opening battle.
 
 ## Open Questions

@@ -176,7 +176,7 @@ hidden rule", "one fragment gave it away", or "the evidence was rigged".
     save: encrypting only the maker would be theatre, since the filled claims
     identify the maker by deduction anyway. The guarantee is that **no in-game or
     shareable path reveals it**: not the save header, not the slot summary, not a
-    bug-report bundle. Reading one's own save file is out of scope.
+    bug-report bundle. Reading one's own save file is out of scope. A playtest build's sealed telemetry file (Telemetry & Playtest Logging) is a second disk copy, outside every in-game and shareable path; bug-report bundles exclude it.
 13. **Truth-neutral writing** (binding on #28's templates and the writer): every
     race has a motive, a means and an innocent gap in the shared backstory, true
     in every seed; templates have identical wording per race with only the value
