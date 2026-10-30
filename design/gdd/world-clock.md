@@ -111,7 +111,9 @@ reading" or "I lost the campaign by resting".
    clock fires them. **Order is (due_s, priority, seq), ascending**, always.
    - `seq` is a saved counter, +1 per registration (events are not entities and
      use no Runtime IDs).
-   - Priority bands: 100 world changes (contract expiry and replacement); 200
+   - Priority bands: 90 payouts (contract rewards, so they land before upkeep at
+     the same instant); 100 world changes (contract expiry and replacement,
+     fleet upkeep, standing drift); 200
      rival actions (investigator steps); 300 player completions (rest done);
      900 notices. Lower fires first at the same instant.
 7. **Handlers act at the event's time, not the tick's.** Each handler receives

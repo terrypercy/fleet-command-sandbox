@@ -386,4 +386,4 @@ All in `assets/data/vigor/`.
 | 2 | **Which ports offer rest and care**, and care's standing price. | Ports, Rest & Care (#27), Faction Reputation | When designed |
 | 3 | **Ember policy for AI** (when an AI ship holds fire to avoid EMPTY). | Ship AI (#20) | When #20 is designed |
 | 4 | **Chronicler at 73 %** after 3 battles is accepted; revisit in playtest. | game-designer | First expedition playtest |
-| 5 | **Travel healing gate** (Hulls Open Question 1): this GDD's erosion keeps a defeat costly; #18 must still sign off. | Credits, Upkeep & Sinks (#18) | Before #27 approval |
+| 5 | ~~**Travel healing gate**~~ **Resolved 2026-10-30**: Credits, Upkeep & Sinks rule 13 signs it off with three conditions. | Credits, Upkeep & Sinks (#18) | Resolved |
