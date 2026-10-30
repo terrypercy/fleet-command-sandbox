@@ -241,7 +241,7 @@ Later tiers:
 | 42 | Colonies & Industry | Economy | Full Vision | Not Started | — | Faction Reputation & Standing, Credits, Upkeep & Sinks, Sector Map & Travel |
 | 43 | Background Faction Economy | Economy | Alpha | Not Started | — | World Clock, Faction Reputation & Standing, Markets & Trade, Contracts & Missions |
 | 44 | Breakaway Machine Faction | Gameplay | Full Vision | Not Started | — | Coherence & Links, Ship AI, Archive Fragments & Evidence, Allied Lending, Runtime ID Service |
-| 45 | Camera & Combat View | Core | MVP | In Design | design/gdd/camera-and-combat-view.md | Simulation Tick & Pause, Input & Controls, Combat Space, Runtime ID Service |
+| 45 | Camera & Combat View | Core | MVP | Designed | design/gdd/camera-and-combat-view.md | Simulation Tick & Pause, Input & Controls, Combat Space, Runtime ID Service |
 | 46 | Combat HUD & Tactical Overlay | UI | MVP | In Design | design/gdd/combat-hud-and-tactical-overlay.md | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View, Runtime ID Service |
 | 47 | Dossier | UI | MVP | In Design | design/gdd/dossier.md | Simulation Tick & Pause, Machine Nodes & Strongholds, After-Action Debrief, Allied Lending |
 | 48 | Ledger | UI | Vertical Slice | Not Started | — | Simulation Tick & Pause, Sector Map & Travel, Markets & Trade |
@@ -479,10 +479,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 35 |
+| Design docs started | 38 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 35/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
+| MVP systems designed | 36/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
 | Vertical Slice systems designed | 0/6 |
 
 ---
