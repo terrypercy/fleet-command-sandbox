@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (counter roles; relay_cut supporting after the opening; readiness calibration; every loss names a cause; truth-neutral nodes; reserved fragment)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — every stronghold is a fixed, authored puzzle whose counters are data); Pillar 5 (Living Against Made — strongholds are built around keystones and the link graph); Pillar 4 (Plan in the Open — the counter taxonomy feeds the Dossier and Debrief)
 
 ## Summary
@@ -39,7 +39,9 @@ links"). The player refits, comes back, and the same wall comes apart where they
 were told it would. The stronghold did not get weaker. The player got right.
 
 Target aesthetics (MDA): **Challenge** first (a fixed, readable puzzle),
-**Discovery** second (the Dossier fills in; the fragment at the end). SDT:
+**Discovery** second (the Dossier fills in; the fragment at the end). This
+deliberately inverts the concept's order (Discovery 2, Challenge 3) for this
+combat-facing system. SDT:
 **competence** through a truthful readiness range and a named counter;
 **autonomy** through more than one viable counter per node.
 
@@ -68,11 +70,15 @@ Target aesthetics (MDA): **Challenge** first (a fixed, readable puzzle),
    | `garrison[]` | list of `{hull, base_n, n_min, parent}` | 1 – 12 entries | `parent` is the keystone or a relay |
    | `doctrines[]` | list of `{anchor, doctrine_id}` | one per anchor | anchor = keystone or a root relay (Fleet Coordination rule 4) |
    | `layout` | list of `{member, x_pm, y_pm}` | per member | node-local start positions, permille of the anchor's `link_range` |
-   | `fragment_slot` | ref → `fragment_slot` | 0 – 1 | Truth Seeding (#16) fills the slot per save |
+   | `fragment_slot` | ref → `fragment_slot` | 0 – 1 | Authored and seed-independent; Truth Seeding (#16) fills its content per save |
    | `roaming[]` | list of roaming defs (rule 14) | 0 – 2 | MVP authors at most 1 |
    | `dossier` | block (rule 18) | 1 | counters, helper faction |
    | `first_encounter` | bool | — | Settings rule 10a applies |
    | `exempt_lasting_cost` | bool | — | Copied into the battle setup (Battle Resolution rule 19, Vigor rule 18); at most one node per save, sequenced by Onboarding (#53) |
+1a. **Nothing on a node reveals the truth** (Pillar 2). Whether a node has a
+    `fragment_slot` is authored and seed-independent; Truth Seeding fills
+    content only. No node field, map marker, Dossier line, `NodeBroken` beat or
+    garrison composition varies with the seeded maker.
 2. **The keystone is an immobile relay** (Coherence & Links rule 2). Its move
    speed is 0 in battle whatever its hull says. It is the root of the node's link
    tree. Every relay and garrison ship links, directly or through relays, to the
@@ -137,8 +143,12 @@ Target aesthetics (MDA): **Challenge** first (a fixed, readable puzzle),
     `core_exposure` is defensive: it names a player loss and how to avoid it.
     RUPTURE maps to it as the type the node turns on the player's cores, so its
     `affects[]` targets the node's RUPTURE weapons and rule 19 can match it.
-13. **Every node must list `relay_cut`** among its Dossier counters. Cutting
-    links always matters against the made (Pillar 5).
+13. **Every node's link tree is cuttable, so `relay_cut` is always listed.**
+    On a node with `first_encounter` false it is `supporting`: it does not
+    satisfy `NODE_NO_SOLO_COUNTER`, and the Runner fails the node if
+    `relay_cut`'s cheapest kit alone wins ≥ `PROOF_WIN_MIN` at `s` 1000 (error
+    `NODE_RELAY_CUT_SUFFICIENT`). Cutting links always matters against the made
+    (Pillar 5), but it is never the whole answer after the opening.
 
 **D. Breaking a node**
 
@@ -170,17 +180,21 @@ Target aesthetics (MDA): **Challenge** first (a fixed, readable puzzle),
     outcome is win-class, the fragment slot is granted to Archive Fragments (#28)
     at once and the node goes INERT. Otherwise it stays BROKEN_UNCLAIMED and the
     fragment is granted, with no battle, the next time a player fleet reaches the
-    node. The map marker changes to the broken state. A node with no
+    node. A fragment at a BROKEN_UNCLAIMED node is reserved for the player and
+    counts as unfound for exposure until claimed (Exposure & Rival
+    Investigation #32). The map marker changes to the broken state. A node with no
     `fragment_slot` goes straight to INERT.
 
 **E. Dossier, readiness and guarantees**
 
-18. **Dossier block.** `dossier.counters[]` (1 – 6 refs → `counter`) and
+18. **Dossier block.** `dossier.counters[]` (1 – 6 entries `{counter, role:
+    solo | supporting}`; only `solo` entries satisfy rule 19 and the proof in
+    rule 21, and a `solo` entry needs `requires_allies` false) and
     optional `helper_faction_id`. Weaknesses shown are derived from the members'
     hull `counters[]` tags, never authored. If any listed counter has
     `requires_allies` true, `helper_faction_id` is required.
-19. **The no-ally guarantee (validator).** Every node lists at least one counter
-    with `requires_allies` false (error `NODE_NO_SOLO_COUNTER`). Every listed
+19. **The no-ally guarantee (validator).** Every node lists at least one entry
+    with role `solo` (error `NODE_NO_SOLO_COUNTER`). Every listed
     counter's `affects[]` must match at least one tag, field or core present on
     the node (error `NODE_COUNTER_NO_TARGET`).
 20. **Affordability (validator, post-load cross-kind check).** For each listed
@@ -193,6 +207,10 @@ Target aesthetics (MDA): **Challenge** first (a fixed, readable puzzle),
     over `PROOF_SEEDS` (10) fixed seeds, at `s` 1000 and 1200. The counter passes
     if it wins at least `PROOF_WIN_MIN` (7) (D5). A failing counter blocks release
     of that node.
+21a. **Every loss names a cause.** For every node, each of the unprepared
+    reference fleet's losses trips at least one listed counter's predicate in
+    every one of the `PROOF_SEEDS` battles, so the Debrief always has a cause
+    to name (Pillar 1).
 22. **The first stronghold still wins first** (Settings rule 10a). A node with
     `first_encounter` true must also pass the inverse proof: the unprepared MVP
     reference fleet (no kit, default doctrine) loses all `PROOF_SEEDS` battles at
@@ -208,7 +226,7 @@ Target aesthetics (MDA): **Challenge** first (a fixed, readable puzzle),
     names it). `exempt_lasting_cost` and `first_encounter` true. Keystone (Capital, one
     Keystone Breaker, RUPTURE) as the root with doctrine **Anvil**. Two relays,
     children of the keystone. Garrison: 3 escorts per relay (`base_n` 3, `n_min`
-    2). Counters: `relay_cut`, `core_exposure`, `regrowth_stall`. Expected first
+    2). Counters: `relay_cut` (solo, opening only), `core_exposure` (solo), `regrowth_stall` (supporting). Expected first
     loss: the Anvil contracts, the Keystone Breaker burns the player's cores;
     the Debrief names "Vigor ran dry" and "links held". Expected first win: cut
     one relay's links (SEVERING), keep cores out of the breaker's arc, kill the
@@ -306,7 +324,7 @@ high   = R_eff × (1,000 + unc) ÷ 1,000
 
 | Variable | Range | Description |
 |---|---|---|
-| k | 0 – 6 | Listed counters that are both revealed in the Dossier and fielded (a kit present in the fleet) |
+| k | 0 – 6 | Listed counters that are both revealed in the Dossier and fielded. A kit counts as fielded only if the fleet carries every weapon and module in it; order-only kits count only when their orders are assigned in the pre-battle plan |
 | known | 0 – 12 | Doctrine fields and counters revealed for this node |
 | unc | 100 – 400 | Uncertainty, permille |
 
@@ -364,10 +382,9 @@ Solo counter passes: `wins ≥ PROOF_WIN_MIN` over `PROOF_SEEDS` seeds at each o
   can withdraw again (rule 15 restarts).
 - **Salvage farming by repeat attempts**: Salvage & Recovery (#36) owns yields;
   flagged as Open Question 2.
-- **Degenerate: one counter dominates every node.** Rule 13 makes `relay_cut`
-  universal, so it must never be sufficient alone on non-opening nodes; the
-  Runner's per-counter win table shows any node where it wins ≥ 9 of 10 at 1200,
-  for review.
+- **Degenerate: one counter dominates every node.** `relay_cut` is listed
+  everywhere but is `supporting` after the opening, and the Runner blocks a node
+  where it alone wins ≥ `PROOF_WIN_MIN` (rule 13, `NODE_RELAY_CUT_SUFFICIENT`).
 
 ## Dependencies
 
@@ -423,6 +440,8 @@ Solo counter passes: `wins ≥ PROOF_WIN_MIN` over `PROOF_SEEDS` seeds at each o
   cheapest kit cost), helper faction if any, and the readiness range with band
   words and numbers.
 - Readiness always shows a range, never a single number or a win percentage.
+  Above `s` 1200 the band reads "uncalibrated above Admiral".
+- Each counter shows its role (solo or supporting).
 - Counter text is generated from `counter` data (Content Data rule 14).
 
 ## Cross-References
@@ -457,11 +476,14 @@ Solo counter passes: `wins ≥ PROOF_WIN_MIN` over `PROOF_SEEDS` seeds at each o
 - **AC-14 (Logic; rule 17)**: broken with a win-class outcome grants the fragment at battle end; with a loss-class outcome it grants on the next arrival, with no battle.
 - **AC-15 (Logic; rule 19)**: a node with no solo counter fails with `NODE_NO_SOLO_COUNTER`.
 - **AC-16 (Logic; rule 20, D6)**: a base node whose counter's cheapest kit costs 4,801 fails `COUNTER_UNAFFORDABLE`.
-- **AC-17 (Integration; D4)**: over the Runner's calibration set, battles shown Ready win at least 70% and battles shown Outmatched win at most 30%.
+- **AC-17 (Integration; D4)**: over the Runner's calibration set, across `s` ∈ {500, 750, 1000, 1200} and every `enemy_ai_level`, battles shown Ready win at least 70%, Contested 30–70% and Outmatched at most 30%; and the Runner's win rate falls inside the shown range in ≥ 80% of calibration battles at each `known` value.
 - **AC-18 (Logic; D4)**: the worked example gives 442 – 858, "Outmatched to Contested".
 - **AC-19 (Integration; rule 21)**: every MVP node's every solo counter wins ≥ 7 of 10 at `s` 1000 and 1200 in the Runner.
 - **AC-20 (Integration; rule 22)**: the unprepared reference fleet loses 10 of 10 against the opening stronghold at `s` 500 and `enemy_ai_level` 0.
 - **AC-21 (Logic; determinism)**: roaming spawn days and routes are identical across two runs from the same campaign seed.
+- **AC-24 (Integration; rule 13)**: a non-opening node where `relay_cut`'s cheapest kit alone wins ≥ 7 of 10 at `s` 1000 fails `NODE_RELAY_CUT_SUFFICIENT`.
+- **AC-25 (Integration; rule 21a)**: for every MVP node, every unprepared-fleet loss in the proof set trips at least one listed counter's predicate.
+- **AC-26 (Logic; rule 1a)**: two saves with different seeded makers give byte-identical node definitions, map markers and Dossier counter lists for every node.
 - **AC-22 (Playtest; rule 24)**: 4 of 5 new players lose the opening stronghold, then name a counter from its Dossier entry and win within three attempts.
 - **AC-23 (Playtest; D4)**: 4 of 5 players describe the readiness range as "about right" after their attempt.
 

@@ -652,6 +652,18 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: counter_cost_cap
+    status: active
+    source: design/gdd/machine-nodes-and-strongholds.md
+    referenced_by:
+      - design/gdd/machine-nodes-and-strongholds.md
+      - design/gdd/credits-upkeep-and-sinks.md
+    value: 4800
+    unit: credits
+    notes: "Machine Nodes rule 20 / D6: every Dossier counter needs a kit costing at most this (net surplus of a defeated Standard expedition plus one clean one, Credits OQ2 on the D5 fleet). Error COUNTER_UNAFFORDABLE for base content. Re-derive when Refit & Loadout prices exist."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:
