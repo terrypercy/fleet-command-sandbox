@@ -59,7 +59,8 @@ one defeat at a time.
 2. **Reading never costs days.** Opening the Dossier sets the hold
    `PLANNING:dossier` with Simulation Tick & Pause; closing clears it (World
    Clock rule 3). The Dossier opens from the sector map, a port and the
-   pre-battle panel. It does not open during a battle at MVP (Open Question 5).
+   pre-battle panel. It opens in battle read-only, as the Case File does,
+   adding `PLAYER_PAUSE`; no reveal applies until the Debrief closes.
 3. **Reading changes nothing.** Opening, paging and closing never change
    reveal state, the clock, RNG streams or any other system. Only rule 9's
    apply step writes reveal state.
@@ -111,6 +112,10 @@ one defeat at a time.
       stays in the stored Debrief Timeline (Open Question 3).
     A counter not listed on the node is ignored. A counter already revealed
     gains the missing mark; a mark already set keeps its first day.
+10a. **A loss always reveals something.** A loss that reveals no new line
+    reveals the first held cause in `counters_evidenced[]` order as *seen as
+    cause*. If every counter is already revealed, the log row reads "No new
+    counters: all seen."
 11. **Doctrine.** For each `doctrine_observations[]` entry
     `{anchor, doctrine_id, event, tick}`, every doctrine sentence of
     `doctrine_id` whose reveal event (Fleet Coordination rule 3) matches
@@ -135,7 +140,7 @@ one defeat at a time.
     (Outmatched, Contested, Ready; "Outmatched to Contested" across two).
     When `s` > 1200 the band words are replaced by "uncalibrated above
     Admiral"; the range still shows. Never a single number or a win
-    percentage.
+    percentage. The range counts only counters you have seen.
 16. **The counter line.** Each revealed counter shows, in this order:
     - name (`name_key`) and role words: `solo` "can win on its own";
       `supporting` "helps, not enough alone"; if `requires_allies` true,
@@ -154,7 +159,10 @@ one defeat at a time.
     the page shows `helper_line(f)` exactly as Allied Lending rule 22 returns
     it: the condition in words, the status now, the pending GRANTS / LOSES
     line, and the exposure line "If this investigation exposes the public
-    history: loses the ⟨f⟩ escort". The Dossier adds no number and never
+    history: loses the ⟨f⟩ escort". The exposure line is shown whenever an
+    investigation is running and the escort is at stake, whether or not the
+    public history is true; it never reads unfound fragments. The Dossier
+    adds no number and never
     suggests a share or accusation (Allied Lending rule 23).
 18. **The defeat-cost quote.** Each node page shows Credits' defeat cap
     (Credits rule 7) "If you lose: up to {X} credits, plus up to {N} rest days
@@ -250,7 +258,8 @@ k(n) = count of counters c on n with REVEALED(c) and fitted(c)
 
 `fitted(c)` is Refit rule 19's **Kit fitted** state; an order-only kit counts
 only when its orders are assigned in the pre-battle plan (Machine Nodes D4).
-Range 0 – 6.
+Range 0 – 6. The range counts only counters you have seen. A fitted counter
+not yet revealed adds nothing, so probing kits cannot leak unseen counters.
 
 ### D3. Keystone line
 
@@ -430,8 +439,8 @@ Resolved with the recommended defaults under the owner's standing instruction to
 proceed (the owner may revisit any of them at review):
 - **Breaking a node reveals nothing extra** (rule 13): what the Dossier holds
   stays earned in battle.
-- **The opening node does not say "a loss here costs nothing"**: the first
-  loss stays a lesson, and the Debrief's "Nothing was lost" says it after.
+- **The opening node says 'A loss here costs nothing'** (rule 18): planning
+  information is never withheld; the lesson is the Debrief's.
 - **The Dossier opens in battle read-only**, as the Case File does, with
   `PLAYER_PAUSE` added.
 - **Polarity**: each `counters_evidenced[]` entry carries `polarity: cause |

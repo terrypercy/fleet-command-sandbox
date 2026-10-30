@@ -245,7 +245,7 @@ Later tiers:
 | 46 | Combat HUD & Tactical Overlay | UI | MVP | In Design | design/gdd/combat-hud-and-tactical-overlay.md | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View, Runtime ID Service |
 | 47 | Dossier | UI | MVP | In Design | design/gdd/dossier.md | Simulation Tick & Pause, Machine Nodes & Strongholds, After-Action Debrief, Allied Lending |
 | 48 | Ledger | UI | Vertical Slice | Not Started | — | Simulation Tick & Pause, Sector Map & Travel, Markets & Trade |
-| 49 | Public History Screen (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
+| 49 | Public History Screen | UI | MVP | In Design | design/gdd/public-history-screen.md | Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 50 | Port & Fleet Management Screens (inferred) | UI | MVP | Not Started | — | Ports, Rest & Care, Refit & Loadout, Markets & Trade |
 | 51 | Menus, Settings & Save UI (inferred) | UI | MVP | Not Started | — | Simulation Tick & Pause, Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
 | 52 | Audio Direction & Adaptive Music | Audio | Vertical Slice | Not Started | — | Combat Event Bus & Battle Record, Vigor, Coherence & Links, Battle Resolution & Retreat, After-Action Debrief, Archive Fragments & Evidence, Exposure & Rival Investigation |
