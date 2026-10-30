@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (last Debrief counter in the header; Esc never closes the dock; fleet_roster hold; status list fixed)
 > **Implements Pillar**: Pillar 4 (Plan in the Open — every port action shows its days, price and consequence before commit); Pillar 1 (Every Defeat Is a Lead — the port is where a loss becomes a plan)
 
 ## Summary
@@ -44,6 +44,8 @@ you see each consequence before you sign.
 
 Target aesthetics (MDA): **Challenge** as planning, not reflex; **Expression**
 through loadouts and lay-up choices; **Submission** in the calm of a held clock.
+Narrative shows at the desk: the owner's band and care price are the blame
+state's consequence, read before you sign.
 SDT: **Competence** comes from readable previews (the player knows why a rest
 takes 3 days); **Autonomy** from real alternatives (rest, care, sell, refit,
 leave) with no hidden best answer. Pillar 4 is served by the preview-before-
@@ -152,7 +154,10 @@ which turns the Debrief's bill into a rest plan on one screen.
     the Rest tab with "Until full" selected, and the header carries the
     Debrief's bill line (Credits rule 7) until the player undocks. No rest
     starts on its own. The opening loss (Ports rule 25) opens the same way;
-    the Rest tab shows only hull damage, if any.
+    the Rest tab shows only hull damage, if any. The header also carries
+    "Last Debrief counter: {counter} — {state} ({cheapest kit cost})", from
+    Refit rule 19, with a link to Refit with that counter selected, until the
+    player undocks.
 
 **C. Rest panel (`PLANNING:port_rest`)**
 
@@ -267,8 +272,8 @@ which turns the Debrief's bill into a rest plan on one screen.
 35. **One row per owned or lent ship,** grouped: active, mothballed with the
     fleet, laid up (by port), lent. Columns:
     - name (organic) or designation (machine) (Hulls UI), class and size;
-    - status: Active, Mothballed, Laid up at {port}, Recovered, Disabled, or
-      "Lent by {faction} — {n} days left" (Allied Lending UI);
+    - status: Active, Mothballed, Laid up at {port}, or "Lent by {faction} —
+      {n} days left" (Allied Lending UI);
     - hull now / max and the scar line as text ("Scarred to 72%") (Hulls rule
       8; Ports rule 21);
     - Vigor ceiling per core for organic ships, with rest days needed (Vigor
@@ -293,7 +298,7 @@ which turns the Debrief's bill into a rest plan on one screen.
     | Enter / Space | activate the focused control |
     | Ctrl+Enter | the tab's commit (Rest, Commit, Sell), only when enabled |
     | Ctrl+Z / Ctrl+Shift+Z | refit draft Undo / Redo |
-    | Esc | close dialog; else go to Overview; on Overview, Close (rule 10) |
+    | Esc | close dialog; else go to Overview; on Overview, nothing. Close needs its button or Ctrl+W. |
 
     Every action reachable by mouse is reachable by keyboard. Focus is always
     visible. Commit never fires from a key without focus on its tab.
@@ -316,8 +321,9 @@ which turns the Debrief's bill into a rest plan on one screen.
 | CONFIRM | one dialog over a TAB or HUB | held | the page it came from (Cancel, Confirm) |
 | ROUTE | Sector Map route planner | held | HUB (Back), UNDOCKED (Commit: Depart) |
 | RESTING | one skip running (Ports rule 14) | skipping | INTERRUPT (interrupts_skip event), HUB (`rest_ended`) |
-| INTERRUPT | interrupt hold (Ports rule 15) | held | RESTING (Resume), HUB (End rest), MAP_UNDOCKED (rule 9 Continue) |
+| INTERRUPT | interrupt hold (Ports rule 15) | held | RESTING (Resume), HUB (End rest), UNDOCKED (rule 9 Continue) |
 | UNDOCKED | fleet IN_SYSTEM | CAMPAIGN | HUB (Dock) |
+| MAP → ROSTER | `PLANNING:fleet_roster` opened from the map, read-only; row jump buttons hidden when undocked | held | the map state it came from (Esc, Close) |
 
 The refit draft is a sub-state of the docking: NONE, ACTIVE, SUSPENDED (another
 tab open). It goes NONE on commit, discard, or any exit from HUB to MAP_DOCKED,
@@ -420,9 +426,10 @@ percent in the UI unless the quote returns a percent.
   name on focus; hull, ceiling and upkeep never truncate; the roster scrolls
   horizontally if needed.
 - **Many ships:** lists scroll; the header and tab bar never scroll away.
-- **Esc pressed with an uncommitted draft on Overview:** "Discard changes?"
-  opens; Esc again cancels it (rule 9). There is no path that discards a
-  draft without a prompt except losing docking rights.
+- **Esc pressed with an uncommitted draft on Overview:** nothing happens
+  (rule 38). Close (its button or Ctrl+W) with an uncommitted draft opens
+  "Discard changes?"; Esc cancels that prompt. There is no path that discards
+  a draft without a prompt except losing docking rights.
 - **Degenerate use:** the held clock means a player can study the port for any
   real time at no game cost. This is intended (Pillar 4). Close returns to a
   running clock, and the map badge says so, so no one mistakes a closed hub
@@ -534,7 +541,7 @@ the UX specs fix layout.
 - **AC-07 (Logic; rule 6)**: opening each of the seven screens sets the matching `PLANNING:<screen_id>` hold; across 100 random tab switches `clock_s` changes by 0.
 - **AC-08 (Logic; rule 9)**: no sequence of inputs produces two open dialogs; from any dialog, Esc returns to the page it came from.
 - **AC-09 (Logic; rules 10, 11)**: a refit draft survives a switch to Market and back with identical staged changes; Undock, Close and Plan route commit each prompt "Discard changes?" first; Cancel keeps the draft.
-- **AC-10 (Logic; rule 12)**: after a defeat skip ends, the hub opens on the Rest tab with "Until full" selected and the bill line in the header, and no `rest` order has been issued.
+- **AC-10 (Logic; rule 12)**: after a defeat skip ends, the hub opens on the Rest tab with "Until full" selected, the bill line and the "Last Debrief counter: {counter} — {state} ({cheapest kit cost})" line in the header, and no `rest` order has been issued; activating the counter link opens Refit with that counter selected; both lines are gone after Undock.
 - **AC-11 (Logic; rule 13)**: the Days stepper offers exactly the lengths Ports returns and none above `L_full`.
 - **AC-12 (Logic; rule 22)**: the free core has no Mothball action and shows "Free core: never mothballed"; a ship laid up at another port shows "Laid up at {port}" and no Reactivate.
 - **AC-13 (Logic; rules 27 – 30)**: a lent ship is read-only in Refit with "Lent by {faction}"; a mothballed ship with gear produces the mothball notice; a stat at D7's clamp shows "capped at +500‰".
@@ -546,9 +553,9 @@ the UX specs fix layout.
 - **AC-19 (UI; rules 21 – 24)**: a retained screenshot of the Fleet tab with ships in all three lists and a loan offer.
 - **AC-20 (UI; rules 25 – 31)**: retained screenshots of Refit with a staged draft, the counter panel showing all three states, the mothball notice and a clamp notice.
 - **AC-21 (UI; rules 32 – 34)**: retained screenshots of Market at a full rate and at a sub-par rate with the detour line.
-- **AC-22 (UI; rules 35 – 37)**: a retained screenshot of the Roster with an active, a mothballed, a laid-up, a recovered and a lent ship, and one expanded hull card.
+- **AC-22 (UI; rules 35 – 37)**: a retained screenshot of the Roster with an active, a mothballed, a laid-up and a lent ship, and one expanded hull card.
 - **AC-23 (UI; rules 39, 40)**: retained screenshots of the hub and Roster at 200% text scale and in a greyscale capture; every state is still distinguishable by text and shape, and no number is truncated.
-- **AC-24 (Playtest; rules 8, 12)**: at least 4 of 5 testers, after a defeat, can say from the port screen alone how many days and credits a full recovery costs (shared with Ports AC-25).
+- **AC-24 (Playtest; rules 8, 12)**: at least 4 of 5 testers, after a defeat, can say from the port screen alone how many days and credits a full recovery costs (shared with Ports AC-25), and which counter the last Debrief named and whether it is fitted, in stores or missing.
 - **AC-25 (Playtest; rules 11, 26)**: at least 4 of 5 testers who are short of credits in Refit sell salvage and return to finish the refit without rebuilding the draft, and none reports losing work.
 - **AC-26 (Playtest; rule 10)**: at least 4 of 5 testers, asked after closing the hub, correctly say whether time is passing.
 
@@ -563,7 +570,7 @@ proceed (the owner may revisit any of them at review):
   (Battle Resolution rule 11; Credits forgives shortfalls), so a docked ship
   is active, mothballed, laid up or lent.
 - **The roster also opens from the map** as a read-only hold
-  (`PLANNING:port_fleet`).
+  (`PLANNING:fleet_roster`); row jump buttons are hidden when undocked.
 - **The screen IDs** join the Simulation Tick & Pause hold list (amended).
 
 | # | Question | Owner | Resolve by |

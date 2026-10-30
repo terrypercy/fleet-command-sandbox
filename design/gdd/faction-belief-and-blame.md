@@ -629,7 +629,8 @@ the faith judgement, so sound reveals nothing.
 ## UI Requirements
 
 - **Blame bars:** each bar shows a fixed naming line at `NAME_PM`, and the
-  leader is labelled Named, Leading or Contested by the D3 conditions.
+  leader is labelled per Public History Screen D2 (Named by D3; Leading and
+  Contested by `LEADING_PM`).
 - **Share picker:** held fragments in `acq_seq` order, with "Shared with" and
   "Sealed" lines. Target: one faction or Public.
 - **Preview panel:** every rule 18 line. The Case File text panel (#49 stub)

@@ -3,12 +3,12 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (own record at Tier 0; preview visible on every tab; pass-bar AC with newcomers)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — the screen where the player shapes what the world believes, with every consequence shown before commit); Pillar 4 (Plan in the Open)
 
 ## Summary
 
-The Public History Screen shows what the galaxy believes: the verdict, one blame bar per candidate race with a naming line and a Named / Leading / Contested label, and the public record of shares, accusations, exposures and namings. It owns the single dialog contract for share, accuse, seal and release, which renders Faction Belief's rule 18 preview word for word and commits exactly what was previewed. At Tier 0 it adds only a read-only Public History panel inside the Case File, which keeps the action stub. The screen of its own, the action takeover and the private ledger come at the Vertical Slice.
+The Public History Screen shows what the galaxy believes: the verdict, one blame bar per candidate race with a naming line and a Named / Leading / Contested label, and the public record of shares, accusations, exposures and namings. It owns the single dialog contract for share, accuse, seal and release, which renders Faction Belief's rule 18 preview word for word and commits exactly what was previewed. At Tier 0 it adds the read-only Public History panel and "Your own record" list as Case File tabs; its own screen and the action takeover come at the Vertical Slice.
 
 > **Quick reference** — Layer: `Presentation` · Priority: `MVP` · Key deps: `Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation`
 
@@ -76,8 +76,10 @@ galaxy was to naming", or "something changed and I don't know why".
    actions. It owns no belief, standing, lending or exposure value. Every
    figure and every sentence about consequences comes from #30, #17, #32 or
    #33. #49 only places them.
-2. **Tier 0 (MVP).** #49 adds the **Public History panel** (section B) as a
-   read-only tab of the Case File. It opens inside the Case File's
+2. **Tier 0 (MVP).** #49 adds the **Public History panel** (section B) and
+   the **"Your own record" list** (rule 13) as read-only tabs of the Case
+   File. Private shares, seals, releases and lapses appear in a record at
+   Tier 0, so the bars never move with no visible cause. They open inside the Case File's
    `PLANNING:case_file` hold. The share, seal, release and accuse entry points
    stay in the Case File (Case File rules 21–25). They follow the dialog
    contract in section C, rendered as text in the Case File's text panel. #49
@@ -86,7 +88,7 @@ galaxy was to naming", or "something changed and I don't know why".
    preview and the exposure change.
 3. **Vertical Slice.** #49 becomes its own planning screen
    (`PLANNING:public_history`). It hosts the four dialogs as dialogs (rule
-   14), adds the player's private ledger (rule 13) and adds the exposure
+   14), moves the private ledger (rule 13) onto it and adds the exposure
    readout to its header (rule 12). The Case File keeps the board and aids
    (Case File rule 25). Its entry points open #49's dialogs (rule 23).
 4. **Never.** #49 never shows a belief number, a per-faction belief value or
@@ -144,7 +146,7 @@ galaxy was to naming", or "something changed and I don't know why".
     (Case File rule 24). At the Vertical Slice #49's header shows the same
     `exposure_readout(verdict())` line, with #32's wording and figures and
     the level as shape and text (#32 rule 20).
-13. **Private ledger (Vertical Slice).** A second list, headed "Your own
+13. **Private ledger.** A second list, headed "Your own
     record", shows the non-public kinds: SHARE_PRIVATE, SUPPRESS, RELEASE,
     LAPSE and CONFIRM, plus each active seal with its keeper, its daily cost
     and its unpaid-day count. CONFIRM lines carry no amount: "A find
@@ -417,7 +419,7 @@ nothing the bar does not show.
   disabled. The Seal entry point is not hidden.
 - **If a seal lapses while the panel is open**: it cannot, because the hold
   stops the clock. Lapses arrive on the next daily step after the panel
-  closes, and appear in the private ledger (Vertical Slice).
+  closes, and appear in the private ledger.
 - **If the player changes an input after "Commit…"**: the strip closes, the
   dialog returns to Editing and requests a new preview (rule 17).
 - **If #30 refuses a commit whose preview showed no refusal**: this is a bug.
@@ -501,7 +503,8 @@ difficulty.
 
 - **Layout (Tier 0 panel):** verdict headline; bars with the naming line,
   titles and labels; the label caption; the public record. It is a tab of the
-  Case File, next to the board.
+  Case File. The text panel, with any open preview and commit strip, stays
+  visible on every tab, so the bars and the preview are on screen together.
 - **Layout (Vertical Slice screen):** the same, plus the exposure readout in
   the header and the "Your own record" list as a second tab.
 - **Dialogs:** inputs, preview and commit strip, top to bottom. The preview
@@ -554,21 +557,21 @@ difficulty.
 - **AC-18 (UI; rules 5–11)**: screenshots of the Tier 0 panel in the start state, a Leading state, a Named state below the line (hysteresis) and a Named-before state are retained in `production/qa/evidence/`.
 - **AC-19 (UI; section C; #30 AC-20)**: screenshots of the share, accuse, seal and release dialogs (or their Tier 0 text renderings) with a full preview and the commit strip open are retained in `production/qa/evidence/`.
 - **AC-20 (UI; UI Requirements)**: every bar, record entry and dialog control is reachable and operable by keyboard alone; a screen reader reads each bar's D3 name; evidence retained in `production/qa/evidence/`.
-- **AC-21 (Playtest; concept pass bar item 3)**: in Tier 0 playtests, at least 4 of 5 testers give a reason for their share that the written rubric accepts, and every tester can say, from the panel alone, which race leads and whether their next share would name it.
+- **AC-21 (Playtest; concept pass bar item 3)**: at least 4 of 5 testers, including at least 2 of the 3 new to the genre, give a share reason the written rubric accepts; every tester can say, from the panel and the share preview, which race leads and whether that share would name it.
 - **AC-22 (Playtest; rule 6, 25)**: no tester reports that a bar, order, label or animation "gave away" the maker; no tester reports a commit that differed from its preview.
 
 ## Open Questions
 
 Resolved with the recommended defaults, for the owner to confirm at review:
 - **Tier 0 scope:** #49 adds only the read-only panel (verdict, bars,
-  record) inside the Case File. The alternative, adding nothing at MVP,
+  record) and the "Your own record" list, as tabs of the Case File. The alternative, adding nothing at MVP,
   leaves the verdict and bars unseen, which breaks #30's UI Requirements and
   Pillar 4.
 - **No projected bars in the preview.** Showing "after" bars would show
   magnitudes, which the concept rules out ("no magnitudes"). The preview
   shows the verdict after and #30's band words only.
 - **The public record hides faith.** It is the world's record. The faith
-  line appears only in the private ledger (Vertical Slice).
+  line appears only in the private ledger.
 - **One dialog contract, two hosts.** The Case File renders it as text at
   Tier 0, so the Vertical Slice takeover changes layout, not rules.
 - **Label rule**: `LEADING_PM` 100 (D2); a top race leads only by that
@@ -580,5 +583,6 @@ Resolved with the recommended defaults, for the owner to confirm at review:
 |---|---|---|---|
 | 2 | **`preview(release)`.** Does #30's `preview` accept a release? Rule 21 needs the readout before and after. Recommended: yes, with "No faction changes its view". | #30 owner | #30 amendment |
 | 4 | **Per-faction views.** Should the Vertical Slice show each faction's lean in words ("Orrowen blames Halsk most")? It adds Relatedness but shows more of `b_f` than #30's UI Requirements allow. | owner / #30 owner | Vertical Slice planning |
+| 7 | Should #30 rule 18 add the label after ("Halsk would read Leading")? It is a category, not a size. | #30 owner | #30 re-review |
 | 5 | **Preview token.** Rule 17 binds Commit to the previewed inputs. Is a debug-build equality assert (rule 19) enough, or should #30's command return its applied effects for a release-build check? | lead-programmer | ADR on commands (#30 OQ 4) |
 | 6 | `design/accessibility-requirements.md` does not exist; the keyboard, screen-reader and no-colour rules here are local until it does (as Case File OQ 4). | ux-designer | Pre-Production gate |
