@@ -616,6 +616,18 @@ constants:
     added: 2026-10-30
     revised: ""
 
+  - name: ai_share_ms
+    status: active
+    source: design/gdd/ship-ai.md
+    referenced_by:
+      - design/gdd/ship-ai.md
+      - design/gdd/coherence-and-links.md
+    value: 0.35
+    unit: ms
+    notes: "Ship AI rule 15: p95 cap for P2 Ship AI at the Tick D10 steady fixture. With Combat Space 1.2, RNG 0.6, Weapons 1.2 and Coherence 0.3 ms, about 0.35 ms of L remains for Vigor and the record. Needs technical-director sign-off."
+    added: 2026-10-30
+    revised: ""
+
 # Example:
 #
 # constants:

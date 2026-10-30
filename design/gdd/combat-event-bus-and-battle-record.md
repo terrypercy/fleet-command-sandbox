@@ -156,7 +156,8 @@ thing" or "I can't see what killed me".
 13. **Aggregates at battle end.** When the battle context ends, before the
     Debrief hold, the Record computes and stores alongside the raw log:
     - per ship: damage dealt and taken by type, time alive, last Vigor band,
-      killer;
+      killer, and Ship AI's rationing counters (held-fire ticks per Vigor band,
+      ember shots fired; Ship AI rule 14);
     - per death, a **kill window**: per-attacker damage, hits and damage types
       over the `KILL_WINDOW` ticks before `Destroyed`. It is built from a
       per-target ring buffer the Record fills from bus-tier `Hit`s and written

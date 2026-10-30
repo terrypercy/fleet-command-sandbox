@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 3 (Hands on the Helm — ships carry out orders as goals, never puppets); Pillar 5 (Living Against Made — two behaviour families, Vigor and Coherence); Pillar 1 (Every Defeat Is a Lead — AI choices are recorded with reasons)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on hidden ember verdicts, hold-cap precedence, rationing missing from the Debrief, the mode contradiction, and ally readability at L4; all five revised, plus lent ships and pillar order
+> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — AI choices and rationing are recorded with reasons); Pillar 5 (Living Against Made — two behaviour families, Vigor and Coherence); Pillar 4 (Plan in the Open — every pause in fire is explained in words); Pillar 3 (Hands on the Helm — ships carry out orders as goals, never puppets)
 
 ## Summary
 
@@ -111,7 +112,10 @@ with Vigor" or "the enemy cheats".
    - **EMPTY**: ember shots only at the Focus target or finishing shots;
    - **FLOOR**: fire freely (erosion has stopped, Vigor rule 9).
    **Hold cap**: never hold more than `MAX_HOLD_TICKS` (180) while a valid target
-   offers a shown hit chance ≥ 600 ‰.
+   offers a shown hit chance ≥ 600 ‰. The cap applies **at LOW and below
+   `RESERVE_PM` only**; at EMPTY only Focus and finishing shots fire; at FLOOR
+   there is nothing to cap. Opportunity shots (rule 5) obey the same band
+   verdict.
 8. **Fed weapons when cut**: no fire intent; fed mounts are left out of the
    range band (D2) until relinked.
 9. **Movement**:
@@ -145,7 +149,7 @@ with Vigor" or "the enemy cheats".
     4. **relay protection**: machine escorts converge on whatever attacks their
        relay (`relay_guard`); organic escorts guard only their ward;
     5. **when cut**: machines switch to one of four distinct cut behaviours;
-       organics never switch modes, they degrade gradually.
+       organics have no cut state; they degrade gradually through Vigor bands.
 13. **`enemy_ai_level` changes execution only** (Gameplay Settings & Modifiers
     rule 10). It enters only through an `ExecParams` table; candidate sets,
     utility terms, weights, cut behaviours and thresholds never read it:
@@ -167,7 +171,10 @@ with Vigor" or "the enemy cheats".
     `EVENT_SCHEMA_VERSION`). An interrupt-forced choice uses its cause;
     otherwise the code is the largest weighted term. Because `TargetChosen` is
     the first event dropped when a record fills (Battle Record rule 17), no
-    Debrief-critical fact lives only in it.
+    Debrief-critical fact lives only in it. **Rationing reaches the Debrief**:
+    Ship AI accumulates per-ship counters (held-fire ticks per Vigor band,
+    ember shots fired) into the Battle Record's end-of-battle aggregates, so the
+    Debrief can say "your line held fire 40 % of the engagement at LOW Vigor".
 15. **Budget**: Ship AI ≤ `AI_SHARE_MS` (0.35 ms) at the 95th percentile on the
     D10 steady fixture; scratch buffers are preallocated; no allocation in P2.
     *Whether GDScript meets this is NOT SOURCEABLE until the D10 spike.*
@@ -181,7 +188,7 @@ with Vigor" or "the enemy cheats".
 | Mode | Entered when | Leaves to |
 |---|---|---|
 | Normal | default | Rationing (organic LOW or below), Cut (machine snapped), Suspended (band BROKEN), Retreating (retreat intent) |
-| Rationing | organic band LOW / EMPTY | Normal (band recovers), Retreating |
+| Rationing | organic band LOW, below `RESERVE_PM`, or EMPTY | Normal (band recovers, or FLOOR: fires freely), Retreating |
 | Cut | machine link snapped | Normal (relinked) |
 | Suspended | fleet band BROKEN | Normal (band recovers) |
 | Retreating | retreat intent (order, or enemy self-preservation) | Departed (Combat Space) |
@@ -241,6 +248,8 @@ slots excluded.
 - **If every core is dark**: rationing uses `C_floor`.
 - **If an escort's ward dies**: anchor where it is (Fleet Orders).
 - **If a ship is disabled or destroyed on tick T**: it makes no draw on T.
+- **If a ship is lent by a faction**: it is a player ship: `ALLY_EXEC`, Fleet
+  Orders goals, its race's behaviour family.
 - **If two candidates tie exactly**: tie-break draw, then lower Runtime ID;
   adding an unrelated candidate never changes the winner.
 
@@ -293,7 +302,9 @@ All in `assets/data/ai/`.
 ## UI Requirements
 
 - Hovering an ally while paused shows its goal, target and reason in words
-  ("Attacking: threat").
+  ("Attacking: threat"), and **each slot's ember verdict in words with the
+  deciding number** ("Holding: Vigor LOW, hit 23 % < 40 %"; "Firing: finishing
+  shot"; "Firing: Focus").
 - The debug overlay (rule 16) is a developer view, also used by the AI-vs-AI
   Runner.
 
@@ -319,13 +330,14 @@ All in `assets/data/ai/`.
 - **AC-05 (Logic; rule 3)**: across a scripted goal matrix, no goal's kind ever changes and no ship leaves its D4/D5 leash.
 - **AC-06 (Logic; rule 3)**: an in-range Focus target is fired on within the reaction delay + 1 tick, even at LOW or EMPTY.
 - **AC-07 (Logic; rules 3, 10)**: a player ship never sets retreat intent without a Retreat order.
-- **AC-08 (Logic; rule 7)**: each band gives the specified fire or hold verdict; FLOOR fires freely; the `MAX_HOLD_TICKS` cap holds.
+- **AC-08 (Logic; rule 7)**: each band gives the specified fire or hold verdict; FLOOR fires freely; the `MAX_HOLD_TICKS` cap holds at LOW and below RESERVE and never forces a non-Focus, non-finishing shot at EMPTY; opportunity shots obey the band verdict.
+- **AC-15 (Logic; rule 14)**: on a fixture, the per-ship held-fire ticks per band and ember-shot counts in the record equal the simulated totals.
 - **AC-09 (Logic; rule 11)**: each cut behaviour starts within 1 tick of `SNAPPED` with its multipliers; fed guns get no fire intent; with the band BROKEN no fleet goal runs.
 - **AC-10 (Logic; rule 14)**: `TargetChosen` is emitted on change only, with the right code for each of the 9 causes.
 - **AC-11 (Logic; rule 13)**: in a forced-trigger fixture, the set of (ship, tactic) pairs is identical at L0 – L4; a static check confirms doctrine code never reads `ExecParams`; player ships behave identically at every level.
 - **AC-12 (Logic; D2)**: an engaged ship stays inside its D2 band in at least 95 % of ticks.
 - **AC-13 (Visual; rule 12)**: the five family differences are captured as retained screenshots in `production/qa/evidence/`.
-- **AC-14 (Playtest)**: at most 1 in 5 testers calls ally Vigor use "dumb" or "wasteful", and at least 3 of 5 can explain why a ship paused its fire.
+- **AC-14 (Playtest)**: run at enemy level L2 and L4: at most 1 in 5 testers calls ally Vigor use "dumb" or "wasteful", and at least 3 of 5 can explain why a ship paused its fire using only in-game UI. If the rate rises at L4, tune the L4 `ExecParams` row, never `ALLY_EXEC`.
 
 ## Open Questions
 
