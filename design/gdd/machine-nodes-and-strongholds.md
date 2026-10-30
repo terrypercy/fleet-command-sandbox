@@ -119,27 +119,38 @@ combat-facing system. SDT:
    | `action_key` | text key | 1 | counter-action, e.g. "cut the relay links" |
    | `affects[]` (inbound) | list of tags or refs | ≥ 1 | hull counter tags (`relay`, `regrowing`), doctrine fields, organic cores |
    | `exploited_by[]` (outbound) | list of refs | ≥ 1 | damage types, order types, module or weapon refs |
-   | `evidence` | `{event, predicate}` | 1 | a Battle Record event type and a predicate from a fixed list (rule 11) |
+   | `evidence` | `{event, predicate}` | 1 | **cause polarity**: true when the cause operated (rule 11); the Debrief names the cause only when it held |
+   | `worked` | `{event, predicate}` | 1 | **success polarity**: true when the counter was applied; feeds the Dossier (rule 11) |
    | `requires_allies` | bool | — | false = a solo counter |
    | `kits[]` | list of `{weapons[], modules[], orders[]}` | ≥ 1 | each kit realises the counter; gear unlocks kits |
 10. **Validation.** A counter missing any field above is a validation error.
     Mods add counters in their own namespace and never change base counters
     (Content Data rule 5).
-11. **Evidence predicates** are a fixed engine list: `link_snapped_by(type)`,
-    `band_entered(state, anchor)`, `focus_on(flagship)`, `hit_outside_arc(arc)`,
-    `regrowth_stalled`, `ward_emptied`, `core_damage_ge(pm)`. A mod counter may
-    use only these. The Debrief names a counter's cause only when its predicate
-    held in the Battle Record.
+11. **Predicates** are a fixed engine list, in two polarities:
+    - **cause** (for `evidence`): `band_held(WHOLE, anchor, pm)` (the anchor
+      spent ≥ pm of the battle in WHOLE), `armour_regrew(pm)` (enemy armour
+      regrew ≥ pm of its max in total), `ward_held(pm)` (wards absorbed ≥ pm of
+      player damage on warded ships), `core_damage_ge(pm)` (player cores took ≥
+      pm of `C0` as core damage), `focus_on(flagship)` (a `FocusAssigned` on
+      the flagship held ≥ `TELL_TICKS`), `hits_inside_arc(arc, pm)` (≥ pm of
+      player hits on a screen landed inside its front arc);
+    - **success** (for `worked`): `link_snapped_by(type)`,
+      `band_entered(state, anchor)`, `regrowth_stalled`, `ward_emptied`,
+      `core_damage_lt(pm)`, `focus_lost(flagship)`, `hit_outside_arc(arc)`.
+    A mod counter may use only these. The Debrief names a counter's cause only
+    when its `evidence` held in the Battle Record (After-Action Debrief rule 7);
+    the Dossier records `worked`.
 12. **MVP counter set** (six, base namespace). The four damage types map one to
     one onto the first four (Weapons & Damage, type-to-counter mapping):
-    | ID | Cause (Debrief) | Counter-action | Affects | Exploited by | Solo |
-    |---|---|---|---|---|---|
-    | `relay_cut` | links held | cut the relay links | `relay`, `network_fed` | SEVERING; Focus on a relay | yes |
-    | `regrowth_stall` | armour regrew | stall regrowth, then burst | `regrowing` | KINETIC | yes |
-    | `ward_break` | ward held | strip the ward first | machine wards | ENERGY | yes |
-    | `core_exposure` | Vigor ran dry | keep cores out of the breaker's arc | the node's RUPTURE-armed members (weapon tag `core_breaker`) | Hold, Escort, Move out of arc | yes |
-    | `focus_screen` | flagship focused | screen the flagship, bait the lock | Spear `focus_share_pm` | Escort order; decoy hull | yes |
-    | `flank_arc` | flanked | strike outside the screen's arc | Lattice Screen `spread` | Move order to a flank | yes |
+    | ID | Cause (Debrief) | Counter-action | Affects | Exploited by | Evidence (cause) | Worked (success) | Can be solo |
+    |---|---|---|---|---|---|---|---|
+    | `relay_cut` | links held | cut the relay links | `relay`, `network_fed` | SEVERING; Focus on a relay | `band_held(WHOLE, anchor, 750)` | `link_snapped_by(SEVERING)` | yes |
+    | `regrowth_stall` | armour regrew | stall regrowth, then burst | `regrowing` | KINETIC | `armour_regrew(500)` | `regrowth_stalled` | yes |
+    | `ward_break` | ward held | strip the ward first | machine wards | ENERGY | `ward_held(500)` | `ward_emptied` | yes |
+    | `core_exposure` | Vigor ran dry | keep cores out of the breaker's arc | the node's RUPTURE-armed members (weapon tag `core_breaker`) | Hold, Escort, Move out of arc | `core_damage_ge(300)` | `core_damage_lt(100)` | yes |
+    | `focus_screen` | flagship focused | screen the flagship, bait the lock | Spear `focus_share_pm` | Escort order; decoy hull | `focus_on(flagship)` | `focus_lost(flagship)` | yes |
+    | `flank_arc` | met the screen head-on | strike outside the screen's arc | Lattice Screen `spread` | Move order to a flank | `hits_inside_arc(front, 800)` | `hit_outside_arc(front)` | yes |
+    "Can be solo" says the counter may take role `solo` on a node (rule 18).
     `core_exposure` is defensive: it names a player loss and how to avoid it.
     RUPTURE maps to it as the type the node turns on the player's cores, so its
     `affects[]` targets the node's RUPTURE weapons and rule 19 can match it.

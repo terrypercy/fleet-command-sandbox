@@ -209,7 +209,7 @@ stored enum.
 | Ports, Rest & Care (#27) | #27 → clock | Rest requests a skip; base rest lengths and their floor |
 | Exposure & Rival Investigation (#32) | #32 → clock | Registers investigator steps (priority 200); must accept "nothing fires in battle" |
 | Credits, Upkeep & Sinks (#18); Contracts & Missions (#38); Background Faction Economy (#43) | each → clock | Register their timed events; own what happens when they fire (e.g. contract replacement) |
-| Defeat & Debrief | → clock | A defeat's day cost is a skip (bounded by `SKIP_MAX_S`) |
+| After-Action Debrief (#24) | → clock | A defeat's day cost is one skip of `defeat_skip_s(report)` (Debrief D5), bounded by `DEFEAT_MAX_S`; it runs when the Debrief closes |
 | Combat HUD (#46), campaign UI | clock → UI | Day and time display; notices |
 
 ## Formulas
@@ -395,7 +395,7 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 | 3 | **Pace values** (120 s/day travel, 720 s/day battle, half-day cap) need a playtest against rival pace and contract lengths. | game-designer | First campaign playtest |
 | 4 | **Time of day** has no rule at MVP; a day/night or shift mechanic would need a GDD change. | game-designer | Post-MVP |
 | 5 | **Section ceiling** (1 MiB) counts within Save/Load's "all other systems" placeholder; confirm when that placeholder is broken down. | Save/Load owner | When ceilings are declared |
-| 6 | **`DEFEAT_MAX_S`** value and how a defeat's day cost is computed under it. | Defeat & Debrief | When designed |
+| 6 | ~~**`DEFEAT_MAX_S`** value and how a defeat's day cost is computed under it.~~ **Resolved 2026-10-30:** the skip length is `defeat_skip_s(report)` (After-Action Debrief D5: 1 – 7 days at Standard, 14 at most at `defeat_cost_permille` 2000), queued in #8's delivery slot and run when the Debrief closes; `DEFEAT_MAX_S` stays 14 days. | After-Action Debrief (#24) | Closed |
 | 7 | **Port-screen holds** (rule 3) must be added to Simulation Tick & Pause's `PLANNING:*` list. | Tick owner | Tick re-review |
 | 8 | **Idle-proof contract replacement** (rule 15). | Contracts & Missions (#38) | When #38 is designed |
 | 9 | **Default interrupt kinds** (rule 14) for investigator steps and hostility changes. | #32, Faction Reputation | When designed |

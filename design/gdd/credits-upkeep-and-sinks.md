@@ -110,7 +110,9 @@ where".
    (`DEFEAT_FORGIVEN`). The wallet part is a forced charge clamped at the
    wallet; any shortfall is forgiven, never turned into debt. The cap is quoted
    before a battle (Dossier, pre-battle panel) and in the Debrief.
-8. **The opening loss is exempt** (concept): Battle Resolution flags it
+8. **The opening loss is exempt** (concept), and Credits still reports the
+   would-be bill (computed as if `opening_loss` were false) for the Debrief's
+   "What this would have cost" (Debrief rule 20). Battle Resolution flags it
    `opening_loss`; the bill is 0 and the hold is untouched.
 
 **D. Suppression**
@@ -191,7 +193,7 @@ where".
 
 `bill_base = D2(hold × LOST_SALVAGE_PM × (1,000 − retreated_pm) ÷ 1,000,000 + Σ hull_value × RECOVER_PM ÷ 1,000, dcp)`, with `retreated_pm` from the Battle Outcome report (Battle Resolution D4; 0 on DEFEAT), and Σ over the disabled ships left behind
 `eff = max(DEFEAT_COST_FLOOR, bill_base)` when `bill_base` > 0
-`bill = eff + days_defeat × U_day` (days already scaled by the World Clock skip)
+`bill = eff + defeat_skip_s × U_day div 86,400`, with `defeat_skip_s(report)` from After-Action Debrief D5 (already scaled by `defeat_cost_permille`)
 `defeat_cap = D2(DEFEAT_CAP_DAYS × U_nominal, dcp)`, with `U_nominal` the whole roster's upkeep at nominal rates (core and mothballed ships included); `final = min(bill, defeat_cap)`
 
 | Variable | Default | Range |

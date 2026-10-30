@@ -181,9 +181,9 @@ the terms of my war", which put the settings screen at the centre).*
     | Key (Tier C) | Chronicler | Standard | Admiral | Range |
     |---|---|---|---|---|
     | `stronghold_strength_permille` (accepted by Machine Nodes & Strongholds rule 4) | 750 | 1000 | 1200 | 500 – 1500 |
-    | `defeat_cost_permille` † | 500 | 1000 | 1500 | 250 – 2000 (floor above 0) |
+    | `defeat_cost_permille` (accepted by After-Action Debrief rule 28) | 500 | 1000 | 1500 | 250 – 2000 (floor above 0) |
     | `vigor_erosion_permille` † | 600 | 1000 | 1250 | 250 – 2000 |
-    | `rest_days_permille` † | 500 | 1000 | 1250 | 250 – 2000 |
+    | `rest_days_permille` † (owner: World Clock and Ports, Rest & Care #27) | 500 | 1000 | 1250 | 250 – 2000 |
     | `yield_permille` † (loot, contracts) | 1250 | 1000 | 850 | 500 – 1500 |
     | `investigator_pace_permille` † | 600 | 1000 | 1250 | 500 – 1500 |
     | `enemy_ai_level` † | 1 | 2 | 3 | 0 – 4 |
@@ -450,4 +450,4 @@ Owned by #51 (MVP basics) and #55/#56 (Vertical Slice screens):
 | 3 | **Simulation Tick & Pause D7 amendment** (toggles gate only the hold) must be confirmed in Tick's re-review. | Tick owner | Tick re-review |
 | 4 | **In-game profiles** (several players on one OS account) are not at MVP. | producer | Post-MVP |
 | 5 | **Achievements** (if any) must follow rule 15: difficulty may add marks, never remove them. | release-manager | Before store submission |
-| 6 | **`DEFEAT_COST_FLOOR` unit** depends on how Defeat & Debrief measures costs (days, salvage, both). | Defeat & Debrief | When designed |
+| 6 | ~~**`DEFEAT_COST_FLOOR` unit**~~ **Resolved 2026-10-30:** measured per cost: 1 day for the day cost (Debrief `DEFEAT_FLOOR_S`), 1 credit for the bill (Credits rule 7). | After-Action Debrief (#24) | Closed |
