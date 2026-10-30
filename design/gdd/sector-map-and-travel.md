@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (return trip to a free port at the slowest legal speed; laid-up and lent ships do not slow the fleet; Discovery first; seed-independent starting bands as a rule)
 > **Implements Pillar**: Pillar 4 (Plan in the Open — routes, travel time and what waits along them are shown before you commit); Pillar 1 (Every Defeat Is a Lead — the way back to a stronghold is short and known); Pillar 2 (The Truth Is Yours to Tell — the map is where evidence and rumours are found)
 
 ## Summary
@@ -44,9 +44,9 @@ upkeep 1,200, patrolled lane (Spindle roaming fleet)". You go anyway. On day 35
 a notice says "Contact: Spindle Lattice, closing, 1.0 day". You turn back,
 refit, and come back on the patrol's off day.
 
-Target aesthetics (MDA): **Submission** first (calm, readable travel between
-fights; the concept rates it 7), **Challenge** second (choosing when and how to
-travel through danger), **Discovery** third (sites revealed by visiting and by
+Target aesthetics (MDA): **Discovery** first (concept rank 2), **Challenge**
+second (choosing when and how to cross danger), **Submission** supporting
+(concept rank 7: calm, readable travel). Discovery here means (sites revealed by visiting and by
 rumours). SDT: **autonomy** through route choice and the three contact
 options; **competence** through exact, truthful time and risk previews.
 
@@ -93,9 +93,11 @@ options; **competence** through exact, truthful time and risk previews.
    and lanes in their own namespace and never move base systems (Content Data
    rule 5).
 4. **Strongholds sit near ports.** For every machine node, the shortest path
-   time (D3) from its system to the nearest port system, at the reference speed
-   `V_REF` (1,000 mu/day), must be at most `RETURN_TRIP_MAX_S` (172,800, two
-   days). Otherwise the Runner warns `NODE_FAR_FROM_PORT`. This keeps
+   time (D3) from its system to the nearest **free port** (owner `none`; rule
+   3), at `V_REF_SLOW` (= `SPEED_CAPITAL × SIZE_FLOOR_PM div 1,000`, the
+   slowest legal fleet), must be at most `RETURN_TRIP_MAX_S` (172,800, two
+   days). A free port can never turn Hostile, so naming the true maker costs
+   standing, never the return loop (Pillar 2 never breaks Pillar 1). Otherwise the Runner warns `NODE_FAR_FROM_PORT`. This keeps
    "fail, prepare, return, win" short.
 
 **B. Travel**
@@ -106,8 +108,12 @@ options; **competence** through exact, truthful time and risk previews.
    Clock rule 15). Holding in a system undocked still passes time.
 6. **Speed.** Each hull's size class (light, line, heavy, capital, the classes
    Credits rule 4 already bills) has a travel speed in mu per day. The fleet
-   moves at the slowest class present among **every ship in the roster**,
-   mothballed and lent ships included, scaled down by fleet size (D2). Speed is
+   moves at the slowest class present among the **active roster**, scaled down
+   by fleet size (D2). Mothballed ships travel with the fleet and count, unless
+   they are **laid up** at a port: a laid-up ship stays there, does not count
+   toward speed or `n`, and reactivates only at that port. Lent ships escort
+   and never count toward `v_slow` or `n`, so an earned alliance never slows
+   the return attempt. Speed is
    fixed at departure from a system and does not change mid-lane.
 7. **Leg time.** A lane's time is `leg_s` (D3), an integer number of
    game-seconds, rounded up. At departure, the fleet registers a `map.arrive`
@@ -143,6 +149,8 @@ options; **competence** through exact, truthful time and risk previews.
     day, upkeep (D5), suppression upkeep, the visible World Clock events that
     fall due before arrival (contract expiries, known investigator arrivals),
     and known risks (rule 15). The numbers are the same functions the run uses.
+    Systems not yet visited are marked "unvisited: sites unknown" (site
+    placement is seed-independent, rule 25, so this leaks nothing).
 15. **Known risks** are: Hostile-owned systems on the path (patrol contact on
     arrival, rule 18); lanes in a revealed roaming route ("patrolled lane");
     and, for a sighted hostile fleet (rule 24), its predicted contact time (D6)
@@ -209,7 +217,10 @@ options; **competence** through exact, truthful time and risk previews.
     reveal is authored and seed-independent. Truth Seeding fills fragment
     content only. No map fact, marker, reveal or contact varies with the seeded
     maker. Hostility reaches the map only through the faction band, which is
-    truth-blind (Faction Reputation rule 8).
+    truth-blind (Faction Reputation rule 8). Starting faction bands are
+    authored and seed-independent: before the first public naming, no band,
+    patrol or docking right may differ between two seeds with identical
+    orders.
 
 **F. After a battle**
 
@@ -340,7 +351,7 @@ v = 800 × 950 div 1,000 = **760** mu/day.
 `leg_s = (L × DAY_S + v − 1) div v` (rounded up), `DAY_S` = 86,400.
 
 Example: L 1,500, v 760: 129,600,000 / 760 = 170,526.3 → **170,527 s** (1.97
-days; 237 real seconds at 1×). At `V_REF` 1,000: **129,600 s** (1.50 days).
+days; 237 real seconds at 1×). At 1,000 mu/day (line speed): **129,600 s** (1.50 days).
 
 ### D4. Position on a lane
 
@@ -410,6 +421,8 @@ the fleet's current speed (D2, D3).
   is available (the enemy is ahead); Evade passes D7.
 - **Faster enemy behind you**: Turn back and Evade are unavailable; the offer
   shows Fight alone and says why. Seeing it earlier (rule 24) is the warning.
+  If it is lost, the Debrief names the unsighted approach and the system the
+  player could have watched from, so the forced fight becomes a lead.
 - **Two contacts at one instant**: offered in `seq` order (rule 21).
 - **Reverse order then reverse again**: allowed; each is a new segment.
 - **Clock at the half-day battle cap**: the fleet resumes at the contact point;
@@ -447,7 +460,7 @@ the fleet's current speed (D2, D3).
 | `SIZE_DRAG_PM` | 25 | 0 – 50 | Curve | Cost of a big fleet |
 | `SIZE_FLOOR_PM` | 700 | 500 – 1,000 | Curve | Worst size slowdown |
 | `V_MIN` | 300 | 200 – 600 | Gate | Hard speed floor |
-| `V_REF` | 1,000 | 600 – 1,200 | Gate | Rule 4 check |
+| `V_REF_SLOW` | derived: 600 × 700 div 1,000 = 420 mu/day | follows `SPEED_CAPITAL`, `SIZE_FLOOR_PM` | Gate | Rule 4 check: a node must be within 840 mu of path from a free port at the defaults |
 | `RETURN_TRIP_MAX_S` | 172,800 | 86,400 – 259,200 | Gate | How short the way back is |
 | `LANE_LEN_MIN_MU` / `MAX_MU` | 200 / 4,000 | 100 – 6,000 | Gate | Leg time span |
 | `SYSTEM_RADIUS_MU` | 300 | 100 – 500 | Gate | Site placement |
@@ -507,7 +520,8 @@ Constraint: `SPEED_*` ≥ `V_MIN`; `LANE_LEN_MAX_MU × DAY_S div V_MIN` ≤ `SKI
 
 - **AC-01 (Logic; rule 3)**: a region with a disconnected system fails `REGION_DISCONNECTED`; one with no unaligned port fails `REGION_NO_FREE_PORT`; a 150 mu lane fails `LANE_LENGTH`.
 - **AC-02 (Logic; rule 2)**: a site 301 mu from every system fails `SITE_OUTSIDE_SYSTEM`; a site within 300 mu of two systems fails too.
-- **AC-03 (Logic; rule 4)**: a node whose nearest port is 2.1 days at `V_REF` raises `NODE_FAR_FROM_PORT`.
+- **AC-03 (Logic; rule 4)**: a node whose nearest free port is 2.1 days at `V_REF_SLOW` raises `NODE_FAR_FROM_PORT`.
+- **AC-03b (Logic; rule 4)**: with every faction-owned port in the region Hostile, every node's free-port path at `V_REF_SLOW` is still ≤ `RETURN_TRIP_MAX_S`.
 - **AC-04 (Logic; D1)**: (1,000, 2,000) to (1,900, 3,200) gives L 1,500.
 - **AC-05 (Logic; D2)**: 6 ships with a heavy slowest give 760; 30 light ships give 1,200 × 700 div 1,000 = 840.
 - **AC-06 (Logic; rule 6)**: mothballing the only heavy ship leaves fleet speed unchanged.
@@ -531,18 +545,19 @@ Constraint: `SPEED_*` ≥ `V_MIN`; `LANE_LEN_MAX_MU × DAY_S div V_MIN` ≤ `SKI
 - **AC-24 (Logic; rule 28)**: after a VICTORY on a lane, the remaining leg time equals the remaining time before the contact.
 - **AC-25 (Logic; rule 29)**: arriving in a BROKEN_UNCLAIMED node's system grants its fragment once, with no battle.
 - **AC-26 (Logic; rules 22, 23)**: a POI in a system with `start_known_sites` false is hidden at day 0, shown after arrival or a `reveal()`, and never hidden again.
-- **AC-27 (Logic; rule 25)**: two saves with different seeded makers and identical orders give byte-identical `base:sector_map` sections and identical contact times through day 30.
+- **AC-27 (Logic; rule 25)**: two saves with different seeded makers and identical orders give byte-identical `base:sector_map` sections, identical starting faction bands and active patrols, and identical contact times through day 30.
 - **AC-28 (Logic; rules 31, 34)**: save and reload mid-lane give the same position, arrival time and pending contacts; a full replay from the same seed and orders gives an identical `base:sector_map` hash.
 - **AC-29 (Logic; rule 33)**: a contact and an arrival due at the same `due_s` fire contact first.
 - **AC-30 (Playtest; rule 4)**: 4 of 5 players describe the trip back to a stronghold after a defeat as "short" or "fine", not "tedious".
 - **AC-31 (Playtest; rules 14, 24)**: 4 of 5 players who meet a sighted roaming fleet say they saw it coming.
+- **AC-32 (Playtest; rule 14)**: 4 of 5 players visit at least one unvisited system without a contract or lead pulling them there.
 
 ## Open Questions
 
 Resolved with the recommended defaults (the owner may revisit at review):
 - **Travel model**: lane by lane, continuous on the lane, never a skip.
 - **No auto-started battles**: every contact is player-resolved (World Clock OQ 2).
-- **Mothballed and lent ships count toward speed** (closes a cheap speed exploit).
+- **Speed counts the active roster** (CD review revised the earlier "every ship counts"): mothballed ships count unless laid up at a port; lent ships never count.
 - **Defeat placement inside the skip** (rule 26): the trip to the fallback port
   happens inside the defeat's bounded day cost, so a loss never adds an
   unbounded flight home.
