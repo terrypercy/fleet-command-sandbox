@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (honest cost of withholding; exposure-caused withdrawal previewed; loan ends at the first stronghold battle; no battle against the lender while escorted; AC and knob fixes)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — what you tell decides who lends you ships); Pillar 1 (Every Defeat Is a Lead — an earned escort is one way back, never the only one); Pillar 4 (Plan in the Open — every share previews whether it grants or loses the escort)
 
 ## Summary
@@ -128,7 +128,8 @@ own losses, and the Orrowen remember.*
 13. **Upkeep.** The lender pays. A lent ship adds nothing to `U_day`,
     `U_nominal`, `defeat_cap` or any Credits bill (Credits rules 4, 5, 7).
 14. **The loan ends** at the first of these:
-    - (a) the end of the first battle against a machine node after the join,
+    - (a) the end of the first battle against a stronghold after the join (a
+      roaming fleet or minor contact on the way never uses up the loan),
       whatever the outcome (the return attempt);
     - (b) `LOAN_MAX_DAYS` (20) world days after the join;
     - (c) withdrawal (rule 15);
@@ -192,7 +193,12 @@ own losses, and the Orrowen remember.*
     - the status now: "would lend", "would not lend", "escort with you" or
       "recalling";
     - while a share or accusation is pending in a planning hold, the same
-      GRANTS / LOSES line as rule 21: "This share grants / loses the escort".
+      GRANTS / LOSES line as rule 21: "This share grants / loses the escort";
+    - when an investigation is running against the current verdict, the line
+      "If this investigation exposes the public history: loses the ⟨f⟩
+      escort", computed with `preview_lending` on #32's projected belief after
+      that exposure, also shown on #32's exposure readout, so even a
+      withdrawal caused by exposure never arrives unpreviewed.
 23. **The Debrief** names the helper faction and states this condition (Debrief
     rule 26). Neither the Debrief nor the Dossier ever suggests which share or
     accusation would unlock it (concept, Unique Hook).
@@ -205,7 +211,9 @@ own losses, and the Orrowen remember.*
     Shared with the lender, they move its blame onto its own race, so `R_f`
     falls; shared in public, they raise `S_f`. Telling the truth then loses
     the escort. The player can keep it by withholding, by sharing selectively,
-    or by lying, and each of those carries #30's and #32's visible costs. The
+    or by lying. Lying carries #30's and #32's visible costs; withholding and
+    selective sharing cost only the trust that later confirmations would have
+    paid. The
     game never tells the player which case they are in: the lending result is
     a function of the claims on cards the player already holds, so it leaks
     nothing the cards do not.
@@ -381,9 +389,10 @@ The preview had shown "each one lost costs SLIGHT; both lost: −80".
   Dossier status reads "would lend, no ships ready until day D".
 - **If a second lender becomes willing (post-MVP) while a loan is active**:
   `MAX_ACTIVE_LOANS` (1) blocks a second loan; the offer says why.
-- **If the lender becomes Hostile through a player-started battle against it**:
-  rule 6 recalls the escort; the battle-start preview already shows Standing's
-  band change.
+- **If the player tries to start a battle against the lender's faction**: it
+  cannot start while that faction's escort is with the player; the battle-start
+  preview offers "Dismiss the ⟨f⟩ escort first". Lent ships never fight their
+  own faction.
 - **If a lent ship is the cheapest escort**: it is never the free core (Credits
   rule 5), because it is not in the roster.
 - **If a save is made mid-loan or in RECALLING**: the loan state, pool and
@@ -429,7 +438,7 @@ amendments in Cross-References.
 | `GRANT_PM` | 600 | 500 – 700 | Gate | How much persuasion buys the escort | One share grants it; no decision | Unreachable without accusing |
 | `REFUSE_PM` | 600 | 550 – `NAME_PM` | Gate | How much public blame refuses | Refuses before any naming threat | A named lender could still lend (Hostile veto catches it) |
 | `LEND_H` | 50 | 25 – 100 | Curve | Flip-flop resistance | Escort flickers on small shares | Escort sticks after belief moves away |
-| `LEND_PACKAGE` | Seedcaller + Thornbrood | 1 – 3 organic hulls | Curve | Escort strength | Not worth the trip | Makes the no-ally counter feel optional; must stay below the Runner's `REINFORCE_ESCORTS` (3) |
+| `LEND_PACKAGE` | Seedcaller + Thornbrood | 1 – 2 organic hulls | Curve | Escort strength | Not worth the trip | Makes the no-ally counter feel optional; must stay below the Runner's `REINFORCE_ESCORTS` (3) |
 | `LOAN_MAX_DAYS` | 20 | 10 – 40 | Gate | How long an unused escort stays | Lost before reaching the node | Escort becomes a permanent buff |
 | `LENT_LOSS_STANDING` | 40 | 0 – 120 | Curve | Price of spending lent ships | Lent ships are free fodder | Players refuse to use them |
 | `LEND_RESTOCK_DAYS` | 10 | 5 – 30 | Gate | Time to replace a lost ship | Losses free | One bad fight ends lending |
@@ -485,17 +494,19 @@ amendments in Cross-References.
 - **AC-06 (Integration; rules 9–10; CD c)**: after taking the escort, each lent ship is a separate ship in Combat Space, accepts Move, Attack, Escort, Hold, Focus Fire and Retreat, and follows the default doctrine with no goal; no stat of any player ship changes.
 - **AC-07 (Logic; rule 27; CD c)**: a Runner proof run never contains a ship with `lender` set or a helper faction, and every node's `solo` counter wins in it.
 - **AC-08 (Logic; rule 24; CD d)**: two saves whose makers differ (one the lender's race) but whose belief histories are identical give byte-identical `W_f`, previews and `base:allied_lending` sections.
-- **AC-09 (Integration; rule 24; CD d)**: with the maker set to the lender's race, sharing a reliable fragment consistent with that race and contradicting both rivals to the lender lowers `R_f`; the preview shows LOSES or UNCHANGED, never GRANTS.
+- **AC-09 (Integration; rule 24; CD d)**: with the maker set to the lender's race, sharing a reliable fragment consistent with that race and contradicting both rivals to the lender lowers `R_f`; the preview shows LOSES or UNCHANGED, never GRANTS; a public share of the same fragment raises `S_f` and previews LOSES when it crosses `REFUSE_PM`.
 - **AC-10 (Logic; rule 15)**: a withdrawal outside battle removes lent ships on that tick with one `OwnerChanged(PLAYER → f)` each; inside battle the loan is RECALLING and every lent ship stays until battle end.
 - **AC-11 (Logic; rules 17–18)**: in a lost battle with two lent ships, one destroyed and one retreated: one `LentShipLost`, one `penalize(f, 40)`, no Credits charge, and the Debrief lists the destroyed ship as a player loss.
 - **AC-12 (UI; rule 19; BR OQ 7)**: the battle-start preview shows the lent-loss line whenever `k_present > 0`; retained screenshot.
 - **AC-13 (Logic; rules 3, 9, 14)**: a ship lent, returned and lent again keeps its Runtime ID; join and leave each emit one `OwnerChanged` in ascending ID.
 - **AC-14 (Logic; rules 11, 13)**: adding the escort changes neither `v_slow`, `n`, `U_day` nor `defeat_cap`.
-- **AC-15 (Logic; rule 14)**: the loan ends at the end of the first node battle (any outcome) or after 20 days, whichever is first.
+- **AC-15 (Logic; rule 14)**: the loan ends at the end of the first stronghold battle (any outcome; a roaming-fleet battle does not end it) or after 20 days, whichever is first.
 - **AC-16 (Logic; rule 6)**: a lender set Hostile is unwilling and an active loan is recalled under rule 15.
 - **AC-17 (Logic; rule 26)**: a save in each loan state round-trips byte-identical, including `W_f` inside the hysteresis band.
 - **AC-18 (Logic; rule 2)**: a package entry that is a machine hull or another race's hull fails load with `LEND_HULL_INVALID`.
-- **AC-19 (Playtest; CD validation)**: in Tier 0 playtests at least one tester changes or keeps a share to gain or keep the escort (logged, unscored), and testers on a lender-maker seed describe losing the escort as their choice.
+- **AC-20 (Logic; rule 22)**: with an investigation running whose projected exposure would push `S_f` past `REFUSE_PM`, the Dossier line and the exposure readout both show "If this investigation exposes the public history: loses the ⟨f⟩ escort".
+- **AC-21 (Logic; edge cases)**: a battle against the lender's faction cannot start while its escort is with the player; the preview offers dismissal.
+- **AC-19 (Playtest; CD validation)**: in Tier 0 playtests at least one tester changes or keeps a share to gain or keep the escort (logged, unscored), testers on a lender-maker seed describe losing the escort as their choice, and no tester lies to gain the escort without paying a visible cost.
 
 ## Open Questions
 
@@ -516,4 +527,4 @@ proceed (the owner may revisit any of them at review):
 |---|---|---|---|
 | 1 | Do lent ships count against any battle deployment cap? Not verified. | systems-designer | Battle Resolution review |
 | 2 | `LEND_PACKAGE` size against the Runner's Ready band; no balance data exists. | systems-designer | When `assets/data/hulls/` exists |
-| 3 | Stub depth (Producer note): Tier 0 may ship a fixed escort without the pool and restock. Confirm the coupling test still holds. | creative-director | Tier 0 planning |
+| 3 | ~~Stub depth~~ **Answered by CD 2026-10-30:** the coupling holds at stub depth if the stub keeps both directions of D3 with hysteresis, the grant / lose preview line, the Runner exclusion (rule 27) and the lent-loss line before battle; the pool, restocking and named ships can wait for the Vertical Slice. A stub that only ever grants breaks condition (a). | creative-director | Closed |
