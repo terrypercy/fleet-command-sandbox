@@ -128,7 +128,7 @@ splinter must read as my cut working.
     is shown at once as a lock marker from each assigned ship, visible while the
     assignment holds; focus is not delayed by `TELL_TICKS`, only made visible
     immediately.
-12. **The record.** Record-tier events (never dropped like `TargetChosen`):
+12. **Published to the HUD**: each fleet's `sr_pm` (D2) and each tell's declared and effective ticks (Combat HUD & Tactical Overlay). **The record.** Record-tier events (never dropped like `TargetChosen`):
     `DoctrinePhase(fleet, doctrine, from, to, cause, declared_tick,
     effective_tick)` (for BROKEN, `cause` names the destroyed ship and the
     snapped link) and `FocusAssigned(fleet, target, ships, reason)`; and an

@@ -434,7 +434,7 @@ Hooks for Combat HUD (#46):
 - **AC-17 (Playtest; rule 20)**: no tester reports discomfort from shake at the default (500 ‰); every tester can find the shake setting from the Settings screen.
 - **AC-18 (Playtest; rule 17)**: 4 of 5 testers who lose the flagship can say where it was lost and what the fleet did next.
 - **AC-19 (Logic; rule 17)**: in Fleet frame, selecting a surviving player ship enters Escort follow on it; across 300 ticks no command is issued and the recorded aim does not change; when that ship is lost the camera glides to Fleet frame; C returns to Fleet frame.
-- **AC-20 (Logic; rule 12, D5)**: with a jammed or undetected enemy on the field, battle-start Frame, frame all and Fleet frame each give the same c and H as a fixture without that ship; no Frame fits a position the HUD does not display.
+- **AC-20 (Logic; rule 12, D5)**: with an enemy that fails the HUD's `hud_visible` test on the field (none at MVP), battle-start Frame, frame all and Fleet frame each give the same c and H as a fixture without that ship; no Frame fits a position the HUD does not display.
 
 ## Open Questions
 
