@@ -392,7 +392,7 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **No campaign system acts inside a battle** (rule 9) — Exposure & Rival Investigation must accept that investigators pause during battles. | #32 | When #32 is designed |
+| 1 | ~~**No campaign system acts inside a battle**~~ **Resolved 2026-10-30:** accepted; investigator leads are clock events and never fire in battle (Exposure & Rival Investigation). | #32 | Closed |
 | 2 | ~~**Whether an encounter offer can auto-start after being seen**~~ **Resolved 2026-10-30:** never; every contact is an offer the player resolves (Sector Map & Travel rules 17–20; `map.contact` interrupts skips). (e.g. an unavoidable interception) belongs to the encounter's owning GDD. | Sector Map & Travel (#26), encounter owners | When designed |
 | 3 | **Pace values** (120 s/day travel, 720 s/day battle, half-day cap) need a playtest against rival pace and contract lengths. | game-designer | First campaign playtest |
 | 4 | **Time of day** has no rule at MVP; a day/night or shift mechanic would need a GDD change. | game-designer | Post-MVP |
@@ -400,4 +400,4 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 | 6 | ~~**`DEFEAT_MAX_S`** value and how a defeat's day cost is computed under it.~~ **Resolved 2026-10-30:** the skip length is `defeat_skip_s(report)` (After-Action Debrief D5: 1 – 7 days at Standard, 14 at most at `defeat_cost_permille` 2000), queued in #8's delivery slot and run when the Debrief closes; `DEFEAT_MAX_S` stays 14 days. | After-Action Debrief (#24) | Closed |
 | 7 | **Port-screen holds** (rule 3) must be added to Simulation Tick & Pause's `PLANNING:*` list. | Tick owner | Tick re-review |
 | 8 | **Idle-proof contract replacement** (rule 15). | Contracts & Missions (#38) | When #38 is designed |
-| 9 | **Default interrupt kinds** (rule 14) for investigator steps and hostility changes. | #32, Faction Reputation | When designed |
+| 9 | **Default interrupt kinds** (rule 14): resolved for investigators (a find always interrupts a skip; a lead does not; Exposure & Rival Investigation); hostility changes still open. | Faction Reputation | When #17 is revised |

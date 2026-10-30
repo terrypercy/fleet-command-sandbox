@@ -185,7 +185,7 @@ the terms of my war", which put the settings screen at the centre).*
     | `vigor_erosion_permille` † | 600 | 1000 | 1250 | 250 – 2000 |
     | `rest_days_permille` † (owner: World Clock and Ports, Rest & Care #27) | 500 | 1000 | 1250 | 250 – 2000 |
     | `yield_permille` † (loot, contracts) | 1250 | 1000 | 850 | 500 – 1500 |
-    | `investigator_pace_permille` † | 600 | 1000 | 1250 | 500 – 1500 |
+    | `investigator_pace_permille` (accepted by Exposure & Rival Investigation D1–D2) | 600 | 1000 | 1250 | 500 – 1500 |
     | `enemy_ai_level` † | 1 | 2 | 3 | 0 – 4 |
     | Tier P suggestions | more auto-pause triggers, 0.5× default | none | none | — |
 

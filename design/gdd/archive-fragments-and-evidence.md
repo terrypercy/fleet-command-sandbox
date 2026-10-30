@@ -477,8 +477,8 @@ proceed (the owner may revisit any of them at review):
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Does a rival find remove the fragment, or can the player still claim it? Recommendation: still claimable (the rival copies, does not take). | #32 owner | #32 design |
-| 2 | The true maker's agents (#32) target unfound fragments: their visible choice must be maker-blind, or it leaks G6. | #32 owner | #32 design |
+| 1 | ~~Does a rival find remove the fragment?~~ **Resolved 2026-10-30:** no; the rival copies, and the player can still claim it (Exposure & Rival Investigation). | #32 owner | Closed |
+| 2 | ~~Maker-blind targeting~~ **Resolved 2026-10-30:** the rival's target is one uniform draw over unfound fragments, blind to class, verdict and maker (Exposure D5); the maker's agents (Vertical Slice) follow the same rule. | #32 owner | Closed |
 | 3 | ~~Suppression of a HELD fragment~~ **Resolved 2026-10-30:** the fragment stays HELD with a Faction Belief & Blame flag; the card shows a "Sealed" line next to "Shared with". | #30 owner | Closed |
 | 4 | Final template, class-line and tell text, and the codex page. | writer, narrative-director | Before content lock |
 | 5 | Grammar-neutral value slots and per-language length matching (Truth Seeding OQ 5; lore bible OQ 7). | localization-lead | Before localisation |

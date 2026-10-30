@@ -602,4 +602,4 @@ Resolved with the recommended defaults, for the owner to confirm at review:
 |---|---|---|---|
 | 4 | `design/accessibility-requirements.md` does not exist; the keyboard and no-colour rules here are local until it does. | ux-designer | Pre-Production gate |
 | 5 | Does the Reckoning (#34) need anything from the Case File? Recommendation: no; it reads #16 and #30 directly. Then the index dependency should be removed. | #34 owner | #34 design |
-| 6 | #32's readout wording and API (`exposure_readout(verdict)`), shown in rule 24. | #32 owner | #32 design |
+| 6 | ~~#32's readout API~~ **Resolved 2026-10-30:** `exposure_readout(verdict)` (Exposure & Rival Investigation). | #32 owner | Closed |

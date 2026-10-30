@@ -278,7 +278,7 @@ battle; each has a preview, a confirm step and no undo)
 | Archive Fragments & Evidence (#28) | both | Reads `held_fragments()`, `unfound_count_by_class()`, `FragmentHeld`. Supplies the "Shared with ⟨faction⟩" and "Sealed" lines for the card |
 | Faction Reputation & Standing (#17) | #30 → #17 | `earn` / `penalize` (reactions, confirmations, exposure), `set_hostile`, `set_target`, `spend` (keeper), `preview(ops)` |
 | Credits, Upkeep & Sinks (#18) | both | Suppression purchase and upkeep charges; `suppression_at_risk` and lapse back to #30; coverage line |
-| Exposure & Rival Investigation (#32) | both | #32 reads `verdict()`, `contradicts_public(φ)`, `held_reliable_contradictions()`, `suppressed_set()`, `suppression_lapsed`. #32 calls `expose(φ)` and `preview_readout(verdict_after)` |
+| Exposure & Rival Investigation (#32) | both | #32 reads `verdict()`, `contradicts_public(φ)`, `held_reliable_contradictions()`, `suppressed_set()`, `suppression_lapsed`. #32 calls `expose(φ)`; #30 calls #32's `exposure_readout(verdict)` for the preview and signals when a naming is entered (for #32's retest) |
 | Allied Lending (#33) | #30 → #33 | Reads `belief(f)` and `public_blame()`; supplies `preview_lending(belief_after)` |
 | Reckoning & Endings (#34) | #30 → #34 | Reads `verdict()`, `naming()`, `suppressed_set()`, the log. Read only |
 | Public History screen (#49) | #30 → #49 | `preview(action)`, the commit commands, the record, `P` as bars |
@@ -553,7 +553,9 @@ numbers are shown.
   is not reliable or is suppressed, or while the verdict is UNRESOLVED**: it
   returns `NOT_CONTRADICTING` and nothing changes.
 - **If `expose` is called on a fragment the player holds**: it is refused with
-  `HELD`. A held contradiction is the player's to show or seal, and #34 reads
+  `HELD`, **unless the fragment is in #32's `known(r)` (the rival copied it
+  while it was unfound) and is neither suppressed nor shared**; then it is
+  accepted, so claiming a rival's copy never makes a lie safe. A held contradiction is the player's to show or seal, and #34 reads
   it.
 - **If a grant is attempted between preview and commit**: it is deferred
   (#28 rule 24).
