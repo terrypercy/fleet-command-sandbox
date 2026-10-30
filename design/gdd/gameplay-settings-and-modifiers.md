@@ -4,7 +4,8 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — difficulty changes how hard, never how readable); Pillar 3 (Hands on the Helm — pause, speed and assists are commitments, not polish)
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on lie/truth price ratio, first-stronghold-still-wins, AI level vs doctrine, shared organic/machine keys, and the pillar header; all five revised
+> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — difficulty changes how hard, never how readable); Pillar 2 (The Truth Is Yours to Tell — investigators slow, never stop; difficulty never touches evidence, previews or the price of a lie relative to the truth); Pillar 3 (Hands on the Helm — pause, speed and assists are commitments, not polish)
 
 ## Summary
 
@@ -138,10 +139,21 @@ the terms of my war", which put the settings screen at the centre).*
    - the Vigor no-lockout floor, the reachable rest port, the cost-free opening
      loss, and the rule that lent ships are never required;
    - the defeat-cost floor (above zero) and the defeat-cost cap ("never the
-     run").
+     run");
+   - **the price of a lie relative to the truth**: suppression purchase and
+     upkeep scale with `yield_permille`, so a lie costs the same share of income
+     on every preset (Pillar 2).
 10. **Strongholds scale by numbers, never by composition.** `stronghold_strength`
     scales stats and ship count within the same doctrine, so the Dossier's
-    counter-fleet stays correct on every preset.
+    counter-fleet stays correct on every preset. **`enemy_ai_level` scales
+    execution only** (reaction delay, focus-fire accuracy, retreat discipline),
+    never doctrine or which tactics are available: a Debrief counter valid at
+    one level is valid at every level (Ship AI must accept this with the key).
+10a. **The first stronghold still wins first.** First-encounter strongholds are
+    tuned so that a fleet without Dossier or Debrief preparation loses at
+    Chronicler values, and at the Custom minimums. Stronghold and Battle
+    Resolution must accept this as a constraint on the minimums of
+    `stronghold_strength_permille` and `enemy_ai_level`.
 11. **Investigators slow, never stop.** `investigator_pace_permille` has a
     floor of `INVESTIGATOR_PACE_FLOOR` (500): a lie always carries risk
     (Pillar 2).
@@ -160,7 +172,10 @@ the terms of my war", which put the settings screen at the centre).*
     11). Choosing a preset copies its values into the snapshot; player overrides
     win per key; a key the preset omits takes the schema default. Tier P
     suggestions are offered once ("Apply these comfort suggestions?") and never
-    forced. The shipped presets are:
+    forced. **Organic and machine resource models never share one modifier
+    key**: a Coherence-side modifier, if added, is its own key with its own
+    range, so no setting flattens the Living-against-Made asymmetry (Pillar 5).
+    The shipped presets are:
 
     | Key (Tier C) | Chronicler | Standard | Admiral | Range |
     |---|---|---|---|---|
@@ -420,13 +435,16 @@ Owned by #51 (MVP basics) and #55/#56 (Vertical Slice screens):
 - **AC-15 (Logic; rule 17)**: every Tier P value takes effect on the next frame without a restart; a missing or corrupt profile file loads defaults and tells the player once.
 - **AC-16 (Logic; rule 15)**: the voyage record of a campaign played on Chronicler for days 1–140, then Standard, with Ironman, reads exactly "Charted on Chronicler, days 1–140; Standard from day 141. Ironman." and lists no assists.
 - **AC-17 (Logic; rule 9, cross-GDD audit)**: a review checklist confirms each consuming GDD (Vigor, Ship AI, Battle Resolution, Ports & Rest, Loot & Contracts, Rival Investigators, Defeat & Debrief, Dossier) states its key, range and the rule 9 limits before that GDD is approved.
+- **AC-19 (Logic; rule 9, Pillar 2)**: suppression purchase and upkeep, as a share of income at the same campaign state, are equal (±1 permille) on Chronicler, Standard and Admiral.
+- **AC-20 (Playtest; rule 10a)**: a fresh fleet with no Dossier or Debrief preparation loses its first stronghold attempt on Chronicler and at the Custom minimums, in 5 of 5 attempts.
+- **AC-21 (Logic; rule 10)**: for a fixed battle, the set of tactics each enemy ship uses is identical at every `enemy_ai_level`; only execution parameters differ.
 - **AC-18 (UI)**: the new-campaign setup, the Assists/Challenge settings, and the voyage record each have a retained screenshot in `production/qa/evidence/` when their #51/#55/#56 story closes; no screen uses the word "Easy" or a warning colour for a preset.
 
 ## Open Questions
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | **Every † key and range** must be accepted by its owning GDD; the preset values are starting points. | each owning GDD; economy-designer for yield and costs | As each is designed; balance pass |
+| 1 | **Every † key and range** must be accepted by its owning GDD, together with rules 9, 10 and 10a (Rival Investigators, Loot & Contracts, Stronghold/Battle Resolution, Ship AI first); the preset values are starting points. | each owning GDD; economy-designer for yield and costs | As each is designed; balance pass |
 | 2 | **Preset names** (Chronicler / Standard / Admiral) need a naming pass with the world's voice. | narrative-director | Vertical Slice |
 | 3 | **Simulation Tick & Pause D7 amendment** (toggles gate only the hold) must be confirmed in Tick's re-review. | Tick owner | Tick re-review |
 | 4 | **In-game profiles** (several players on one OS account) are not at MVP. | producer | Post-MVP |

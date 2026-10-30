@@ -191,6 +191,19 @@ formulas:
     notes: "Save/Load D1. Computed at startup from the section registry; result in MiB. 35 MiB with the 2026-10-30 ceilings (sum 22.75 MiB). Upper bound of the range is a review threshold, not a cap."
     added: 2026-10-30
 
+  - name: modifier_compose
+    status: active
+    source: design/gdd/gameplay-settings-and-modifiers.md
+    referenced_by:
+      - design/gdd/gameplay-settings-and-modifiers.md
+    variables:
+      - base
+      - m
+    output_range: [0, "2 x base"]
+    expression: "(base x m + 500) div 1000"
+    notes: "Settings D2. Integer permille composition of a campaign modifier onto a consumer's base value; m within the key's range (at most 250-2000). Every consumer of a Tier C permille key (Vigor, Ship AI, Battle Resolution, Ports & Rest, Loot & Contracts, Rival Investigators, Defeat & Debrief) must use exactly this rounding."
+    added: 2026-10-30
+
 # Example:
 #
 # formulas:
@@ -256,6 +269,7 @@ constants:
       - design/gdd/deterministic-rng-and-seed-streams.md
       - design/gdd/content-data-and-mod-loading.md
       - design/gdd/input-and-controls.md
+      - design/gdd/gameplay-settings-and-modifiers.md
     value: 1000
     unit: permille
     notes: "The unit of every outcome-deciding probability (D4). Consumers (Weapons & Damage, Loot, Contracts) store odds as integer permille 0-1000."
@@ -420,6 +434,17 @@ constants:
     value: 64
     unit: KiB
     notes: "Largest save header (Save/Load Core Rule 3). Must hold the package list and hashes from Content Data Core Rule 13."
+    added: 2026-10-30
+    revised: ""
+
+  - name: investigator_pace_floor_permille
+    status: active
+    source: design/gdd/gameplay-settings-and-modifiers.md
+    referenced_by:
+      - design/gdd/gameplay-settings-and-modifiers.md
+    value: 500
+    unit: permille
+    notes: "Settings rule 11 / D3. Lowest investigator_pace_permille any preset, mod or override may resolve to; Rival Investigators must honour it (Pillar 2: a lie always carries risk)."
     added: 2026-10-30
     revised: ""
 
