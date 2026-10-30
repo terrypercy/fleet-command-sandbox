@@ -110,16 +110,17 @@ can't tell those two states apart without colour".
 
 **B. Visibility of enemies**
 
-9. **No fog and no jamming of the view at MVP.** Every ship whose Runtime ID
+9. **No fog and no jamming of the view, at any tier.** Every ship whose Runtime ID
    status is `LIVE` on the field, and every disabled ship still on the field, is
    **HUD-visible** to the player, on both sides. There are no sensors and no
-   area jammers at MVP (Coherence & Links rule 13 and Open Question 5). A
+   area jammers (Coherence & Links rule 13): fog would break "combat
+   information is always clear" (Game Concept, Pillars). A
    `jammed` link is a link state, not a hidden ship.
 10. **One visibility predicate.** `hud_visible(ship)` is the only test of
-    whether the HUD draws a ship. At MVP it is true for every on-field ship. The
+    whether the HUD draws a ship. It is true for every on-field ship. The
     camera's frame sets use the same predicate (Camera & Combat View rule 12),
-    so the camera never fits to a ship the HUD does not draw. A later sensor
-    system changes only this predicate.
+    so the camera never fits to a ship the HUD does not draw. It stays a
+    single predicate so the HUD, the camera and the Runner's `BotView` agree.
 
 **C. Tiers**
 

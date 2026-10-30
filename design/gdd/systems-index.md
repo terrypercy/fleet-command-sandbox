@@ -242,7 +242,7 @@ Later tiers:
 | 43 | Background Faction Economy | Economy | Alpha | Not Started | — | World Clock, Faction Reputation & Standing, Markets & Trade, Contracts & Missions |
 | 44 | Breakaway Machine Faction | Gameplay | Full Vision | Not Started | — | Coherence & Links, Ship AI, Archive Fragments & Evidence, Allied Lending, Runtime ID Service |
 | 45 | Camera & Combat View | Core | MVP | Designed | design/gdd/camera-and-combat-view.md | Simulation Tick & Pause, Input & Controls, Combat Space, Runtime ID Service |
-| 46 | Combat HUD & Tactical Overlay | UI | MVP | In Design | design/gdd/combat-hud-and-tactical-overlay.md | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View, Runtime ID Service |
+| 46 | Combat HUD & Tactical Overlay | UI | MVP | Designed | design/gdd/combat-hud-and-tactical-overlay.md | Simulation Tick & Pause, Gameplay Settings & Modifiers, Vigor, Coherence & Links, Fleet Orders, Ship AI, Camera & Combat View, Runtime ID Service |
 | 47 | Dossier | UI | MVP | Designed | design/gdd/dossier.md | Simulation Tick & Pause, Machine Nodes & Strongholds, After-Action Debrief, Allied Lending |
 | 48 | Ledger | UI | Vertical Slice | Not Started | — | Simulation Tick & Pause, Sector Map & Travel, Markets & Trade |
 | 49 | Public History Screen | UI | MVP | In Design | design/gdd/public-history-screen.md | Simulation Tick & Pause, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
@@ -482,7 +482,7 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Design docs started | 38 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 37/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
+| MVP systems designed | 38/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
 | Vertical Slice systems designed | 0/6 |
 
 ---
