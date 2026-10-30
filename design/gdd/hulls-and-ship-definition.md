@@ -121,8 +121,11 @@ different colour" or "the Dossier told me it had no rear guns, and it did".
 6. **Validation** (at content load, Content Data Core Rule 10): duplicate
    `slot_id`, a point outside the outline, a block that doesn't match the race's
    resource model, `link_ports` > 0 with `relay_capacity` 0, 0 mounts on a role
-   other than support or relay, and a machine hull with a lineage-bearing
-   manufacturer are all errors that refuse the hull.
+   other than support or relay, a machine hull with a lineage-bearing
+   manufacturer, **a non-relay machine hull with no unfed mount** (so every cut
+   ship can still shoot; Coherence & Links rule 6), and, at MVP, **a machine
+   hull in the player fleet** (Coherence & Links rule 17) are all errors that
+   refuse the hull.
 
 **B. Living against made**
 

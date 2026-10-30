@@ -118,7 +118,7 @@ thing" or "I can't see what killed me".
    | Ship state | `OwnerChanged` (record) | ship, old_owner, new_owner |
    | Vigor | `VigorBand` (record) | ship, from, to (bands owned by Vigor #13) |
    | Vigor | `VigorCeilingEroded` (record, at battle end) | ship, amount |
-   | Coherence | `LinkState` (record) | relay, target, from, to (SOLID / DASHED / SNAPPED / RELAYED), cause_code (relay_lost / jammed / range), actor |
+   | Coherence | `LinkState` (record) | relay, target, from, to (SOLID / DASHED / SNAPPED / RELAYED), cause_code (relay_lost / jammed / range / capacity), actor |
    | Coherence | `CoherenceBand` (record) | fleet, from, to |
    | Orders | `OrderApplied` (record) | order_id, subject, kind, target |
    | Orders | `OrderRejected` (record) | order_id, reason (Simulation Tick & Pause) |
