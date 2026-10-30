@@ -233,7 +233,7 @@ Later tiers:
 | 34 | Reckoning & Endings | Narrative | Vertical Slice | Not Started | — | Truth Seeding & Candidates, Credits, Upkeep & Sinks, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 35 | Refit & Loadout | Progression | MVP | Designed | design/gdd/refit-and-loadout.md | Hulls & Ship Definition, Weapons & Damage, Credits, Upkeep & Sinks |
 | 36 | Salvage & Recovery | Economy | Vertical Slice | Not Started | — | Credits, Upkeep & Sinks, Battle Resolution & Retreat, Runtime ID Service |
-| 37 | Markets & Trade | Economy | MVP | In Design | design/gdd/markets-and-trade.md | Credits, Upkeep & Sinks, Sector Map & Travel |
+| 37 | Markets & Trade | Economy | MVP | Designed | design/gdd/markets-and-trade.md | Credits, Upkeep & Sinks, Sector Map & Travel |
 | 38 | Contracts & Missions | Economy | Alpha | Not Started | — | Deterministic RNG & Seed Streams, World Clock, Faction Reputation & Standing, Credits, Upkeep & Sinks, Sector Map & Travel |
 | 39 | Loot & Crafting | Progression | Alpha | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, Refit & Loadout, Salvage & Recovery |
 | 40 | Captain Skills | Progression | Alpha | Not Started | — | Save/Load & Migration, Flagship Piloting |
@@ -479,10 +479,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 34 |
+| Design docs started | 35 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 34/43 (#1 In Review; #2–#35 pending review; #34 is Vertical Slice) |
+| MVP systems designed | 35/43 (#1 In Review; others pending review; #34 and #36 are Vertical Slice) |
 | Vertical Slice systems designed | 0/6 |
 
 ---
