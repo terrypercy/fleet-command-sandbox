@@ -4,6 +4,7 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on dwell delaying cuts, SEEK_RELAY with no provider, hidden cut reasons, capacity snaps, strain-as-flux, no AC-19 fallback, and Debrief data for uncut formations; all seven revised
 > **Implements Pillar**: Pillar 5 (Living Against Made — machine strength is relayed bandwidth through visible links, not a per-ship pool); Pillar 4 (Plan in the Open — link state is readable at a glance); Pillar 1 (a cut is a nameable cause and counter)
 
 ## Summary
@@ -120,6 +121,8 @@ another health bar" or "I couldn't tell what the lines meant".
    - `HOLD_STATION`: throttle 0, keeps heading; turn at 700 ‰;
    - `SEEK_RELAY`: steers to the nearest live provider with a free port
      (`fallback_relay_id`, refreshed on every recompute) and relinks on arrival;
+     with `fallback_relay_id` NONE it behaves as `HOLD_STATION` until a provider
+     is valid;
    - `INDEPENDENT`: keeps its last target, then the nearest; speed 900 ‰,
      turn 800 ‰;
    - `RETURN_TO_LINK_POINT`: steers back to where it was last linked
@@ -127,8 +130,10 @@ another health bar" or "I couldn't tell what the lines meant".
    Multipliers are published to Combat Space (rule 6a).
 8. **What #14 publishes per machine ship** (read by Ship AI in P2, one tick
    stale): state (LINKED / RELAYED / CUT / RELINKING), `cut_tick`,
-   `relink_eta_tick` (an exact tick, or NONE), `fallback_relay_id` and
-   `last_link_pos`.
+   `relink_eta_tick` (an exact tick, or NONE) with a **reason** (`TIMER`,
+   `STRAINED`, `NO_PROVIDER`, `CAPACITY`), `fallback_relay_id` and
+   `last_link_pos`. Only `TIMER` carries an ETA; a strained ship never shows
+   one.
 
 **C. Link states**
 
@@ -140,13 +145,17 @@ another health bar" or "I couldn't tell what the lines meant".
    - **SNAPPED**: strain ≥ hold (`cause_code = jammed`), **or** distance >
      `link_range` (the ring the HUD shows; `cause_code = range`), **or** the
      provider is destroyed, retreated or stalled (`relay_lost`), **or** the
-     ship was refused for lack of capacity (`capacity`, a new code in the
-     Battle Record);
+     ship's existing link is lost because reassignment found no capacity
+     (`capacity`, a new code in the Battle Record). A ship refused before it
+     ever linked (for example at battle start) is simply CUT with reason
+     `CAPACITY`: no snap event and no spark;
    - **RELAYED**: linked through two or more relays; drawn solid with a mid-line
      node mark.
    A snapped link can form again only within `DASH_RANGE_PM` of range (90 %), so
    a ship at the edge never flickers. No ship changes link state twice within
-   `LINK_DWELL` (30 ticks).
+   `LINK_DWELL` (30 ticks); **`relay_lost`, `jammed` and stall snaps are exempt**,
+   so a cut always lands on the tick it happens; dwell gates only range-driven
+   changes and SOLID/DASHED toggles.
 10. **Strain.** A SEVERING hit (Weapons & Damage rule 6) adds `LinkStrain` to the
     target's link. Strain decays by `STRAIN_DECAY` (2 per tick) after 30 ticks
     with no new strain. When strain reaches the link's hold, the link snaps
@@ -172,7 +181,9 @@ another health bar" or "I couldn't tell what the lines meant".
     10 % hysteresis band, `LINK_CHECK_N ≤ hysteresis ÷ (2 × fastest ship's
     movement per tick)`, so no crossing is missed (Formulas D5).
 14. **Relinking** waits `relink_ticks` (Formulas D3) after a cut; while it runs a
-    short dotted stub pulses from the ship's receive point; on relink the line
+    short dotted stub pulses from the ship's receive point with its ETA; a ship
+    held cut for another reason (strain, no provider, capacity) shows a static
+    stub with a reason icon on pause-hover instead; on relink the line
     draws in from the provider over 20 ticks, dashed then solid.
 15. **Coherence draws no random numbers.** Links, strain, stall meters, timers
     and wards are in `state_hash`.
@@ -197,7 +208,15 @@ another health bar" or "I couldn't tell what the lines meant".
     5. one cut changes many ships at once; an empty Vigor pool changes one;
     6. the counters are target choice and position (relay kill, severing,
        baiting range); Vigor's counter is rupture on cores.
+    7. **strain is not flux**: it never limits the struck ship's own fire, and a
+       stall silences the relay's subtree, not the relay itself; the effect
+       lands on *other* ships.
     Coherence keeps its own modifier keys (Gameplay Settings & Modifiers rule 13).
+19. **A per-battle `CoherenceSummary`** goes into the Battle Record at battle
+    end: time spent in each band per fleet, and per relay its subtree size,
+    damage taken, and whether it was ever struck, strained or stalled. A defeat
+    against a formation that was never cut can then be named ("relay L-01 was
+    never targeted").
 
 ### States and Transitions
 
@@ -300,6 +319,7 @@ C‰ = 30 × 1,000 ÷ 30 = **1,000, WHOLE**; five SOLID lines.
 | Combat Space (#11) | Hard | Positions, multipliers |
 | Combat Event Bus & Battle Record (#9) | Hard | Events |
 | Ship AI (#20), Machine Nodes & Strongholds (#23), HUD (#46) | Hard (reverse) | Published state, keystones, display |
+| After-Action Debrief, Dossier | Hard (reverse) | `CoherenceSummary` and link events for causes and relay intel |
 
 Bidirectional check: Hulls, Weapons, Combat Space and Battle Record already name
 Coherence & Links.
@@ -333,6 +353,7 @@ All in `assets/data/coherence/`.
 - Snaps spark and make a short, distinct sound; a stall shows on the relay.
 - Relinking: a pulsing dotted stub, then the line drawing in.
 - Each cut behaviour looks different (hold, seek, independent, return).
+- Link and relay visuals carry no organic-race lineage (concept; Hulls rule 14).
 
 ## Game Feel
 
@@ -342,7 +363,10 @@ All in `assets/data/coherence/`.
 ## UI Requirements
 
 - Paused: link lines with state; hovering a relay highlights its whole subtree
-  and shows capacity used and ports; a cut ship shows its relink ETA.
+  and shows capacity used and ports; a cut ship shows its relink ETA (TIMER) or
+  its reason (STRAINED, NO_PROVIDER, CAPACITY).
+- **Strain without a bar**: hovering a link while paused shows "hits to dash /
+  hits to snap" for the selected weapon (computed, no draw).
 - Fleet Coherence band per machine fleet on the HUD.
 - 📌 **UX Flag — Coherence & Links**: include line states, relay subtree
   highlight and ETAs in the Combat HUD UX spec before epics.
@@ -378,6 +402,11 @@ All in `assets/data/coherence/`.
 - **AC-16 (Logic; rule 17)**: content validation refuses a machine hull in the player fleet at MVP.
 - **AC-17 (Performance; rule 16)**: steady P6 Coherence work ≤ 0.3 ms at the 95th percentile on the D10 fixture; a full recompute ≤ 1.5 ms; allocation delta 0 over 3,600 ticks.
 - **AC-18 (Visual)**: at 32 px in greyscale, testers name SOLID, DASHED, SNAPPED and RELAYED in ≥ 90 % of cases.
+- **AC-20 (Logic; rule 9)**: a ship that relinked 10 ticks before its relay dies snaps `relay_lost` on the kill tick (dwell exemption).
+- **AC-21 (Logic; rule 7)**: `SEEK_RELAY` with no provider left behaves as `HOLD_STATION` until one becomes valid.
+- **AC-22 (Logic; rule 8)**: a cut ship held by strain publishes reason `STRAINED` and no ETA; a ship refused at battle start is CUT with reason `CAPACITY` and emits no `SNAPPED`.
+- **AC-23 (Logic; rule 19)**: after a battle in which relay L-01 was never struck, `CoherenceSummary` records it with 0 damage and the Debrief can name "relay never targeted".
+- **AC-24 (UI)**: hovering a link while paused shows hits-to-dash and hits-to-snap for the selected weapon, matching D1 and the weapon's strain per hit.
 - **AC-19 (Playtest; prototype caveat)**: 5 players with no genre briefing, where the relay is not the largest silhouette: in at least 3 of 5, the first deliberate target by the second skirmish is the relay, and at least 3 of 5 say in interview that the **lines** told them, not that "it looked like a commander".
 
 ## Open Questions
@@ -390,3 +419,4 @@ All in `assets/data/coherence/`.
 | 4 | **Player machine ships and breakaways** (rule 17). | game-designer | Post-MVP |
 | 5 | **Area jammers** as a weapon or module. | game-designer | Post-MVP |
 | 6 | **All numbers** are starting values; no balance data yet. | systems-designer | When `assets/data/coherence/` exists |
+| 7 | **If AC-19 fails** (the lines don't teach relay-first): options are a relay-subtree trace on first sighting, Dossier pre-tagging of known relays, or a stronger line-convergence treatment. | creative-director, ux-designer | Vertical-slice playtest |
