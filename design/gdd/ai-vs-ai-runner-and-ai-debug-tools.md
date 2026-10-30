@@ -192,7 +192,7 @@ them. Then change one value and run the suite again overnight.
     | **S1 Determinism** | `DET_FIXTURES` (6) × 3 runs | The same key run twice gives an identical per-tick `state_hash` sequence, event-log hash and `DebriefResult` bytes. A replay from the record header and command log rebuilds a byte-identical event log (Battle Record AC-09). | `determinism.json` |
     | **S2 Proofs** | D1 | Machine Nodes rules 13, 21, 21a, 22 (D5; AC-19, AC-20) | `proofs.json` |
     | **S3 Calibration** | D1 | Machine Nodes D4 / AC-17 (D2, D3) | `calibration.csv` |
-    | **S4 Debrief** | 50 fixtures, plus S2 and S3 reused | Debrief AC-21, 21b, 21c, 22 | `debrief.csv` |
+    | **S4 Debrief** | 50 engine-cause fixtures and 120 mixed-cause battles, plus S2 and S3 reused | Debrief AC-21, 21b, 21c, 22 | `debrief.csv` |
     | **S5 Telemetry** | D1 | No gate. Data for Battle Resolution OQ 5, Fleet Coordination OQ 3 and AC-10, Ship AI OQ 4, Debrief OQ 4 | `telemetry/*.csv` |
     | **S6 Regression** | S1 fixtures | Golden record hashes (rule 25) | `regression.json` |
 19. **Proof levels.** Proofs at `s` 1000 and 1200 use the `enemy_ai_level` of
@@ -370,6 +370,7 @@ them. Then change one value and run the suite again overnight.
 N_proof = Σ_nodes ( solo_n × PROOF_SEEDS × 2 + PROOF_SEEDS + PROOF_SEEDS )
 N_cal   = Σ_nodes ( |S_CAL| × LEVELS × V_n × CAL_SEEDS ),  V_n = 3 + counters_n
 N_fx    = ENGINE_CAUSES × FX_SEEDS
+N_mix   = MIXED_FIXTURES × FX_SEEDS
 N_tel   = nodes × 2 × TEL_SEEDS + DOCTRINES × TEL_SEEDS
 N_det   = DET_FIXTURES × 3
 ```
@@ -396,9 +397,10 @@ nodes of 2 solo counters and 3 listed counters each:
 - `N_proof` = 3 × (2 × 10 × 2 + 10 + 10) = 3 × 60 = **180**;
 - `N_cal` = 3 × (4 × 5 × 6 × 10) = 3 × 1,200 = **3,600**;
 - `N_fx` = **50**;
+- `N_mix` = 12 × 10 = **120**;
 - `N_tel` = 3 × 2 × 10 + 3 × 10 = **90**;
 - `N_det` = **18**.
-The full tier totals **3,938** battles. The fast tier runs `N_det + N_fx` =
+The full tier totals **4,058** battles. The fast tier runs `N_det + N_fx` =
 **68**.
 
 ### D2. Pooled band win rates (AC-17, first clause)
@@ -471,12 +473,12 @@ wall_s      = ticks_total div (HEADLESS_TPS × workers) + battles × SETUP_S_PM 
 | wall_s | — | ≥ 0 | Must be ≤ `FULL_BUDGET_S` (3,600) or ≤ `FAST_BUDGET_S` (600) |
 
 Example, for the full tier with a mean of 20,000 ticks (5:33 per battle):
-- `ticks_total` = 3,938 × 20,000 = 78,760,000;
-- that is 78,760,000 div 48,000 = 1,640 s, plus 3,938 × 200 div 1,000 = 787 s;
-- `wall_s` = **2,427 s** (40 min), inside 3,600.
+- `ticks_total` = 4,058 × 20,000 = 81,160,000;
+- that is 81,160,000 div 48,000 = 1,690 s, plus 4,058 × 200 div 1,000 = 811 s;
+- `wall_s` = **2,501 s** (42 min), inside 3,600.
 
 The worst case is every battle at the 30-minute limit, 108,600 ticks. That
-gives 8,909 + 787 = **9,696 s**, which is over budget. It can only happen if
+gives 9,181 + 811 = **9,992 s**, which is over budget. It can only happen if
 most battles stall, and that is itself a balance finding.
 
 ### D6. Kiting vs ordered retreat (Battle Resolution OQ 5)
@@ -667,8 +669,8 @@ in `assets/data/runner/`.
   workers gives byte-identical `battles.csv`, `proofs.json` and
   `calibration.csv`.
 - **AC-06 (Logic; D1)**: with 3 nodes of 2 solo and 3 listed counters each, the
-  key list holds 180 proof, 3,600 calibration, 50 fixture, 90 telemetry and 18
-  determinism battles.
+  key list holds 180 proof, 3,600 calibration, 50 fixture, 120 mixed-cause,
+  90 telemetry and 18 determinism battles.
 - **AC-07 (Logic; D3)**: range 442 – 858 with 4 of 10 wins is in range; with 8
   of 10 it is out of range; `low` 600 is Contested.
 - **AC-08 (Logic; rule 24)**: a schema check finds no `pass`, `fail`, `verdict`
