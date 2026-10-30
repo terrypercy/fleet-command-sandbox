@@ -122,6 +122,7 @@ thing" or "I can't see what killed me".
    | Coherence | `CoherenceBand` (record) | fleet, from, to |
    | Orders | `OrderApplied` (record) | order_id, subject, kind, target |
    | Orders | `OrderRejected` (record) | order_id, reason (Simulation Tick & Pause) |
+   | Orders | `OrderEnded` (record) | order_id, subject, outcome (done / target_destroyed / target_retreated / target_lost / replaced / cleared) — Fleet Orders rule 12 |
    | AI | `TargetChosen` (record, on change only) | ship, target, reason_code (focus_called / nearest / lowest_hull / threat / ordered / retaliate) |
    | AI | `FocusCalled` (record) | fleet, target |
    | Auto-pause | `AutoPauseTrigger` (record) | trigger_id, subject (fires whether or not the player has the trigger enabled; Simulation Tick & Pause D7) |

@@ -555,6 +555,6 @@ Owned by Menus, Settings & Save UI (#51); Input supplies the table and logic.
 | 2 | **Mouse-only play** is a stated limit at MVP. Revisit with accessibility testing. | accessibility-specialist | Polish |
 | 3 | **Gamepad and Steam Deck** layouts (fleet command on a pad needs a radial or cursor mode). | game-designer, ux-designer | Post-launch |
 | 4 | **Hold-to-pause / slow-time** as an optional second pause path. | game-designer | Post-MVP |
-| 5 | **Live order hotkey set** (which five orders F1–F5 carry) is Fleet Orders' call. | Fleet Orders (#19) | When #19 is designed |
+| 5 | ~~**Live order hotkey set**~~ **Resolved 2026-10-30** by Fleet Orders rule 3: F1 Attack, F2 Move, F3 Hold, F4 Regroup, F5 Focus Fire; Retreat never on a single key. | Fleet Orders (#19) | Resolved |
 | 6 | **North-up camera** is assumed by screen-relative movement (rule 16). | Camera & Combat View (#45) | When #45 is designed |
 | 7 | **`design/accessibility-requirements.md`** does not exist; the Pre-Production gate checks it. It must cite rules 6–9 and 17. | ux-designer, accessibility-specialist | Before Pre-Production |
