@@ -3,12 +3,12 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (no solved banner; statuses shown when the player tests a row; 'may narrow the case' header; learning forgery tells)
 > **Implements Pillar**: Pillar 2 (The Truth Is Yours to Tell — the player works out the truth from held evidence before deciding what to tell); Pillar 4 (Plan in the Open — what is ruled out, and why, is always readable)
 
 ## Summary
 
-The Case File is the player's reasoning board: the candidate rows with their status (not contradicted, contradicted once, ruled out by two independent chains), a fragment-by-candidate evidence matrix and the public attribute table, every reason citing its chains. It never declares the case solved; when one candidate remains it states only that it "still stands on the evidence you hold". It owns the `support` measure, hosts player aids that change no number, and at Tier 0 is the panel where sharing, sealing and accusing are previewed and committed, with no ordering or highlight that could leak the maker.
+The Case File is the player's reasoning board: the candidate rows with their status (not contradicted, contradicted once, ruled out by two independent chains), a fragment-by-candidate evidence matrix and the public attribute table, every reason citing its chains. It never declares the case solved; statuses appear when the player tests a row, and nothing is shown when one candidate remains. It owns the `support` measure, hosts player aids that change no number, and at Tier 0 is the panel where sharing, sealing and accusing are previewed and committed, with no ordering or highlight that could leak the maker.
 
 > **Quick reference** — Layer: `Feature` · Priority: `MVP` · Key deps: `Truth Seeding & Candidates, Archive Fragments & Evidence`
 
@@ -23,9 +23,9 @@ out. A candidate is ruled out when `contra ≥ 2` from distinct independent
 groups. Truth Seeding rule 8 owns that meaning; the Case File uses it and does
 not own it. The Case File **does own the meaning of `support`** (D3), which
 Faction Belief's good-faith test reads. It says why each candidate is ruled
-out, citing the chains. It never says who the maker is. When one candidate is
-left, it says "only X still stands on the evidence you hold", which is a fact
-about the held set. It also holds player aids (one theory pin, doubt marks,
+out, citing the chains, once the player tests that row. It never says who the
+maker is, and when one candidate is left it says nothing more: the conclusion
+is the player's. It also holds player aids (one theory pin, doubt marks,
 notes) that change no game number. At Tier 0 its text panel is the Public
 History stub: the share, accuse and suppress entry points, the first-order
 preview (Faction Belief rule 18) and the exposure change (#32). It never reads
@@ -44,14 +44,14 @@ can rule a race out. Testimony leans, and is marked as leaning. A marked
 forgery sits on the board, counted nowhere, so the player sees it and learns
 its tell.
 
-*Anchor moment:* a find card closes. The Case File shows "New since you last
-looked" on one row. Halsk has moved from "contradicted once" to "ruled out".
-Only Orrowen still stands. The File does not say "Orrowen built it". The player
-says that, or chooses not to.
+*Anchor moment:* a find card closes. The Halsk row reads "New evidence since
+you last tested". The player selects "Strike out…", and the File confirms,
+citing Chain A and Chain C. Two rows are struck. The File says nothing more.
+The player says "Orrowen", or chooses not to.
 
 **MDA aesthetics served:** Discovery (the case narrows as evidence arrives),
-Challenge (weighing testimony, spotting forgeries, choosing when the held case
-is enough), Expression (what to tell, to whom, in the attached preview).
+Challenge (weighing testimony, learning forgery tells, choosing when the held
+case is enough), Expression (what to tell, to whom, in the attached preview).
 
 **SDT:** Competence: every status has a cited reason. Autonomy: the File informs
 and never decides; sharing, accusing and keeping quiet stay the player's.
@@ -107,8 +107,10 @@ answer", "the order or highlight gave it away", "a forgery fooled the File", or
    the player holds").
 6. **Header lines** (text panel, always shown, fixed order):
    - "Held h of N" (#28 rule 16);
-   - "k reliable fragments are still unfound; any may contradict a candidate"
-     (from `unfound_count_by_class()`, D6);
+   - "k reliable fragments are still unfound; any may narrow the case" (from
+     `unfound_count_by_class()`, D6). By G1 an unfound fragment can never rule
+     out a candidate the held evidence leaves standing as the truth, so the
+     line suggests no doubt the rules make impossible;
    - "Relics and records can rule a candidate out. Testimony is weight only.
      Marked forgeries prove nothing and are counted nowhere." (fixed text).
 
@@ -143,7 +145,13 @@ answer", "the order or highlight gave it away", "a forgery fooled the File", or
 
 **C. Status and reasons**
 
-12. **Status per candidate** (D4):
+12. **Status per candidate** (D4), **shown after the player tests the row.**
+    Each candidate row offers "Strike out…" and "Test". The File then confirms
+    the status and cites the chains, or answers "Not yet: you hold n reliable
+    contradiction(s)." Until then, a row whose counts changed since its last
+    test reads "New evidence since you last tested", and a tested row keeps
+    its last shown status. The deduction is the player's act; the File only
+    checks it. Statuses:
     - **Not contradicted:** `contra(c)` = 0. Shown "Not contradicted".
     - **Contradicted once:** `contra(c)` = 1. Shown "Contradicted once; not
       ruled out".
@@ -158,11 +166,12 @@ answer", "the order or highlight gave it away", "a forgery fooled the File", or
     (script: knotted)". Per chain it cites the earliest-held contradicting
     fragment; selecting the citation opens that card. A contradicted-once row
     cites its one chain the same way.
-15. **Only one still stands.** When exactly one candidate is not ruled out, the
-    text panel shows a fixed line: "Only ⟨X⟩ still stands on the evidence you
-    hold." It is a fact about the held set. The File **never** uses "maker",
-    "correct", "solved", "guilty" or "true" about a candidate, in any state.
-    It shows no other summary and plays no special effect for any candidate.
+15. **No solved banner.** When exactly one candidate is not ruled out, the File
+    shows **no extra line, flag or cue**: that row looks the same as any other
+    row that is not ruled out. (By G1 that candidate is certainly the maker, so
+    any "only X remains" line would be a solved banner in other words.) The
+    File **never** uses "maker", "correct", "solved", "guilty" or "true" about
+    a candidate, in any state, and plays no special effect for any candidate.
 16. **Forgeries and testimony cannot be mistaken for proof.**
     - A **forgery** row shows its value and the full-width band "Marked
       forgery: proves nothing, counted nowhere", with its tell. It has **no
@@ -233,8 +242,9 @@ answer", "the order or highlight gave it away", "a forgery fooled the File", or
       applies to any row whose status or cells changed, whatever the
       candidate.
 28. **New since you last looked.** The File stores the `acq_seq` high-water
-    mark at last close. Rows whose fragments or statuses changed since then
-    carry a "New" tag until the File is closed.
+    mark at last close. "New" tags apply to evidence rows and matrix cells
+    only, never to candidate status; a candidate row's only change marker is
+    rule 12's "New evidence since you last tested".
 29. **In battle, read-only.** In `BATTLE` the File opens with `PLAYER_PAUSE`
     added (Simulation Tick rule 10). The player may read everything. Share,
     Seal, Release, Accuse, the pin, doubt marks and notes are disabled with
@@ -270,8 +280,8 @@ answer", "the order or highlight gave it away", "a forgery fooled the File", or
 | Contradicted once | `contra` = 1 | Ruled out |
 | Ruled out | `contra ≥ 2` | — |
 
-"Only X still stands" is a board flag, not a status: it holds while exactly one
-candidate is not ruled out.
+There is no board flag for one candidate remaining (rule 15). A row's *shown*
+status updates only when the player tests it (rule 12).
 
 ### Interactions with Other Systems
 
@@ -334,9 +344,8 @@ fits(f, c) } |`
 ### D4. Status
 
 `status(c)` = Ruled out if `contra(c) ≥ 2`; Contradicted once if `contra(c)` =
-1; else Not contradicted. `S` = { c : `contra(c) < 2` }. "Only X still stands"
-shows iff `|S|` = 1, with X its member. By G1, `contra(truth)` = 0 always, so
-`|S| ≥ 1`.
+1; else Not contradicted. `S` = { c : `contra(c) < 2` }. By G1, `contra(truth)` = 0 always, so
+`|S| ≥ 1`; nothing is shown when `|S|` = 1 (rule 15).
 
 ### D5. Citation order
 
@@ -393,8 +402,9 @@ Chain C (`first_acq` 3, f1): "Ruled out: Chain A (solvent: saline), Chain C
 Day 10 the player gains f3 (DIRECT, base eight, g3, `acq_seq` 4 → Chain D). It
 contradicts Halsk and fits O and I. Now contra(Halsk) = 2 (C, D): Ruled out.
 support(Orrowen) = 3 reliable (A, C, D) + 1 testimony (B) = 4. support(Ithren)
-= 1 (D); Ithren stays Ruled out (contra wins). `|S|` = 1: "Only Orrowen still
-stands on the evidence you hold." Three reliable fragments were needed, as G2
+= 1 (D); Ithren stays Ruled out (contra wins). `|S|` = 1, and the File shows
+nothing extra (rule 15): the player strikes out Halsk and Ithren and draws the
+conclusion. Three reliable fragments were needed, as G2
 requires.
 
 **Cross-check with #30 D7:** Accuse Orrowen on this held set gives contra_held
@@ -498,8 +508,8 @@ changes a count or a status.
 
 ## Game Feel
 
-- **The click of elimination.** A status change is visible on the next open,
-  tagged "New", with its two chains cited.
+- **The click of elimination.** The player selects "Strike out…" and the File
+  confirms it with its two chains cited: the elimination is the player's act.
 - **Nothing moves under you.** Rows never reorder; the board grows downward in
   find order.
 - **Thinking is free.** The clock holds while the File is open.
@@ -548,7 +558,9 @@ changes a count or a status.
 - **AC-06 (Logic; rule 12, D4)**: status is Ruled out iff `contra ≥ 2`, Contradicted once iff 1, else Not contradicted.
 - **AC-07 (Logic; rule 13)**: over random grant, seal, release and lapse sequences, no status ever moves backward.
 - **AC-08 (Logic; rule 14, D5)**: Ithren's citation in the worked example reads Chain A then Chain C, and opens f2 then f1.
-- **AC-09 (Logic; rule 15)**: "Only X still stands" shows iff exactly one candidate is not ruled out; a string scan of every Case File string finds none of "maker", "correct", "solved", "guilty", "true" applied to a candidate.
+- **AC-09 (Logic; rule 15)**: with exactly one candidate not ruled out, the rendered File is identical, row for row, to a state with two not ruled out apart from the struck rows (no line, flag or cue);
+- **AC-09b (Logic; rule 12)**: an untested row shows no status, only "New evidence since you last tested" when its counts changed; "Strike out…" on a row with `contra` 1 answers "Not yet: you hold 1 reliable contradiction"; "Test" on a row with `contra ≥ 2` confirms and cites both chains;
+- **AC-09c (Logic; rules 12, 15)**: a string scan of every Case File string finds none of "maker", "correct", "solved", "guilty", "true" applied to a candidate.
 - **AC-10 (Logic; rule 16)**: forgery rows have no per-candidate cells; testimony rows never use the contradiction mark; only DIRECT and RECORD rows do.
 - **AC-11 (Logic; rule 26, G6)**: a fixture with fixed held fragments rendered under each of the C makers gives byte-identical screen text, order and glyph keys. The Case File module has no reference to the maker field or #16's reliable-contradiction flag (static check).
 - **AC-12 (Logic; rule 27)**: candidate rows follow content table order and evidence rows follow `acq_seq` in every state; no state sorts by status or count.
@@ -575,7 +587,9 @@ Resolved with the recommended defaults, for the owner to confirm at review:
 - **Board always on.** Every status is shown without a query. Stating a theory
   is free and unlimited in the concept, so a query step adds clicks, not
   mystery (Pillar 4). The pin is the "state a candidate" act.
-- **"Only X still stands"** is shown; "maker" and "correct" never are.
+- **No solved banner** (CD review reversed the earlier default): nothing is
+  shown when one candidate remains; statuses appear when the player tests a
+  row ("Board always on" now means always readable on request).
 - **Aids at MVP:** one pin, doubt marks, notes; none changes a number.
 - **Mid-battle reading** is allowed, read-only (Simulation Tick OQ 6).
 - **Testimony counts in `support`** (matches Faction Belief D7).
