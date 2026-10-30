@@ -250,7 +250,7 @@ Later tiers:
 | 51 | Menus, Settings & Save UI | UI | MVP | In Design | design/gdd/menus-settings-and-save-ui.md | Simulation Tick & Pause, Save/Load & Migration, Input & Controls, Gameplay Settings & Modifiers |
 | 52 | Audio Direction & Adaptive Music | Audio | Vertical Slice | Not Started | — | Combat Event Bus & Battle Record, Vigor, Coherence & Links, Battle Resolution & Retreat, After-Action Debrief, Archive Fragments & Evidence, Exposure & Rival Investigation |
 | 53 | Onboarding & Opening Sequence | Meta | MVP | In Design | design/gdd/onboarding-and-opening-sequence.md | Battle Resolution & Retreat, Machine Nodes & Strongholds, After-Action Debrief, Dossier |
-| 54 | Telemetry & Playtest Logging (inferred) | Meta | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout, Runtime ID Service |
+| 54 | Telemetry & Playtest Logging | Meta | MVP | In Design | design/gdd/telemetry-and-playtest-logging.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Faction Belief & Blame, Exposure & Rival Investigation, Refit & Loadout, Runtime ID Service |
 | 55 | Accessibility Options UI (inferred) | Meta | Vertical Slice | Not Started | — | Gameplay Settings & Modifiers, Menus, Settings & Save UI |
 | 56 | Difficulty Options UI (inferred) | Meta | Vertical Slice | Not Started | — | Gameplay Settings & Modifiers, Menus, Settings & Save UI |
 | 57 | Platform Integration | Meta | Full Vision | Not Started | — | Save/Load & Migration |
