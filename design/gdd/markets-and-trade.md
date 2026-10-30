@@ -3,8 +3,8 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
-> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — trade funds the next attempt); Pillar 4 (Plan in the Open — prices and margins are shown before you commit)
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (break-even as an observation naming the clock cost; hold at risk shown; fresh-save rates seed-independent; route cap ≤ 500 without CD review)
+> **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — trade funds the next attempt); Pillar 2 (The Truth Is Yours to Tell — rates are truth-neutral, rule 4); Pillar 4 (Plan in the Open — prices and margins are shown before you commit)
 
 ## Summary
 
@@ -63,7 +63,9 @@ what you can now afford.
 4. **Truth-neutral.** No rate, port listing or (later) good, stock or price may
    vary with the seeded maker. The band table (rule 7) is one fixed table. A
    port's band is player-caused standing, read through Faction Reputation; the
-   rate it maps to is the same in every seed.
+   rate it maps to is the same in every seed. Starting bands are authored and
+   seed-independent (Sector Map & Travel rule 25), so no rate on a fresh save
+   can point at the maker (Pillar 2).
 
 **B. Selling the hold**
 
@@ -171,6 +173,10 @@ create credits beyond the salvage that earned them.
 
 ### D2. Detour break-even (shown, not enforced)
 
+Shown as an observation, never a recommendation; travel also advances the
+world clock, on which rival investigators move (Exposure & Rival
+Investigation), and the screen says so.
+
 `cut = a − proceeds(a, port)`
 `break_even_s = cut × 86,400 div U_day` (when `U_day` > 0)
 
@@ -195,7 +201,7 @@ Pass when `margin_day(L) ≤ INCOME_REF_DAY × ROUTE_CAP_PM div 1,000`.
 |---|---|---|
 | `CARGO_REF` | 30 units (placeholder; Hulls owns cargo) | 10 – 200 |
 | `INCOME_REF_DAY` | 633 credits/day (Credits D4 worked fleet) | follows Credits |
-| `ROUTE_CAP_PM` | 500 | 250 – 1,000 |
+| `ROUTE_CAP_PM` | 500 | 250 – 500 |
 | `SPEED_LIGHT` | 1,200 mu/day (Sector Map) | follows Sector Map |
 
 Worked check (illustrative good, not shipped): resin bought at A for 40, sold at
@@ -262,7 +268,7 @@ par) still holds for a player who sells at a free port.
 | `SALVAGE_RATE_PM` | 1,000 | 1,000 (fixed at MVP) | Gate | Credits D5 assumes par; changing it re-derives Credits D5 and OQ 2 |
 | `SALVAGE_WARY_PM` | 900 | 500 – 1,000, ≤ `SALVAGE_RATE_PM` | Curve | Cost of trading with a wary faction; D2 detour |
 | Market privilege | `trade` | `dock`, `trade` | Gate | Lowest band that can sell |
-| `ROUTE_CAP_PM` | 500 | 250 – 1,000 | Gate | Trade's ceiling against combat income (D3) |
+| `ROUTE_CAP_PM` | 500 | 250 – 500 | Gate | Trade's ceiling against combat income (D3) |
 | `CARGO_REF` | 30 | 10 – 200 | Placeholder | D3 only, until Hulls defines cargo |
 | `INCOME_REF_DAY` | 633 | follows Credits D4 | Derived | D3 cap |
 
@@ -281,12 +287,14 @@ par) still holds for a player who sells at a free port.
 
 ## UI Requirements
 
-- Header (shared hub): wallet, hold, owner and band (or "Free port").
+- Header (shared hub): wallet, hold, owner and band (or "Free port"), and
+  "Hold at risk on defeat: N (Credits D2)", so banking before a fight is never
+  wiki knowledge.
 - Body: rate (for example "Wary: 900 ‰"), the quote for the chosen amount, "Sell
   all", an amount field (1 – hold).
 - At a sub-par rate: the cut in credits, the nearest full-rate port, its travel
-  time, and D2's break-even ("A free port pays 480 more; worth it within 1.1
-  days").
+  time, and D2's break-even as an observation ("A free port pays 480 more.
+  Break-even: 1.1 days of upkeep. Travel also advances the world clock.").
 - Refused states name their reason ("Hold empty", "Too little to sell here").
 
 ## Cross-References
@@ -306,7 +314,7 @@ par) still holds for a player who sells at a free port.
 - **AC-01 (Logic; rule 1)**: at a port without `market`, the service is not listed; at a Wary or free port with a hold above 0, `available` returns OK.
 - **AC-02 (Logic; rule 2)**: with hold 0, `available` returns "Hold empty" and `sell` returns REFUSED.
 - **AC-03 (Logic; rule 3)**: a free port without `market` fails load with `MARKET_FREE_PORT_MISSING`.
-- **AC-04 (Logic; rule 4)**: for two seeds with different makers and identical standing, every port's `rate_pm` and listing are identical.
+- **AC-04 (Logic; rule 4)**: for two seeds with different makers and identical standing, every port's `rate_pm` and listing are identical; and on a fresh save, every port's band and `rate_pm` are identical across seeds.
 - **AC-05 (Logic; D1)**: selling hold 4,800 credits exactly 4,800 at a free port and 4,320 at a Wary port, with one log entry of cause `MARKET_SALVAGE_SALE`; hold ends at 0.
 - **AC-06 (Logic; rule 5)**: proceeds are identical on Admiral, Standard and Chronicler for the same hold (no yield applied at sale).
 - **AC-07 (Logic; D1)**: property test: for any hold and any split into sales at one port, total proceeds ≤ one whole sale.
@@ -327,7 +335,9 @@ Resolved with the recommended defaults under the owner's standing instruction to
 proceed (the owner may revisit any of them at review):
 - **MVP trade is the hold sale only**; goods wait for the Ledger tier (#48).
 - **Trade is a top-up at MVP, not a career**: `ROUTE_CAP_PM` 500, so trading
-  alone never pays a D5 fleet's upkeep; the living economy may raise it.
+  alone never pays a D5 fleet's upkeep. The living economy may vary prices only
+  within `ROUTE_CAP_PM`; raising the cap above 500 needs a Creative Director
+  review against Pillar 1 (money must never buy the comeback).
 - **Wary pays 900 ‰; Neutral and above stay at par**, so standing is never a
   money faucet.
 
