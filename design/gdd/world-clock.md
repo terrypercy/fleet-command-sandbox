@@ -4,6 +4,7 @@
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
 > **Last Verified**: 2026-10-30
+> **Creative Director Review (CD-GDD-ALIGN)**: REVISED 2026-10-30 — CONCERNS on idling vs rule 15, port screens costing days, unannounced skip events, and the defeat day ceiling; all four revised
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — a defeat costs days, never the run); Pillar 2 (The Truth Is Yours to Tell — rival investigators work visibly on the clock)
 
 ## Summary
@@ -29,7 +30,8 @@ It advances only in phase P8 of a simulation tick (Simulation Tick & Pause,
 rules 3–4) and only while nothing holds the simulation: it reads `is_held()`
 and never keeps a pause of its own. So it stops while combat is paused, while a
 planning screen is open, during the Debrief, and while the game is closed, and
-it runs during travel, port time and battle (concept).
+it runs during travel, port time and battle (concept). It keeps running in the
+sandbox after the optional ending (the Reckoning).
 
 Three behaviours shape the campaign:
 - **Travel is continuous**: time passes tick by tick, so rivals move visibly.
@@ -53,8 +55,10 @@ system on day 42; the rest stops early when a contract offer arrives. The
 player reads it, paused, and decides.
 
 **Pillars served:**
-- **Pillar 1:** the cost of a defeat is counted in days, with a ceiling (battle
-  time cap, skip cap), and the clock never makes a retry unaffordable.
+- **Pillar 1:** the clock *bounds* a defeat's cost in days (battle time cap, one
+  defeat skip of at most `DEFEAT_MAX_S`). The guarantee that a retry stays
+  affordable belongs to Exposure & Rival Investigation (#32) and Contracts &
+  Missions (#38), which must honour it.
 - **Pillar 2:** rival investigators act on the clock, visibly and
   deterministically.
 - **Pillar 4:** the clock never runs while a planning screen is open.
@@ -84,6 +88,12 @@ reading" or "I lost the campaign by resting".
    - The rate must divide exactly (`DAY_S` divisible by `REAL_S_PER_DAY ×
      TICK_RATE`), or content validation refuses the value. Game time per real
      second is the same at 60 Hz and 30 Hz.
+   - **Reading never costs days.** Besides the concept's planning screens
+     (Dossier, Ledger, Case File, Debrief), every port service screen (market,
+     refit, care, contract board) and the sector map's route planner hold the
+     simulation. Port time therefore passes only through docking, departure
+     and rest. *The hold reasons belong to Simulation Tick & Pause (#1), which
+     must add these screens to its `PLANNING:*` list.*
 4. **Speed changes how many ticks run, never the rate.** At 2× speed a game day
    of travel takes 60 real seconds, because twice as many ticks run (Simulation
    Tick & Pause rule 9). Outcomes never depend on speed.
@@ -95,7 +105,9 @@ reading" or "I lost the campaign by resting".
 **B. The scheduler**
 
 6. **Every timed campaign event lives in one queue.** An event is
-   `{seq, due_s, priority, kind, owner, payload}`. Systems register events; the
+   `{seq, due_s, priority, kind, owner, visible, payload}`. `visible` marks an
+   event the player knows about (a contract expiry, a known investigator
+   arrival), which the rest panel can preview. Systems register events; the
    clock fires them. **Order is (due_s, priority, seq), ascending**, always.
    - `seq` is a saved counter, +1 per registration (events are not entities and
      use no Runtime IDs).
@@ -137,19 +149,26 @@ reading" or "I lost the campaign by resting".
     `due_s ≤ min(target, clock_s + SKIP_S_PER_TICK)`, at most
     `SKIP_EVENTS_PER_TICK` events per tick, moving the clock to each event's
     time, then to the window's end. There is never a loop over days.
-    `duration_s ≤ SKIP_MAX_S` (60 days); a longer request is refused, which
-    bounds any one defeat's cost in days. A rest's length is
+    `duration_s ≤ SKIP_MAX_S` (60 days, a technical limit on rests); a longer
+    request is refused. **A defeat's day cost is one skip of at most
+    `DEFEAT_MAX_S`**; a defeat may never chain skips, so this is the hard
+    ceiling on what one defeat costs in days. A rest's length is
     `modifier_compose(base_rest_s, rest_days_permille)` in seconds (Gameplay
     Settings & Modifiers D2), so nothing rounds to whole days.
 14. **A skip can be interrupted.** An event whose kind is flagged
     `interrupts_skip` stops the skip after every event at that same instant has
-    fired. The clock stays at that instant, the remaining target is kept, and
+    fired. **Any event that changes exposure, faction hostility or the state of
+    the case is `interrupts_skip` by default**; its owning GDD may clear the
+    flag only with a stated reason. The clock stays at that instant, the
+    remaining target is kept, and
     the event's owner adds its hold and prompt. The player may resume or
     abandon the rest; the choice is an order, stamped with its tick, so a
     replay repeats it.
-15. **Waiting is resting.** The player can let days pass only by resting at a
-    port (Ports, Rest & Care #27). There is no "wait N days" anywhere else, so
-    contracts cannot be rerolled by idling.
+15. **The only explicit wait is port rest** (Ports, Rest & Care #27). No other
+    "wait N days" command exists. Idling in flight still passes time at the
+    CAMPAIGN rate. Making contract replacement worthless to farm by idling
+    belongs to Contracts & Missions (#38), for example by drawing replacements
+    in a fixed seeded sequence so waiting never improves the draw.
 
 **D. Saving**
 
@@ -262,8 +281,9 @@ so `clock_s` is 64-bit (rule 1); the save asserts below 2⁵³ − 1.
   real second is unchanged.
 - **If a rest composes to 0 seconds**: a programmer error; Ports & Rest sets a
   floor above 0.
-- **If a skip is requested beyond `SKIP_MAX_S`**: refused; the requester must
-  split or shorten it (this is the day ceiling on a defeat's cost).
+- **If a skip is requested beyond `SKIP_MAX_S`**: refused; a rest must be
+  shortened. A defeat requesting more than `DEFEAT_MAX_S`, or a second skip, is
+  refused as a programmer error.
 - **If many events fall due at one instant**: they all fire, in priority then
   `seq` order; a chain past `SAME_INSTANT_CHAIN_MAX` is a programmer error.
 - **If the queue is full**: registering refuses with a programmer error naming
@@ -299,6 +319,7 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 | `SKIP_S_PER_TICK` | 43,200 | 3,600 – 86,400 | How fast a rest looks | Slow skips | Days blur |
 | `SKIP_EVENTS_PER_TICK` | 64 | 16 – 256 | Skip frame cost | Slow skips | Frame spikes |
 | `SKIP_MAX_S` | 5,184,000 (60 days) | 7 – 90 days | Ceiling on one skip | Long rests split | Defeat cost too high |
+| `DEFEAT_MAX_S` | 1,209,600 (14 days), provisional | 3 – 30 days | Hard ceiling on one defeat's day cost (Pillar 1) | Defeat feels free | Defeat feels like losing the run |
 | `SAME_INSTANT_CHAIN_MAX` | 256 | 64 – 1,024 | Runaway-chain guard | — | — |
 | `EVENT_QUEUE_MAX` | 8,192 | 1,024 – 16,384 | Queue and save size | Systems refused | Save grows |
 
@@ -319,8 +340,10 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 ## UI Requirements
 
 - Campaign day display ("Day 42"); travel predictions in days.
-- A rest panel showing the length (after modifiers) and a Resume/Abandon prompt
-  when interrupted.
+- A rest panel showing the length (after modifiers) and, **before the rest is
+  confirmed, every `visible` queued event that falls within it** (contract
+  expiries, known investigator arrivals); a Resume/Abandon prompt when
+  interrupted.
 - A catch-up summary after battle ("While you fought: …") listing notices from
   deferred events, in order.
 - 📌 **UX Flag — World Clock**: include the day display, rest panel and catch-up
@@ -353,7 +376,11 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 - **AC-14 (Logic; rule 4)**: the same seed and orders at 1× and 2× give identical event logs and `clock_s` at every matching tick count.
 - **AC-15 (Logic; rule 16)**: a save mid-skip, loaded, completes the skip byte-identically to an uninterrupted run; a save between outcome and catch-up fires the deferred events after load.
 - **AC-16 (Logic; rule 8)**: registering in the past sets the due time to now, logs it, and fires it this pass after earlier `seq`s; cancelling a fired event does nothing; a same-instant chain of 257 fails as a programmer error.
-- **AC-17 (Logic; rule 15)**: no campaign action other than port rest can request a skip for waiting.
+- **AC-17 (Logic; rule 15)**: no UI action other than port rest requests a skip.
+- **AC-17b (Logic; rule 13)**: a defeat requesting a skip of `DEFEAT_MAX_S` + 1, or a second skip, is refused as a programmer error.
+- **AC-17c (Logic; rule 14)**: during a 30-day rest, an event that changes exposure at day 12 stops the skip at day 12 under a hold; a kind whose owner cleared the flag does not.
+- **AC-17d (Logic; rule 3)**: opening the market, refit, care or contract-board screen, or the route planner, holds the simulation; 600 frames pass with `clock_s` unchanged.
+- **AC-17e (UI; UI Requirements)**: the rest panel lists every `visible` event due within the rest before confirmation; an event outside the rest window is not listed.
 - **AC-18 (Performance; D4)**: the largest skip (60 days, full queue) completes in ≤ 248 ticks and no skip tick exceeds the simulation budget (Simulation Tick & Pause, `sim_budget_ms`).
 - **AC-19 (UI)**: the day display, rest panel (with interruption) and catch-up summary have retained screenshots in `production/qa/evidence/` when their stories close.
 
@@ -366,3 +393,7 @@ systems index lists it under #18, #26, #27, #32, #38 and #43.
 | 3 | **Pace values** (120 s/day travel, 720 s/day battle, half-day cap) need a playtest against rival pace and contract lengths. | game-designer | First campaign playtest |
 | 4 | **Time of day** has no rule at MVP; a day/night or shift mechanic would need a GDD change. | game-designer | Post-MVP |
 | 5 | **Section ceiling** (1 MiB) counts within Save/Load's "all other systems" placeholder; confirm when that placeholder is broken down. | Save/Load owner | When ceilings are declared |
+| 6 | **`DEFEAT_MAX_S`** value and how a defeat's day cost is computed under it. | Defeat & Debrief | When designed |
+| 7 | **Port-screen holds** (rule 3) must be added to Simulation Tick & Pause's `PLANNING:*` list. | Tick owner | Tick re-review |
+| 8 | **Idle-proof contract replacement** (rule 15). | Contracts & Missions (#38) | When #38 is designed |
+| 9 | **Default interrupt kinds** (rule 14) for investigator steps and hostility changes. | #32, Faction Reputation | When designed |

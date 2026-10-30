@@ -202,7 +202,7 @@ Later tiers:
 | 5 | Save/Load & Migration | Persistence | MVP | Designed | design/gdd/save-load-and-migration.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service, Content Data & Mod Loading |
 | 6 | Input & Controls (inferred) | Core | MVP | Designed | design/gdd/input-and-controls.md | Simulation Tick & Pause |
 | 7 | Gameplay Settings & Modifiers (inferred) | Core | MVP | Designed | design/gdd/gameplay-settings-and-modifiers.md | Content Data & Mod Loading, Input & Controls |
-| 8 | World Clock | Core | MVP | Not Started | — | Simulation Tick & Pause |
+| 8 | World Clock | Core | MVP | Designed | design/gdd/world-clock.md | Simulation Tick & Pause |
 | 9 | Combat Event Bus & Battle Record | Core | MVP | Not Started | — | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Runtime ID Service |
 | 10 | Hulls & Ship Definition (inferred) | Gameplay | MVP | Not Started | — | Content Data & Mod Loading |
 | 11 | Combat Space (inferred) | Core | MVP | Not Started | — | Simulation Tick & Pause, Runtime ID Service, Hulls & Ship Definition |
@@ -477,10 +477,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 7 |
+| Design docs started | 8 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 7/43 (#1 In Review; #2–#7 pending review) |
+| MVP systems designed | 8/43 (#1 In Review; #2–#8 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---
