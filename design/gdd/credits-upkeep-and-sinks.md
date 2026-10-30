@@ -102,7 +102,8 @@ where".
 
 7. **A defeat bills, at most, its cap.** `defeat_bill` = lost salvage + recovery
    of disabled ships + upkeep for the defeat's days (Formulas D2), scaled by
-   `defeat_cost_permille`, with `DEFEAT_COST_FLOOR` = 1 credit whenever the base
+   `defeat_cost_permille` (lost salvage on DEFEAT only, so a timely retreat
+   is cheaper), with `DEFEAT_COST_FLOOR` = 1 credit whenever the base
    is above 0. It is capped at `defeat_cap`, computed from the **whole roster's
    nominal upkeep** (core and mothballed ships included), so mothballing ships
    before a risky fight never lowers it; any excess is forgiven and logged
@@ -188,7 +189,7 @@ where".
 
 ### D2. Defeat bill and cap
 
-`bill_base = D2(hold × LOST_SALVAGE_PM ÷ 1,000 + Σ hull_value × RECOVER_PM ÷ 1,000, dcp)`
+`bill_base = D2(lost × hold × LOST_SALVAGE_PM ÷ 1,000 + Σ hull_value × RECOVER_PM ÷ 1,000, dcp)`, with `lost` = 1 on DEFEAT and 0 on PLAYER_RETREATED or STANDOFF (Battle Resolution rule 18), and Σ over the disabled ships left behind
 `eff = max(DEFEAT_COST_FLOOR, bill_base)` when `bill_base` > 0
 `bill = eff + days_defeat × U_day` (days already scaled by the World Clock skip)
 `defeat_cap = D2(DEFEAT_CAP_DAYS × U_nominal, dcp)`, with `U_nominal` the whole roster's upkeep at nominal rates (core and mothballed ships included); `final = min(bill, defeat_cap)`

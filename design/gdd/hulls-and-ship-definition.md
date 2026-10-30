@@ -240,9 +240,10 @@ A hull definition has no states (frozen). A ship instance:
 |---|---|---|
 | Docked | in port | Travelling, Deployed |
 | Travelling | leaves port | Docked (arrives), Deployed (battle) — organic wounds close toward the scar line |
-| Deployed | battle starts and it is fielded | Travelling/Docked (battle ends), Destroyed, Retreated |
+| Deployed | battle starts and it is fielded | Travelling/Docked (battle ends), Disabled, Destroyed, Retreated |
 | Retreated | leaves the battle (Battle Resolution) | Travelling |
-| Destroyed | hull points reach 0 | — (Runtime ID retirement; Battle Record keeps it) |
+| Disabled | hull points reach 0, player side (Battle Resolution rule 7) | Travelling (recovered after a win, or left behind and billed by Credits after a loss) |
+| Destroyed | hull points reach 0, enemy side (player side only in the optional permadeath mode) | — (Runtime ID retirement; Battle Record keeps it) |
 | Inert | its definition is missing (Content Data Core Rule 13) | Docked (content returns) |
 
 ### Interactions with Other Systems

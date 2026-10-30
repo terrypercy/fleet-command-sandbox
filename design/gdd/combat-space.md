@@ -153,13 +153,14 @@ couldn't predict" or "two ships merged into one blob".
     circle (its direction comes from the battle setup) and a **retreat zone**:
     the part of the edge band within ±`RETREAT_ARC` (60°) of its own
     deployment direction. **Only a ship carrying an explicit retreat intent**
-    (from Flagship Piloting for the flagship, from a fleet order through Ship AI
-    for others) enters the Retreating state there; inside its own zone the edge
+    (from Flagship Piloting for the flagship, from a fleet order or a doctrine
+    WITHDRAW goal through Ship AI for others) enters the Retreating state there; inside its own zone the edge
     clamp does not apply to it, and a countdown shows on the ship. A retreating
     ship that stays in its zone for `RETREAT_HOLD` ticks, or reaches `FIELD_R`
     in it, is reported to Battle Resolution, which owns the retreat rules. A
     ship without retreat intent is never reported, however long it stays in the
-    zone; geometry never retreats a ship for the player.
+    zone; geometry never retreats a ship for the player. A ship Battle
+    Resolution marks DISABLED or DESTROYED in P7 leaves the grid that tick.
 13. **No obstacles at MVP.** The battle layout carries an empty `obstacles[]`
     list as a hook; line of sight is always clear at MVP.
 

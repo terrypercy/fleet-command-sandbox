@@ -139,11 +139,13 @@ have".
     governs movement, aim and player-group fire. Queued orders to the flagship
     cover only **retreat intent** (Combat Space rule 12) and the **AUTO group's
     focus target**.
-13. **If the flagship is destroyed**: its intent goes to zero, the lock clears,
+13. **If the flagship is disabled** (hull 0; Battle Resolution rule 7) **or departs**: its intent goes to zero, the lock clears,
     and Flagship Piloting stops publishing (Tick already ignores the command).
     It reports **loss context** with the loss: the killing hit's bearing
     relative to the heading, and whether that bearing was inside any player-
     group arc, so the Debrief can name it ("struck from the uncovered rear").
+    The battle continues; the fleet fights on under Fleet Orders (Battle
+    Resolution rule 6).
     The battle's outcome is Battle Resolution's. The camera follows the flagship
     by default (Camera & Combat View #45).
 14. **The ghost path** uses the flagship's last applied intent (Combat Space

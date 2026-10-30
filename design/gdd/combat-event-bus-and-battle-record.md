@@ -113,8 +113,8 @@ thing" or "I can't see what killed me".
    | Damage | `Hit` (bus) | shooter, slot, target, dmg, dmg_type, shield_absorbed |
    | Damage | `DamageBucket` (record) | attacker, target, window_start, dmg_hull, dmg_shield, hits, dmg_type_mask |
    | Ship state | `Destroyed` (record) | ship, killer, killer_slot, qx, qy |
-   | Ship state | `Disabled` (record) | ship, cause_code |
-   | Ship state | `Retreated` (record) | ship, cause_code (ordered / auto / rout) |
+   | Ship state | `Disabled` (record) | ship, cause_code (hull_zero for a player ship at hull 0; Battle Resolution rule 7), killer, killer_slot, qx, qy |
+   | Ship state | `Retreated` (record) | ship, cause_code (ordered / auto / rout; `auto` unused at MVP) |
    | Ship state | `OwnerChanged` (record) | ship, old_owner, new_owner |
    | Vigor | `VigorBand` (record) | ship, from, to (bands owned by Vigor #13) |
    | Vigor | `VigorCeilingEroded` (record, at battle end) | ship, amount |
@@ -126,7 +126,8 @@ thing" or "I can't see what killed me".
    | AI | `TargetChosen` (record, on change only) | ship, target, reason_code (focus_called / nearest / lowest_hull / threat / ordered / retaliate) |
    | AI | `FocusCalled` (record) | fleet, target |
    | Auto-pause | `AutoPauseTrigger` (record) | trigger_id, subject (fires whether or not the player has the trigger enabled; Simulation Tick & Pause D7) |
-   | Lifecycle | `BattleStart`, `BattleEnd` (record) | outcome, cause_code |
+   | Lifecycle | `BattleStart`, `BattleEnd` (record) | outcome, cause_code, plus on `BattleEnd`: opening_loss, P, E, destroyed_DP, retreated_DP (Battle Resolution rule 22) |
+   | Lifecycle | `StandoffWarning` (record) | sim_s (Battle Resolution rule 5) |
    | Spawn/retire | `Spawned` (record) | id, kind, content_ref, name_ref, side, owner |
    | Spawn/retire | `Retired` (record) | id |
    | Track | `Track` (record, every `TRACK_PERIOD` ticks) | ship, qx, qy, qh |
@@ -159,7 +160,8 @@ thing" or "I can't see what killed me".
       killer, and Ship AI's rationing counters (held-fire ticks per Vigor band,
       ember shots fired; Ship AI rule 14);
     - per death, a **kill window**: per-attacker damage, hits and damage types
-      over the `KILL_WINDOW` ticks before `Destroyed`. It is built from a
+      over the `KILL_WINDOW` ticks before `Destroyed` (or a hull-zero
+      `Disabled`, the player-side equivalent). It is built from a
       per-target ring buffer the Record fills from bus-tier `Hit`s and written
       as a record-tier `KillWindow` at the moment of `Destroyed`, so its
       precision never depends on `DAMAGE_WINDOW` or coarsening (deterministic,

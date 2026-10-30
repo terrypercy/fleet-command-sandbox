@@ -89,7 +89,8 @@ splinter must read as my cut working.
 5. **Phases**: APPROACH → ENGAGE → CONSOLIDATE → WITHDRAW, plus SUSPENDED
    (triggers, Formulas D2). Strongholds never withdraw (`withdraw_sr` 0);
    roaming machine fleets withdraw at `withdraw_sr` 250, a readable "they broke"
-   win state.
+   win state. WITHDRAW writes a Retreat goal (retreat intent) for each linked
+   ship; cut ships receive none and fight on (Battle Resolution rule 10).
 6. **Goal writing.** Fleet Coordination writes Move, Hold, Escort or Attack goals
    and Focus targets directly into Fleet Orders' slots, never through the order
    queue (Fleet Orders rule 11). Only LINKED and RELAYED ships receive goals; a

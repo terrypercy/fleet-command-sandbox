@@ -142,7 +142,7 @@ thing" or "I had to micromanage every shot".
     (adding `queue_full`, `queue_after_standing`, `flagship_not_covered`,
     `no_flagship`); and a new record-tier `OrderEnded(order_id, subject,
     outcome: done | target_destroyed | target_retreated | target_lost |
-    replaced | cleared)` (Battle Record rule 9; raises `EVENT_SCHEMA_VERSION`).
+    replaced | cleared | subject_disabled | subject_retreated)` (Battle Record rule 9; raises `EVENT_SCHEMA_VERSION`).
 
 ### States and Transitions
 

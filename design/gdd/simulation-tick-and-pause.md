@@ -132,7 +132,7 @@ carried into Game Feel and Acceptance Criteria instead.*
    | P4 | Weapons fire; projectiles advance |
    | P5 | Hit resolution and damage |
    | P6 | Vigor update, then Coherence and link update |
-   | P7 | Resolution checks: destruction, retreat, battle end, and **auto-pause trigger evaluation** |
+   | P7 | Resolution checks, in order: destruction, retreat, battle end (all Battle Resolution #22, rule 14), then **auto-pause trigger evaluation** |
    | P8 | World Clock advance |
    | P9 | Event flush to the Combat Event Bus & Battle Record, stamped with `tick_index`; tick ends |
 
