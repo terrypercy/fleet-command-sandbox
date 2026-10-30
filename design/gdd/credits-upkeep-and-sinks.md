@@ -145,7 +145,9 @@ where".
     1, loads after `base:world_clock`, ceiling 20,480 bytes: wallet, hold, log,
     mothball flags.
 12. **API** (no engine types): `balance()`, `hold()`, `credit_yield(base, cause,
-    ref)`, `spend(amount, cause, ref) → OK | REFUSED` (atomic), `charge(amount,
+    ref)`, `sell_hold(a, proceeds, cause, ref)` (an atomic move of `a` from the
+    hold to `proceeds` in the wallet, applying no yield; log cause
+    `MARKET_SALVAGE_SALE`; Markets & Trade), `spend(amount, cause, ref) → OK | REFUSED` (atomic), `charge(amount,
     cause, ref) → paid` (forced, clamped), `quote_upkeep()`,
     `quote_defeat_cap()`, `apply_defeat(report)`, `mothball(id)`,
     `reactivate(id)`; signals `wallet_changed`, `ship_mothballed`,

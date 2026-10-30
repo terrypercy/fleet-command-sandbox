@@ -74,8 +74,8 @@ why" or "I can keep a lie forever for free".
    - **Hostile**: docking refused (no rest, trade, care or refit); not eligible
      to lend; `engages_on_sight` for Sector Map and fleet AI; lent ships of that
      race are recalled by their lending owner (Allied Lending's Hostile veto);
-   - **Wary**: dock, rest and trade (Markets owns prices; this band is a price
-     hook);
+   - **Wary**: dock, rest and trade (at Markets & Trade's Wary rate, 900 ‰
+     of a sale);
    - **Neutral**: care offered at 1,500 ‰ of the base price;
    - **Trusted**: care at 1,000 ‰ (lending does not read Standing: Allied
      Lending decides from Faction Belief alone, with only the Hostile veto
