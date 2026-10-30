@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (sealed file encrypted to the analyst key; folder opens sessions/ only; roster_diff excludes losses and lent ships; reloads flagged, never retries; no recording until consent resolved; annotation only while paused)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — playtest logs verify that defeats lead to informed returns); Pillar 2 (The Truth Is Yours to Tell — logs never record or reveal the maker to the player)
 
 ## Summary
@@ -80,7 +80,9 @@ to accidentally show a tester the maker while doing so.
    and fails if the recording classes are present.
 6. **Opt-in, off by default.** On the first launch of a playtest build, a
    consent screen explains what is recorded and where. The default button is
-   "Don't record". Recording starts only after "Record this session". The
+   "Don't record". Recording starts only after "Record this session". No
+   Tier 0 session is recorded until Open Question 9 (age and consent) is
+   resolved. The
    choice is stored in `user://telemetry/consent.json` and can be changed in
    Settings at any time. Turning it off stops writing at once.
 7. **Local files only.** MVP Telemetry opens no socket, makes no HTTP request
@@ -188,7 +190,10 @@ to accidentally show a tester the maker while doing so.
     (`investigator_lead`, `investigator_retargeted`, `investigator_idle`,
     `investigator_found`). It reads these from the signals and from the
     `base:truth_case` data once, through a read-only accessor owned by Truth
-    Seeding.
+    Seeding. The sealed file is written encrypted to the analyst's public key;
+    the playtest build holds no key that can decrypt it (the encryption method
+    is the technical-director's call), so a tester who opens it learns
+    nothing.
 19. **Who sees the sealed file.** No game path reads it. No bug-report bundle
     includes it. The moderator does not open it during a session. Only the
     analyst (the owner at MVP) joins it to session logs, offline, after the
@@ -209,7 +214,9 @@ to accidentally show a tester the maker while doing so.
 21. **Live annotations.** In a playtest build, `TEL_ANNOTATE_KEY` (F9) opens a
     one-line overlay with four kinds: `PROMPT` (the moderator prompted an
     action), `SHARE_REASON` (the tester's spoken reason, typed verbatim),
-    `BREAK` (the tester stepped away) and `NOTE`. Enter writes
+    `BREAK` (the tester stepped away) and `NOTE`. Live annotation during battle
+    is used only while the game is paused, so it never takes the tester's
+    keyboard mid-fight. Enter writes
     `moderator.note.added` with the current stamps. The overlay adds no hold
     and sends no input to the game while it has focus.
 22. **Post-session annotations.** For remote sessions, `tools/telemetry/annotate`
@@ -231,7 +238,7 @@ to accidentally show a tester the maker while doing so.
 25. **Retention.** On session open, Telemetry deletes session and annotation
     files older than `TEL_KEEP_DAYS`, then the oldest beyond
     `TEL_KEEP_SESSIONS`. Sealed files are deleted when no session file names
-    their `campaign_tag`. Settings has "Open telemetry folder" and "Delete all
+    their `campaign_tag`. Settings has "Open telemetry folder" (opens `sessions/` only) and "Delete all
     telemetry", which deletes everything under `user://telemetry/` except
     `consent.json`. Copies the moderator made are covered by the Tier 0 test
     plan, not by the game.
@@ -241,7 +248,8 @@ to accidentally show a tester the maker while doing so.
 26. **Consent screen**, first launch only (rule 6), with the tester code field.
 27. **Recording mark.** While recording, a small neutral "REC" mark sits in the
     screen corner. It never changes with anything the player does.
-28. **Settings rows**: record on/off, tester code, open folder, delete all.
+28. **Settings rows**: record on/off, tester code, open folder (opens
+    `sessions/` only), delete all.
 29. **Annotation overlay** (rule 21).
 
 **J. Save and bug reports**
@@ -332,19 +340,26 @@ same `campaign_tag`:
 Worked example: loss ends `14:02:10.000`, next attempt `14:09:40.000`, same
 session, no annotation between. `retry_s` = 9:40 − 2:10 = 7 min 30 s = **450**;
 `session_gap` **0**; `prompted` **false**. The summary prints these three
-values. Whether 0 or 1 counts as "same or next session" is the test plan's call.
+values, and L's outcome class (retreat, defeat or standoff). Whether 0 or 1
+counts as "same or next session" is the test plan's call. An attempt preceded
+by a `save.slot.loaded` is flagged `reload: true` and never paired as a retry.
 
 ### D4. Change between attempts
 
 For attempts A1 and A2 on one node, from their loadout snapshots:
-- `roster_diff = ships(A2) Δ ships(A1)` (symmetric difference of Runtime IDs);
+- `roster_diff = ships(A2) Δ ships(A1)` over ships with owner `PLAYER`,
+  excluding ships lost in L (symmetric difference of Runtime IDs). Lent-escort
+  changes and attrition print as separate columns, never in
+  `changed_categories`, so a tester who changed nothing never shows {roster};
 - `refit_diff` = the (ship, slot) pairs present in both whose fitted id differs;
 - `orders_diff` = the order set of A2 ≠ the order set of A1.
 
 `changed_categories` = the non-empty ones of {roster, refit, orders}.
 
-Worked example: A1 ships {101, 102, 103}, A2 {101, 102, 104}: `roster_diff` =
-{103, 104}. Ship 101 slot 2 goes `mod_ablative` → `mod_insulated`: one refit
+Worked example: A1 ships {101, 102, 103}, A2 {101, 102, 104}; ship 103 was not
+lost in L but left behind by the player's choice (laid up): `roster_diff` =
+{103, 104}. Had 103 been disabled and left in L, it would print under
+attrition and `roster_diff` would be {104}. Ship 101 slot 2 goes `mod_ablative` → `mod_insulated`: one refit
 pair. Order sets equal. `changed_categories` = **{roster, refit}**. The summary
 prints the list; it does not judge whether the change was "informed".
 
@@ -369,9 +384,9 @@ is one serialise and append to the buffer, budgeted at `TEL_FRAME_BUDGET_US`.
   shows the error line. No retry loop.
 - **File cap reached**: CAPPED (rule 14). Later events in that session are lost
   and the summary prints "capped at seq N".
-- **Battle restarted from a suspend or save reload**: logged as a new
-  `battle.attempt.started` after `save.slot.loaded`. The summary shows the load
-  between them; whether it counts as a retry is the test plan's call (Save OQ 4).
+- **Battle restarted from a suspend or save reload**: logged as a new attempt
+  after `save.slot.loaded`. The summary flags it `reload: true`, and D3 does
+  not pair it as a retry (a reload skips the defeat's cost).
 - **Two campaigns in one session**: events carry `campaign_tag`, so attempts
   never pair across campaigns.
 - **Same seed started twice**: same `campaign_tag`. The summary splits them by
@@ -491,6 +506,7 @@ one who does not play the same game, tick for tick.
 - **AC-23 (UI; rules 21, 27)**: the REC mark is visible in every context while recording and absent when OFF; F9 opens the overlay, Enter writes one `moderator.note.added`, and the battle tick count during the open overlay matches a run without it (screenshots retained).
 - **AC-24 (Logic; D5)**: in a 10-minute battle fixture, no frame spends more than `TEL_FRAME_BUDGET_US` in Telemetry code on the main thread, and no file write occurs on the main thread.
 - **AC-25 (Playtest; concept pass bar)**: for every Tier 0 tester, the moderator can produce from the files alone each attempt pair's `retry_s`, `session_gap`, `prompted` and `changed_categories`, and each share's reason source (field or annotation), without opening the sealed file.
+- **AC-27 (Logic; rule 18)**: no plaintext race id appears in any file under `sealed/`; the playtest build contains no private key for it.
 - **AC-26 (Playtest; rule 6)**: every Tier 0 tester can say, after reading the consent screen, what is recorded and that nothing leaves their machine.
 
 ## Open Questions
