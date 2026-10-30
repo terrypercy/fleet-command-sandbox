@@ -229,7 +229,7 @@ Later tiers:
 | 30 | Faction Belief & Blame | Narrative | MVP | Designed | design/gdd/faction-belief-and-blame.md | Truth Seeding & Candidates, Faction Reputation & Standing, Credits, Upkeep & Sinks, Archive Fragments & Evidence, Runtime ID Service |
 | 31 | Case File & Deduction | Narrative | MVP | Designed | design/gdd/case-file-and-deduction.md | Truth Seeding & Candidates, Archive Fragments & Evidence |
 | 32 | Exposure & Rival Investigation | Narrative | MVP | Designed | design/gdd/exposure-and-rival-investigation.md | Deterministic RNG & Seed Streams, World Clock, Archive Fragments & Evidence, Faction Belief & Blame, Runtime ID Service |
-| 33 | Allied Lending | Gameplay | MVP | Not Started | — | Hulls & Ship Definition, Fleet Coordination, Faction Belief & Blame, Runtime ID Service |
+| 33 | Allied Lending | Gameplay | MVP | In Design | design/gdd/allied-lending.md | Hulls & Ship Definition, Fleet Coordination, Faction Belief & Blame, Runtime ID Service |
 | 34 | Reckoning & Endings | Narrative | Vertical Slice | Not Started | — | Truth Seeding & Candidates, Credits, Upkeep & Sinks, Faction Belief & Blame, Case File & Deduction, Exposure & Rival Investigation |
 | 35 | Refit & Loadout | Progression | MVP | Not Started | — | Hulls & Ship Definition, Weapons & Damage, Credits, Upkeep & Sinks |
 | 36 | Salvage & Recovery | Economy | Vertical Slice | Not Started | — | Credits, Upkeep & Sinks, Battle Resolution & Retreat, Runtime ID Service |
