@@ -3,7 +3,7 @@
 > **Status**: Designed (pending review)
 > **Author**: owner + agents
 > **Last Updated**: 2026-10-30
-> **Last Verified**: 2026-10-30
+> **Last Verified**: 2026-10-30 · CD-GDD-ALIGN: CONCERNS → revisions applied (aim error and order-rate cap; human win-rate match; worked-gated proof wins; BotView bound to HUD/Dossier at a stated known; mixed-cause fixtures; one-band cell rule; no mystery state)
 > **Implements Pillar**: Pillar 1 (Every Defeat Is a Lead — proves every Dossier counter can win and every Debrief cause is right); Pillar 4 (Plan in the Open — calibrates the readiness range so the Dossier tells the truth)
 
 ## Summary
@@ -62,10 +62,17 @@ them. Then change one value and run the suite again overnight.
    validation and the same `OrderRejected` results as the player. It sets the
    pre-battle plan through the same planning call the player's screen uses.
    It has no other way into the simulation.
-2. **The bot sees what the player sees.** It reads a read-only `BotView`. This
-   holds the player's own ships in full, and enemy ships only as the HUD would
-   show them. It never reads `SimState`, AI intents, enemy Vigor, or hidden
-   doctrine fields. A static check enforces this (AC-01).
+2. **The bot sees what the player sees.** It reads a read-only `BotView`,
+   built from the HUD and Dossier presenters at a stated `known` (Machine
+   Nodes D4). It holds the player's own ships in full, and enemy ships only
+   through those presenters. Proofs use the `known` at which the Dossier first
+   shows the counter being proven; plans may pick ships only by tags visible at
+   that `known`. It never reads `SimState`, AI intents, enemy Vigor, or hidden
+   doctrine fields. A static check enforces this (AC-01), and a schema test
+   holds `BotView`'s fields equal to the HUD-visible list (AC-01b). Link bands
+   (Coherence & Links' drawn links) and the flagship lock marker (Fleet
+   Coordination rule 11) are HUD-visible, so `link_band` and `flagship_locked`
+   stay in the condition set.
 3. **The bot draws no random numbers.** All its choices are pure integer
    functions of `BotView`, its plan and the tick. So it never moves a battle
    stream's draw count. The only variation between seeds is the battle seed
@@ -77,10 +84,13 @@ them. Then change one value and run the suite again overnight.
 5. **Skill: a steady, average captain.** The bot is not an expert. It acts on
    the world as it stood `BOT_REACT_TICKS` (12, 200 ms) ago (D7). It aims at
    that delayed position with a straight-line lead, so its aim is off against
-   a target that turns. It reviews its plan and gives orders every
-   `BOT_THINK_TICKS` (30, 0.5 s). This stands in for a player who pauses
-   twice a second to issue orders. It never gives more than
-   `BOT_ORDERS_PER_THINK` (4) orders at once. A proof flown by a superhuman bot
+   a target that turns. Its aim also carries a deterministic error of up to
+   ±`BOT_AIM_ERR` (1,500 angle units), derived from the battle key and tick by
+   hash, never from a battle stream (rule 3 holds). It reviews its plan every
+   `BOT_THINK_TICKS` (30, 0.5 s), gives at most `BOT_ORDERS_PER_THINK` (2)
+   orders at once, and at most `BOT_ORDERS_PER_10S` (6) in any 600 ticks.
+   The `BOT_*` knobs are tuned against AC-23's human win-rate match, never by
+   feel. A proof flown by a superhuman bot
    would pass counters a person cannot carry out.
 6. **Headless pausing.** No pause holds are added headless (Tick rule 15). The
    bot's think cadence plays the part of the player's pauses. Triggers are
@@ -160,7 +170,11 @@ them. Then change one value and run the suite again overnight.
     `BATTLE_LIMIT_S × TICK_RATE + RUNNER_TICK_MARGIN` (600). That is a harness
     error, not an outcome (Edge Cases).
 15. **A win** is an outcome in Battle Resolution's win class. Anything else is
-    a non-win. The Runner never makes up its own outcome.
+    a non-win. The Runner never makes up its own outcome. **In a proof (S2), a
+    win counts only if the counter's `worked` predicate held** (Machine Nodes
+    rule 12); a win without it is recorded as `won_without_counter` and counts
+    as a non-win, so the Dossier's advice is never proven by an irrelevant
+    win.
 16. **After every battle**, the Runner keeps the outcome report, the record's
     event-log hash, the final `state_hash`, the per-stream draw counts, and the
     `DebriefResult` from `classify(record, report, node_counters, content)`. It
@@ -194,16 +208,18 @@ them. Then change one value and run the suite again overnight.
     each battle is scored against the range shown at every `known` value from 0
     to 12 (D3).
 21. **Degenerate checks** (S2 and S5, observations).
-    - **Won without the counter**: a proof win in which the counter's `worked`
-      predicate never held (Machine Nodes rule 12).
     - **Too easy**: the unprepared fleet wins ≥ `PROOF_WIN_MIN` at `s` 1000 on a
       node that is not the opening.
     - **One counter everywhere**: a counter that passes the proof on every node
       that lists it, including nodes where it is `supporting`.
-    Only `NODE_RELAY_CUT_SUFFICIENT` is a gate today (Machine Nodes rule 13).
-    The others are reported, and making them gates is Open Question 3.
+    `NODE_RELAY_CUT_SUFFICIENT` (Machine Nodes rule 13) and the `worked` rule
+    (rule 15) are gates. The others are reported; making them gates is Open
+    Question 3.
 22. **Debrief checks** (S4). AC-22 runs the five `fx_*` plans on the opening
-    node at 10 seeds each, and each fixture states `expected_primary`. AC-21
+    node at 10 seeds each, and each fixture states `expected_primary`. S4 also
+    runs `MIXED_FIXTURES` (12) mixed-cause fixtures (two causes operating at
+    once, e.g. a late retreat into held links) with a stated `expected_primary`,
+    so a confidently wrong cause fails a gate (AC-24). AC-21
     reads S2's unprepared battles. AC-21b reads S2's counter-fleet battles for
     the node's first listed counter; if that counter is `supporting`, S4 runs it
     for 10 extra seeds. AC-21c counts every loss-class battle in S2, S3, S4 and
@@ -296,6 +312,10 @@ them. Then change one value and run the suite again overnight.
     campaign. It never calls Save/Load's write path. Its `user://` is moved to
     a temporary run folder. A CI check hashes the real `user://` saves before
     and after a run (AC-11).
+36a. **No mystery state.** The Runner, the overlay and every record it writes
+    never read or contain Truth Seeding, Mystery or Blame state. A static check
+    finds that `src/debug/` imports no such module (AC-25). Committed records
+    are readable by anyone with the repo, so this holds for them too.
 37. **Outputs.** Every run writes to `production/qa/runner/<run_id>/`, where
     `run_id` is `<date>-<build>-<tier>`:
     - `manifest.json`: build, engine version, OS, arch, `TICK_RATE`, content
@@ -398,7 +418,9 @@ it as not met (Edge Cases). Example: 412 Contested battles with 197 wins give
 ### D3. In-range check (AC-17, second clause)
 
 The D4 range is a strength ratio, not a win rate, so the Runner maps it onto
-win-rate bands before it compares:
+win-rate bands before it compares. In addition, **no cell may be more than one
+band outside its shown range** (a Ready-only range on a cell that wins ≤ 300 ‰
+fails outright):
 
 ```
 span      = { band(low), …, band(high) }        bands the shown range touches
@@ -567,7 +589,10 @@ gates and tuning data.
 |---|---|---|---|---|
 | `BOT_REACT_TICKS` | 12 (200 ms) | 6 – 30 | Gate | Bot skill. Lower makes proofs easier than a person would find them |
 | `BOT_THINK_TICKS` | 30 (0.5 s) | 15 – 120 | Gate | How often the bot re-plans and gives orders |
-| `BOT_ORDERS_PER_THINK` | 4 | 1 – 8 | Gate | Micro limit per think |
+| `BOT_ORDERS_PER_THINK` | 2 | 1 – 4 | Gate | Micro limit per think |
+| `BOT_ORDERS_PER_10S` | 6 | 3 – 12 | Gate | Sustained order rate, human-like |
+| `BOT_AIM_ERR` | 1,500 angle units | 0 – 4,000 | Gate | Aim error, so execution is not superhuman |
+| `MIXED_FIXTURES` | 12 | 6 – 30 | Gate | Mixed-cause Debrief fixtures |
 | `CAL_SEEDS` | 10 | 5 – 30 | Gate | Calibration noise vs CI time |
 | `REINFORCE_ESCORTS` | 3 | 1 – 6 | Gate | Puts battles in the Ready band |
 | `TEL_SEEDS` | 10 | 5 – 30 | Gate | Telemetry noise |
@@ -682,9 +707,12 @@ in `assets/data/runner/`.
   rules 13 and 21a; Debrief AC-21, 21b, 21c, 22; Battle Record AC-09) has
   exactly one GdUnit4 case named after it. Each case reads its threshold from
   the owner's data.
-- **AC-23 (Playtest; rule 5)**: 3 of 5 testers, given only a counter's plan as
-  Dossier text, beat the opening stronghold at `s` 1000 within 3 attempts. This
-  shows the bot is not superhuman.
+- **AC-01b (Logic; rule 2)**: a schema test finds `BotView`'s field set equal to the HUD- and Dossier-visible field list at the stated `known`.
+- **AC-23 (Playtest; rule 5)**: on every MVP node, the human win rate at `s` 1000 with the counter plan given as Dossier text is within ±150 ‰ of the bot's S2 win rate for that key set. The `BOT_*` knobs are tuned until it is.
+- **AC-24 (Integration; rule 22)**: each mixed-cause fixture names its `expected_primary` in ≥ 9 of 10 seeds; in playtest, testers agree with the named cause in ≥ 7 of 10 human losses.
+- **AC-25 (Logic; rule 36a)**: a static check finds no import of Truth Seeding, Mystery or Blame modules under `src/debug/`, and no such field in any Runner output.
+- **AC-26 (Logic; rule 15)**: a proof win whose counter's `worked` never held is recorded `won_without_counter` and counted as a non-win.
+- **AC-27 (Logic; D3)**: a cell more than one band outside its shown range fails S3 regardless of the 800 ‰ share.
 
 ## Open Questions
 
@@ -692,7 +720,9 @@ in `assets/data/runner/`.
 |---|---|---|---|
 | 1 | The exact MVP reference fleet: hulls, loadouts and doctrine. It must match the fleet Credits and Machine Nodes D6 price against ("the D5 fleet"). | game-designer, systems-designer | Before Runner implementation |
 | 2 | ~~Proof `enemy_ai_level`~~ **Resolved 2026-10-30:** the preset level for that `s` (2 at 1000, 3 at 1200); rule 21a runs at `s` 1000, level 2 (Machine Nodes rules 21, 21a amended). | systems-designer | Closed |
-| 3 | Should "won without the counter" (`worked` never held) and "too easy" become gates in Machine Nodes? Recommended default until then: they stay observations, reviewed on each full-tier run. | owner, game-designer | First full-tier run |
+| 3 | Should "too easy" and "one counter everywhere" become gates? ("Won without the counter" is now a gate, rule 15.) Until then they stay observations, reviewed on each full-tier run. | owner, game-designer | First full-tier run |
+| 10 | Calibration covers bot fleets only (reference, counter, reinforced), not refitted player fleets. Add a `looted` fleet variant once Loot & Crafting exists. | systems-designer | When Loot & Crafting is designed |
+| 11 | Art and content owners confirm that machine reason codes and doctrine fields carry no race lineage (committed records are readable). | art-director, narrative-director | Before the first committed release-gate run |
 | 4 | `HEADLESS_TPS` on the CI machine is assumed (6,000). Measure it with the Tick D10 spike; if it is low, cut `CAL_SEEDS` before cutting proofs. | lead-programmer | Tick D10 spike |
 | 5 | How the push job excludes `tests/integration/runner/full/` from the GdUnit4 `-a res://tests` run (an ignore flag in 4.7.2's GdUnit4 is unverified). The fallback is an environment-gated case that reports "not run". | lead-programmer | CI setup |
 | 6 | D8: a true-80% counter fails a 7-of-10 proof at one `s` in 2 of 9 cases. Raise `PROOF_SEEDS` to 20 for release gates? | systems-designer, owner | Before first release gate |

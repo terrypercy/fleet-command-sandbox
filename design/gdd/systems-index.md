@@ -221,7 +221,7 @@ Later tiers:
 | 22 | Battle Resolution & Retreat | Gameplay | MVP | Designed | design/gdd/battle-resolution-and-retreat.md | Simulation Tick & Pause, Combat Event Bus & Battle Record, Weapons & Damage, Fleet Orders, Runtime ID Service |
 | 23 | Machine Nodes & Strongholds | Gameplay | MVP | Designed | design/gdd/machine-nodes-and-strongholds.md | Content Data & Mod Loading, Hulls & Ship Definition, Coherence & Links, Fleet Coordination |
 | 24 | After-Action Debrief | Gameplay | MVP | Designed | design/gdd/after-action-debrief.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Battle Resolution & Retreat, Machine Nodes & Strongholds, Runtime ID Service |
-| 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | In Design | design/gdd/ai-vs-ai-runner-and-ai-debug-tools.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds, Runtime ID Service |
+| 25 | AI-vs-AI Runner & AI Debug Tools | Meta | MVP | Designed | design/gdd/ai-vs-ai-runner-and-ai-debug-tools.md | Simulation Tick & Pause, Deterministic RNG & Seed Streams, Combat Event Bus & Battle Record, Flagship Piloting, Ship AI, Fleet Coordination, Machine Nodes & Strongholds, Runtime ID Service |
 | 26 | Sector Map & Travel (inferred) | Gameplay | MVP | Not Started | — | Deterministic RNG & Seed Streams, Content Data & Mod Loading, World Clock |
 | 27 | Ports, Rest & Care | Gameplay | MVP | Not Started | — | World Clock, Vigor, Faction Reputation & Standing, Sector Map & Travel |
 | 28 | Archive Fragments & Evidence | Narrative | MVP | Not Started | — | Runtime ID Service, Content Data & Mod Loading, Truth Seeding & Candidates |
@@ -479,10 +479,10 @@ Each cycle is broken by a contract between the two systems. Write the contract i
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 57 |
-| Design docs started | 24 |
+| Design docs started | 25 |
 | Design docs reviewed | 1 |
 | Design docs approved | 0 |
-| MVP systems designed | 24/43 (#1 In Review; #2–#24 pending review) |
+| MVP systems designed | 25/43 (#1 In Review; #2–#25 pending review) |
 | Vertical Slice systems designed | 0/6 |
 
 ---
